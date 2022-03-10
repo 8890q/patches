@@ -1,0 +1,1228 @@
+From 9264fbe7c9afb043dafff4d3ba0beff9b83889ec Mon Sep 17 00:00:00 2001
+From: Dominggoes Isakh <drjisakh@gmail.com>
+Date: Thu, 25 Nov 2021 21:28:54 +0100
+Subject: [PATCH] Add back support for non bpf trafic monitoring
+
+Revert "eliminate TrafficController's mBpfEnabled & friends"
+
+This reverts commit ec36c89c5e6cc6beb7b8ca65e23c824e04a85cdc.
+
+Revert "bpf is always supported"
+
+This reverts commit 0e5d26f4820a84f31b353f4859dbb856e3b55e66.
+
+Change-Id: I117a1c933e635fbf68833a50af33e2625355f3bf
+
+Revert "BandwidthController.cpp - fix a clang warning: abseil-string-find-startswith"
+
+This reverts commit 6857fa528dbc358d67123b6a6b72a7efbc2533db.
+
+Revert "Remove unused IptJumpOp value"
+
+This reverts commit f265dddfffa7d355692bc43cb77d18555764646b.
+
+Revert "Use UidOwnerMatchType rather than IptJumpOp in TrafficController"
+
+This reverts commit 7db39b9dc40432b5ab698144fcaedc6ef44f9aea.
+
+Revert "Refactoring string uid vectors"
+
+This reverts commit 7920397d9760701554bad0d65464f1f41757d465.
+
+Change-Id: I3f42219db33d43ce8b55d7c0b2f20b9398bc129f
+
+Revert "Remove unused code from BandwidthController"
+
+This reverts commit 18295e183be9acc054767a9015fbd8e9c5b53dfa.
+
+Revert "Remove non-bpf support from BandwidthController"
+
+This reverts commit 03e3f7bc49540fe31fcce1edb3c68ba6706fdf27.
+
+Change-Id: Iaacafb74d5195b3816e50dc41148fa5133217184
+---
+ server/BandwidthController.cpp     | 119 +++++++++++++++++------
+ server/BandwidthController.h       |  24 +++--
+ server/BandwidthControllerTest.cpp | 149 ++++++++++++++++++++--------
+ server/Controllers.cpp             |   5 +-
+ server/FirewallController.cpp      |   6 +-
+ server/NetdNativeService.cpp       |  16 +--
+ server/NetworkController.cpp       |  14 +--
+ server/RouteController.cpp         |   2 +
+ server/TrafficController.cpp       | 112 ++++++++++++++++++---
+ server/TrafficController.h         |  14 ++-
+ server/TrafficControllerTest.cpp   | 150 +++++++++++++++--------------
+ 11 files changed, 429 insertions(+), 182 deletions(-)
+
+diff --git a/server/BandwidthController.cpp b/server/BandwidthController.cpp
+index 1b46234a..a81aa551 100644
+--- a/server/BandwidthController.cpp
++++ b/server/BandwidthController.cpp
+@@ -70,7 +70,6 @@ const char BandwidthController::LOCAL_GLOBAL_ALERT[] = "bw_global_alert";
+ auto BandwidthController::iptablesRestoreFunction = execIptablesRestoreWithOutput;
+ 
+ using android::base::Join;
+-using android::base::StartsWith;
+ using android::base::StringAppendF;
+ using android::base::StringPrintf;
+ using android::net::FirewallController;
+@@ -84,6 +83,9 @@ namespace {
+ const char ALERT_GLOBAL_NAME[] = "globalAlert";
+ const std::string NEW_CHAIN_COMMAND = "-N ";
+ 
++const char NAUGHTY_CHAIN[] = "bw_penalty_box";
++const char NICE_CHAIN[] = "bw_happy_box";
++
+ /**
+  * Some comments about the rules:
+  *  * Ordering
+@@ -147,6 +149,10 @@ const std::string NEW_CHAIN_COMMAND = "-N ";
+  */
+ 
+ const std::string COMMIT_AND_CLOSE = "COMMIT\n";
++const std::string HAPPY_BOX_MATCH_ALLOWLIST_COMMAND =
++        StringPrintf("-I bw_happy_box -m owner --uid-owner %d-%d -j RETURN", 0, MAX_SYSTEM_UID);
++const std::string BPF_HAPPY_BOX_MATCH_ALLOWLIST_COMMAND = StringPrintf(
++        "-I bw_happy_box -m bpf --object-pinned %s -j RETURN", XT_BPF_ALLOWLIST_PROG_PATH);
+ const std::string BPF_PENALTY_BOX_MATCH_DENYLIST_COMMAND = StringPrintf(
+         "-I bw_penalty_box -m bpf --object-pinned %s -j REJECT", XT_BPF_DENYLIST_PROG_PATH);
+ 
+@@ -206,8 +212,7 @@ static const uint32_t uidBillingMask = Fwmark::getUidBillingMask();
+  * See go/ipsec-data-accounting for more information.
+  */
+ 
+-std::vector<std::string> getBasicAccountingCommands() {
+-    // clang-format off
++std::vector<std::string> getBasicAccountingCommands(const bool useBpf) {
+     std::vector<std::string> ipt_basic_accounting_commands = {
+             "*filter",
+ 
+@@ -216,14 +221,29 @@ std::vector<std::string> getBasicAccountingCommands() {
+             "-A bw_INPUT -p esp -j RETURN",
+             StringPrintf("-A bw_INPUT -m mark --mark 0x%x/0x%x -j RETURN", uidBillingMask,
+                          uidBillingMask),
++            // This is ingress application UID xt_qtaguid (pre-ebpf) accounting,
++            // for bpf this is handled out of cgroup hooks instead.
++            useBpf ? "" : "-A bw_INPUT -m owner --socket-exists",
+             StringPrintf("-A bw_INPUT -j MARK --or-mark 0x%x", uidBillingMask),
++
+             "-A bw_OUTPUT -j bw_global_alert",
++            // Prevents IPSec double counting (Tunnel mode and Transport mode,
++            // respectively)
++            useBpf ? "" : "-A bw_OUTPUT -o " IPSEC_IFACE_PREFIX "+ -j RETURN",
++            useBpf ? "" : "-A bw_OUTPUT -m policy --pol ipsec --dir out -j RETURN",
++            // Don't count clat traffic, as it has already been counted (and subject to
++            // costly / happy_box / data_saver / penalty_box etc. based on the real UID)
++            // on the stacked interface.
++            useBpf ? "" : "-A bw_OUTPUT -m owner --uid-owner clat -j RETURN",
++            // This is egress application UID xt_qtaguid (pre-ebpf) accounting,
++            // for bpf this is handled out of cgroup hooks instead.
++            useBpf ? "" : "-A bw_OUTPUT -m owner --socket-exists",
++
+             "-A bw_costly_shared -j bw_penalty_box",
+-            ("-I bw_penalty_box -m bpf --object-pinned " XT_BPF_DENYLIST_PROG_PATH " -j REJECT"),
+-            "-A bw_penalty_box -j bw_happy_box",
+-            "-A bw_happy_box -j bw_data_saver",
++            useBpf ? BPF_PENALTY_BOX_MATCH_DENYLIST_COMMAND : "",
++            "-A bw_penalty_box -j bw_happy_box", "-A bw_happy_box -j bw_data_saver",
+             "-A bw_data_saver -j RETURN",
+-            ("-I bw_happy_box -m bpf --object-pinned " XT_BPF_ALLOWLIST_PROG_PATH " -j RETURN"),
++            useBpf ? BPF_HAPPY_BOX_MATCH_ALLOWLIST_COMMAND : HAPPY_BOX_MATCH_ALLOWLIST_COMMAND,
+             "COMMIT",
+ 
+             "*raw",
+@@ -242,7 +262,8 @@ std::vector<std::string> getBasicAccountingCommands() {
+             //
+             // Hence we will never double count and additional corrections are not needed.
+             // We can simply take the sum of base and stacked (+20B/pkt) interface counts.
+-            ("-A bw_raw_PREROUTING -m bpf --object-pinned " XT_BPF_INGRESS_PROG_PATH),
++            useBpf ? "-A bw_raw_PREROUTING -m bpf --object-pinned " XT_BPF_INGRESS_PROG_PATH
++                   : "-A bw_raw_PREROUTING -m owner --socket-exists",
+             "COMMIT",
+ 
+             "*mangle",
+@@ -258,14 +279,22 @@ std::vector<std::string> getBasicAccountingCommands() {
+             // This is egress interface accounting: we account 464xlat traffic only on
+             // the clat interface (as offloaded packets never hit base interface's ip6tables)
+             // and later sum base and stacked with overhead (+20B/pkt) in higher layers
+-            ("-A bw_mangle_POSTROUTING -m bpf --object-pinned " XT_BPF_EGRESS_PROG_PATH),
++            useBpf ? "-A bw_mangle_POSTROUTING -m bpf --object-pinned " XT_BPF_EGRESS_PROG_PATH
++                   : "-A bw_mangle_POSTROUTING -m owner --socket-exists",
+             COMMIT_AND_CLOSE};
+-    // clang-format on
+     return ipt_basic_accounting_commands;
+ }
+ 
++std::vector<std::string> toStrVec(int num, const char* const strs[]) {
++    return std::vector<std::string>(strs, strs + num);
++}
++
+ }  // namespace
+ 
++void BandwidthController::setBpfEnabled(bool isEnabled) {
++    mBpfSupported = isEnabled;
++}
++
+ BandwidthController::BandwidthController() {
+ }
+ 
+@@ -292,7 +321,7 @@ int BandwidthController::enableBandwidthControl() {
+ 
+     flushCleanTables(false);
+ 
+-    std::string commands = Join(getBasicAccountingCommands(), '\n');
++    std::string commands = Join(getBasicAccountingCommands(mBpfSupported), '\n');
+     return iptablesRestoreFunction(V4V6, commands, nullptr);
+ }
+ 
+@@ -323,29 +352,63 @@ int BandwidthController::enableDataSaver(bool enable) {
+     return ret;
+ }
+ 
+-int BandwidthController::addNaughtyApps(const std::vector<uint32_t>& appUids) {
+-    return manipulateSpecialApps(appUids, PENALTY_BOX_MATCH, IptOpInsert);
++// TODO: Remove after removing these commands in CommandListener
++int BandwidthController::addNaughtyApps(int numUids, const char* const appUids[]) {
++    return manipulateSpecialApps(toStrVec(numUids, appUids), NAUGHTY_CHAIN,
++                                 IptJumpReject, IptOpInsert);
+ }
+ 
+-int BandwidthController::removeNaughtyApps(const std::vector<uint32_t>& appUids) {
+-    return manipulateSpecialApps(appUids, PENALTY_BOX_MATCH, IptOpDelete);
++// TODO: Remove after removing these commands in CommandListener
++int BandwidthController::removeNaughtyApps(int numUids, const char* const appUids[]) {
++    return manipulateSpecialApps(toStrVec(numUids, appUids), NAUGHTY_CHAIN,
++                                 IptJumpReject, IptOpDelete);
+ }
+ 
+-int BandwidthController::addNiceApps(const std::vector<uint32_t>& appUids) {
+-    return manipulateSpecialApps(appUids, HAPPY_BOX_MATCH, IptOpInsert);
++// TODO: Remove after removing these commands in CommandListener
++int BandwidthController::addNiceApps(int numUids, const char* const appUids[]) {
++    return manipulateSpecialApps(toStrVec(numUids, appUids), NICE_CHAIN,
++                                 IptJumpReturn, IptOpInsert);
+ }
+ 
+-int BandwidthController::removeNiceApps(const std::vector<uint32_t>& appUids) {
+-    return manipulateSpecialApps(appUids, HAPPY_BOX_MATCH, IptOpDelete);
++// TODO: Remove after removing these commands in CommandListener
++int BandwidthController::removeNiceApps(int numUids, const char* const appUids[]) {
++    return manipulateSpecialApps(toStrVec(numUids, appUids), NICE_CHAIN,
++                                 IptJumpReturn, IptOpDelete);
+ }
+ 
+-int BandwidthController::manipulateSpecialApps(const std::vector<uint32_t>& appUids,
+-                                               UidOwnerMatchType matchType, IptOp op) {
+-    Status status = gCtls->trafficCtrl.updateUidOwnerMap(appUids, matchType, op);
+-    if (!isOk(status)) {
+-        ALOGE("unable to update the Bandwidth Uid Map: %s", toString(status).c_str());
++int BandwidthController::addNaughtyApps(const std::vector<std::string>& appStrUid) {
++    return manipulateSpecialApps(appStrUid, NAUGHTY_CHAIN, IptJumpReject, IptOpInsert);
++}
++
++int BandwidthController::removeNaughtyApps(const std::vector<std::string>& appStrUid) {
++    return manipulateSpecialApps(appStrUid, NAUGHTY_CHAIN, IptJumpReject, IptOpDelete);
++}
++
++int BandwidthController::addNiceApps(const std::vector<std::string>& appStrUid) {
++    return manipulateSpecialApps(appStrUid, NICE_CHAIN, IptJumpReturn, IptOpInsert);
++}
++
++int BandwidthController::removeNiceApps(const std::vector<std::string>& appStrUid) {
++    return manipulateSpecialApps(appStrUid, NICE_CHAIN, IptJumpReturn, IptOpDelete);
++}
++
++int BandwidthController::manipulateSpecialApps(const std::vector<std::string>& appStrUids,
++                                               const std::string& chain, IptJumpOp jumpHandling,
++                                               IptOp op) {
++    if (mBpfSupported) {
++        Status status = gCtls->trafficCtrl.updateUidOwnerMap(appStrUids, jumpHandling, op);
++        if (!isOk(status)) {
++            ALOGE("unable to update the Bandwidth Uid Map: %s", toString(status).c_str());
++      }
++      return status.code();
++    }
++    std::string cmd = "*filter\n";
++    for (const auto& appStrUid : appStrUids) {
++        StringAppendF(&cmd, "%s %s -m owner --uid-owner %s%s\n", opToString(op), chain.c_str(),
++                      appStrUid.c_str(), jumpToString(jumpHandling));
+     }
+-    return status.code();
++    StringAppendF(&cmd, "COMMIT\n");
++    return iptablesRestoreFunction(V4V6, cmd, nullptr);
+ }
+ 
+ int BandwidthController::setInterfaceSharedQuota(const std::string& iface, int64_t maxBytes) {
+@@ -772,11 +835,11 @@ void BandwidthController::parseAndFlushCostlyTables(const std::string& ruleList,
+ 
+     // Find and flush all rules starting with "-N bw_costly_<iface>" except "-N bw_costly_shared".
+     while (std::getline(stream, rule, '\n')) {
+-        if (!StartsWith(rule, NEW_CHAIN_COMMAND)) continue;
++        if (rule.find(NEW_CHAIN_COMMAND) != 0) continue;
+         chainName = rule.substr(NEW_CHAIN_COMMAND.size());
+         ALOGV("parse chainName=<%s> orig line=<%s>", chainName.c_str(), rule.c_str());
+ 
+-        if (!StartsWith(chainName, "bw_costly_") || chainName == std::string("bw_costly_shared")) {
++        if (chainName.find("bw_costly_") != 0 || chainName == std::string("bw_costly_shared")) {
+             continue;
+         }
+ 
+@@ -811,6 +874,8 @@ inline const char *BandwidthController::jumpToString(IptJumpOp jumpHandling) {
+      * For port-unreachable (default), TCP should consider as an abort (RFC1122).
+      */
+     switch (jumpHandling) {
++    case IptJumpNoAdd:
++        return "";
+     case IptJumpReject:
+         return " -j REJECT";
+     case IptJumpReturn:
+diff --git a/server/BandwidthController.h b/server/BandwidthController.h
+index 414e91b8..b8691dcc 100644
+--- a/server/BandwidthController.h
++++ b/server/BandwidthController.h
+@@ -24,7 +24,6 @@
+ #include <mutex>
+ 
+ #include "NetdConstants.h"
+-#include "netdbpf/bpf_shared.h"
+ 
+ class BandwidthController {
+ public:
+@@ -33,6 +32,7 @@ public:
+     BandwidthController();
+ 
+     int setupIptablesHooks();
++    void setBpfEnabled(bool isEnabled);
+ 
+     int enableBandwidthControl();
+     int disableBandwidthControl();
+@@ -46,10 +46,16 @@ public:
+     int getInterfaceQuota(const std::string& iface, int64_t* bytes);
+     int removeInterfaceQuota(const std::string& iface);
+ 
+-    int addNaughtyApps(const std::vector<uint32_t>& appUids);
+-    int removeNaughtyApps(const std::vector<uint32_t>& appUids);
+-    int addNiceApps(const std::vector<uint32_t>& appUids);
+-    int removeNiceApps(const std::vector<uint32_t>& appUids);
++    // TODO: Remove after removing these commands in CommandListener
++    int addNaughtyApps(int numUids, const char* const appUids[]);
++    int removeNaughtyApps(int numUids, const char* const appUids[]);
++    int addNiceApps(int numUids, const char* const appUids[]);
++    int removeNiceApps(int numUids, const char* const appUids[]);
++
++    int addNaughtyApps(const std::vector<std::string>& appStrUid);
++    int removeNaughtyApps(const std::vector<std::string>& appStrUid);
++    int addNiceApps(const std::vector<std::string>& appStrUid);
++    int removeNiceApps(const std::vector<std::string>& appStrUid);
+ 
+     int setGlobalAlert(int64_t bytes);
+     int removeGlobalAlert();
+@@ -69,7 +75,7 @@ public:
+     static const char LOCAL_MANGLE_POSTROUTING[];
+     static const char LOCAL_GLOBAL_ALERT[];
+ 
+-    enum IptJumpOp { IptJumpReject, IptJumpReturn };
++    enum IptJumpOp { IptJumpReject, IptJumpReturn, IptJumpNoAdd };
+     enum IptOp { IptOpInsert, IptOpDelete };
+ 
+   private:
+@@ -90,8 +96,8 @@ public:
+ 
+     std::string makeDataSaverCommand(IptablesTarget target, bool enable);
+ 
+-    int manipulateSpecialApps(const std::vector<uint32_t>& appStrUids, UidOwnerMatchType matchType,
+-                              IptOp appOp);
++    int manipulateSpecialApps(const std::vector<std::string>& appStrUids, const std::string& chain,
++                              IptJumpOp jumpHandling, IptOp appOp);
+ 
+     int runIptablesAlertCmd(IptOp op, const std::string& alertName, int64_t bytes);
+     int runIptablesAlertFwdCmd(IptOp op, const std::string& alertName, int64_t bytes);
+@@ -126,6 +132,8 @@ public:
+     static const char *opToString(IptOp op);
+     static const char *jumpToString(IptJumpOp jumpHandling);
+ 
++    bool mBpfSupported = false;
++
+     int64_t mSharedQuotaBytes = 0;
+     int64_t mSharedAlertBytes = 0;
+     int64_t mGlobalAlertBytes = 0;
+diff --git a/server/BandwidthControllerTest.cpp b/server/BandwidthControllerTest.cpp
+index d635daf0..9953ecdf 100644
+--- a/server/BandwidthControllerTest.cpp
++++ b/server/BandwidthControllerTest.cpp
+@@ -50,6 +50,73 @@ using android::net::TunInterface;
+ using android::netdutils::UniqueFile;
+ using android::netdutils::status::ok;
+ 
++const std::string ACCOUNT_RULES_WITHOUT_BPF =
++        "*filter\n"
++        "-A bw_INPUT -j bw_global_alert\n"
++        "-A bw_INPUT -p esp -j RETURN\n"
++        "-A bw_INPUT -m mark --mark 0x100000/0x100000 -j RETURN\n"
++        "-A bw_INPUT -m owner --socket-exists\n"
++        "-A bw_INPUT -j MARK --or-mark 0x100000\n"
++        "-A bw_OUTPUT -j bw_global_alert\n"
++        "-A bw_OUTPUT -o ipsec+ -j RETURN\n"
++        "-A bw_OUTPUT -m policy --pol ipsec --dir out -j RETURN\n"
++        "-A bw_OUTPUT -m owner --uid-owner clat -j RETURN\n"
++        "-A bw_OUTPUT -m owner --socket-exists\n"
++        "-A bw_costly_shared -j bw_penalty_box\n"
++        "\n"
++        "-A bw_penalty_box -j bw_happy_box\n"
++        "-A bw_happy_box -j bw_data_saver\n"
++        "-A bw_data_saver -j RETURN\n"
++        "-I bw_happy_box -m owner --uid-owner 0-9999 -j RETURN\n"
++        "COMMIT\n"
++        "*raw\n"
++        "-A bw_raw_PREROUTING -i ipsec+ -j RETURN\n"
++        "-A bw_raw_PREROUTING -m policy --pol ipsec --dir in -j RETURN\n"
++        "-A bw_raw_PREROUTING -m owner --socket-exists\n"
++        "COMMIT\n"
++        "*mangle\n"
++        "-A bw_mangle_POSTROUTING -o ipsec+ -j RETURN\n"
++        "-A bw_mangle_POSTROUTING -m policy --pol ipsec --dir out -j RETURN\n"
++        "-A bw_mangle_POSTROUTING -j MARK --set-mark 0x0/0x100000\n"
++        "-A bw_mangle_POSTROUTING -m owner --uid-owner clat -j RETURN\n"
++        "-A bw_mangle_POSTROUTING -m owner --socket-exists\n"
++        "COMMIT\n";
++
++const std::string ACCOUNT_RULES_WITH_BPF =
++        "*filter\n"
++        "-A bw_INPUT -j bw_global_alert\n"
++        "-A bw_INPUT -p esp -j RETURN\n"
++        "-A bw_INPUT -m mark --mark 0x100000/0x100000 -j RETURN\n"
++        "\n"
++        "-A bw_INPUT -j MARK --or-mark 0x100000\n"
++        "-A bw_OUTPUT -j bw_global_alert\n"
++        "\n"
++        "\n"
++        "\n"
++        "\n"
++        "-A bw_costly_shared -j bw_penalty_box\n" +
++        StringPrintf("-I bw_penalty_box -m bpf --object-pinned %s -j REJECT\n",
++                     XT_BPF_DENYLIST_PROG_PATH) +
++        "-A bw_penalty_box -j bw_happy_box\n"
++        "-A bw_happy_box -j bw_data_saver\n"
++        "-A bw_data_saver -j RETURN\n" +
++        StringPrintf("-I bw_happy_box -m bpf --object-pinned %s -j RETURN\n",
++                     XT_BPF_ALLOWLIST_PROG_PATH) +
++        "COMMIT\n"
++        "*raw\n"
++        "-A bw_raw_PREROUTING -i ipsec+ -j RETURN\n"
++        "-A bw_raw_PREROUTING -m policy --pol ipsec --dir in -j RETURN\n" +
++        StringPrintf("-A bw_raw_PREROUTING -m bpf --object-pinned %s\n", XT_BPF_INGRESS_PROG_PATH) +
++        "COMMIT\n"
++        "*mangle\n"
++        "-A bw_mangle_POSTROUTING -o ipsec+ -j RETURN\n"
++        "-A bw_mangle_POSTROUTING -m policy --pol ipsec --dir out -j RETURN\n"
++        "-A bw_mangle_POSTROUTING -j MARK --set-mark 0x0/0x100000\n"
++        "-A bw_mangle_POSTROUTING -m owner --uid-owner clat -j RETURN\n" +
++        StringPrintf("-A bw_mangle_POSTROUTING -m bpf --object-pinned %s\n",
++                     XT_BPF_EGRESS_PROG_PATH) +
++        "COMMIT\n";
++
+ class BandwidthControllerTest : public IptablesBaseTest {
+ protected:
+     BandwidthControllerTest() {
+@@ -128,6 +195,23 @@ protected:
+         EXPECT_CALL(mSyscalls, fclose(dummyFile)).WillOnce(Return(ok));
+     }
+ 
++    void checkBandwithControl(bool useBpf) {
++        // Pretend no bw_costly_shared_<iface> rules already exist...
++        addIptablesRestoreOutput(
++                "-P OUTPUT ACCEPT\n"
++                "-N bw_costly_shared\n"
++                "-N unrelated\n");
++
++        // ... so none are flushed or deleted.
++        std::string expectedClean = "";
++
++        std::string expectedAccounting =
++                useBpf ? ACCOUNT_RULES_WITH_BPF : ACCOUNT_RULES_WITHOUT_BPF;
++        mBw.setBpfEnabled(useBpf);
++        mBw.enableBandwidthControl();
++        expectSetupCommands(expectedClean, expectedAccounting);
++    }
++
+     StrictMock<android::netdutils::ScopedMockSyscalls> mSyscalls;
+ };
+ 
+@@ -163,46 +247,12 @@ TEST_F(BandwidthControllerTest, TestCheckUidBillingMask) {
+     EXPECT_TRUE(isPowerOfTwo);
+ }
+ 
+-TEST_F(BandwidthControllerTest, TestEnableBandwidthControl) {
+-    // Pretend no bw_costly_shared_<iface> rules already exist...
+-    addIptablesRestoreOutput(
+-            "-P OUTPUT ACCEPT\n"
+-            "-N bw_costly_shared\n"
+-            "-N unrelated\n");
+-
+-    // ... so none are flushed or deleted.
+-    // clang-format off
+-    static const std::string expectedClean = "";
+-    static const std::string expectedAccounting =
+-            "*filter\n"
+-            "-A bw_INPUT -j bw_global_alert\n"
+-            "-A bw_INPUT -p esp -j RETURN\n"
+-            "-A bw_INPUT -m mark --mark 0x100000/0x100000 -j RETURN\n"
+-            "-A bw_INPUT -j MARK --or-mark 0x100000\n"
+-            "-A bw_OUTPUT -j bw_global_alert\n"
+-            "-A bw_costly_shared -j bw_penalty_box\n"
+-            "-I bw_penalty_box -m bpf --object-pinned " XT_BPF_DENYLIST_PROG_PATH " -j REJECT\n"
+-            "-A bw_penalty_box -j bw_happy_box\n"
+-            "-A bw_happy_box -j bw_data_saver\n"
+-            "-A bw_data_saver -j RETURN\n"
+-            "-I bw_happy_box -m bpf --object-pinned " XT_BPF_ALLOWLIST_PROG_PATH " -j RETURN\n"
+-            "COMMIT\n"
+-            "*raw\n"
+-            "-A bw_raw_PREROUTING -i ipsec+ -j RETURN\n"
+-            "-A bw_raw_PREROUTING -m policy --pol ipsec --dir in -j RETURN\n"
+-            "-A bw_raw_PREROUTING -m bpf --object-pinned " XT_BPF_INGRESS_PROG_PATH "\n"
+-            "COMMIT\n"
+-            "*mangle\n"
+-            "-A bw_mangle_POSTROUTING -o ipsec+ -j RETURN\n"
+-            "-A bw_mangle_POSTROUTING -m policy --pol ipsec --dir out -j RETURN\n"
+-            "-A bw_mangle_POSTROUTING -j MARK --set-mark 0x0/0x100000\n"
+-            "-A bw_mangle_POSTROUTING -m owner --uid-owner clat -j RETURN\n"
+-            "-A bw_mangle_POSTROUTING -m bpf --object-pinned " XT_BPF_EGRESS_PROG_PATH "\n"
+-            "COMMIT\n";
+-    // clang-format on
++TEST_F(BandwidthControllerTest, TestEnableBandwidthControlWithBpf) {
++    checkBandwithControl(true);
++}
+ 
+-    mBw.enableBandwidthControl();
+-    expectSetupCommands(expectedClean, expectedAccounting);
++TEST_F(BandwidthControllerTest, TestEnableBandwidthControlWithoutBpf) {
++    checkBandwithControl(false);
+ }
+ 
+ TEST_F(BandwidthControllerTest, TestDisableBandwidthControl) {
+@@ -462,3 +512,24 @@ TEST_F(BandwidthControllerTest, CostlyAlert) {
+     expectIptablesRestoreCommands(expected);
+ }
+ 
++TEST_F(BandwidthControllerTest, ManipulateSpecialApps) {
++    std::vector<const char *> appUids = { "1000", "1001", "10012" };
++
++    std::vector<std::string> expected = {
++            "*filter\n"
++            "-I bw_happy_box -m owner --uid-owner 1000 -j RETURN\n"
++            "-I bw_happy_box -m owner --uid-owner 1001 -j RETURN\n"
++            "-I bw_happy_box -m owner --uid-owner 10012 -j RETURN\n"
++            "COMMIT\n"};
++    EXPECT_EQ(0, mBw.addNiceApps(appUids.size(), const_cast<char**>(&appUids[0])));
++    expectIptablesRestoreCommands(expected);
++
++    expected = {
++            "*filter\n"
++            "-D bw_penalty_box -m owner --uid-owner 1000 -j REJECT\n"
++            "-D bw_penalty_box -m owner --uid-owner 1001 -j REJECT\n"
++            "-D bw_penalty_box -m owner --uid-owner 10012 -j REJECT\n"
++            "COMMIT\n"};
++    EXPECT_EQ(0, mBw.removeNaughtyApps(appUids.size(), const_cast<char**>(&appUids[0])));
++    expectIptablesRestoreCommands(expected);
++}
+diff --git a/server/Controllers.cpp b/server/Controllers.cpp
+index 1f2bac22..ed64e257 100644
+--- a/server/Controllers.cpp
++++ b/server/Controllers.cpp
+@@ -19,6 +19,7 @@
+ #include <set>
+ #include <string>
+ 
++#include <android-base/properties.h>
+ #include <android-base/stringprintf.h>
+ #include <android-base/strings.h>
+ #include <netdutils/Stopwatch.h>
+@@ -276,6 +277,7 @@ void Controllers::initIptablesRules() {
+ }
+ 
+ void Controllers::init() {
++    bool ebpf_supported = android::base::GetBoolProperty("ro.kernel.ebpf.supported", true);
+     initIptablesRules();
+     Stopwatch s;
+ 
+@@ -283,7 +285,7 @@ void Controllers::init() {
+     gLog.info("Initializing ClatdController: %" PRId64 "us", s.getTimeAndResetUs());
+ 
+     netdutils::Status tcStatus = trafficCtrl.start();
+-    if (!isOk(tcStatus)) {
++    if (!isOk(tcStatus) && ebpf_supported) {
+         gLog.error("Failed to start trafficcontroller: (%s)", toString(tcStatus).c_str());
+         gLog.error("CRITICAL: sleeping 60 seconds, netd exiting with failure, crash loop likely!");
+         // The expected reason we get here is a major kernel or other code bug, as such
+@@ -294,6 +296,7 @@ void Controllers::init() {
+     }
+     gLog.info("Initializing traffic control: %" PRId64 "us", s.getTimeAndResetUs());
+ 
++    bandwidthCtrl.setBpfEnabled(trafficCtrl.getBpfEnabled());
+     bandwidthCtrl.enableBandwidthControl();
+     gLog.info("Enabling bandwidth control: %" PRId64 "us", s.getTimeAndResetUs());
+ 
+diff --git a/server/FirewallController.cpp b/server/FirewallController.cpp
+index 35fd1e20..360bc80a 100644
+--- a/server/FirewallController.cpp
++++ b/server/FirewallController.cpp
+@@ -53,6 +53,10 @@ constexpr const uid_t kDefaultMaximumUid = UID_MAX - 1;  // UID_MAX defined as U
+ // Proc file containing the uid mapping for the user namespace of the current process.
+ const char kUidMapProcFile[] = "/proc/self/uid_map";
+ 
++bool getBpfOwnerStatus() {
++    return gCtls->trafficCtrl.getBpfEnabled();
++}
++
+ }  // namespace
+ 
+ namespace android {
+@@ -93,7 +97,7 @@ int FirewallController::setupIptablesHooks(void) {
+     int res = flushRules();
+ 
+     // mUseBpfOwnerMatch should be removed, but it is still depended upon by test code.
+-    mUseBpfOwnerMatch = true;
++    mUseBpfOwnerMatch = getBpfOwnerStatus();
+     if (mUseBpfOwnerMatch) {
+         return res;
+     }
+diff --git a/server/NetdNativeService.cpp b/server/NetdNativeService.cpp
+index 1f5dc976..a6580bed 100644
+--- a/server/NetdNativeService.cpp
++++ b/server/NetdNativeService.cpp
+@@ -321,29 +321,29 @@ binder::Status NetdNativeService::bandwidthSetGlobalAlert(int64_t bytes) {
+ 
+ binder::Status NetdNativeService::bandwidthAddNaughtyApp(int32_t uid) {
+     NETD_LOCKING_RPC(gCtls->bandwidthCtrl.lock, PERM_NETWORK_STACK, PERM_MAINLINE_NETWORK_STACK);
+-    std::vector<uint32_t> appUids = {static_cast<uint32_t>(abs(uid))};
+-    int res = gCtls->bandwidthCtrl.addNaughtyApps(appUids);
++    std::vector<std::string> appStrUids = {std::to_string(abs(uid))};
++    int res = gCtls->bandwidthCtrl.addNaughtyApps(appStrUids);
+     return statusFromErrcode(res);
+ }
+ 
+ binder::Status NetdNativeService::bandwidthRemoveNaughtyApp(int32_t uid) {
+     NETD_LOCKING_RPC(gCtls->bandwidthCtrl.lock, PERM_NETWORK_STACK, PERM_MAINLINE_NETWORK_STACK);
+-    std::vector<uint32_t> appUids = {static_cast<uint32_t>(abs(uid))};
+-    int res = gCtls->bandwidthCtrl.removeNaughtyApps(appUids);
++    std::vector<std::string> appStrUids = {std::to_string(abs(uid))};
++    int res = gCtls->bandwidthCtrl.removeNaughtyApps(appStrUids);
+     return statusFromErrcode(res);
+ }
+ 
+ binder::Status NetdNativeService::bandwidthAddNiceApp(int32_t uid) {
+     NETD_LOCKING_RPC(gCtls->bandwidthCtrl.lock, PERM_NETWORK_STACK, PERM_MAINLINE_NETWORK_STACK);
+-    std::vector<uint32_t> appUids = {static_cast<uint32_t>(abs(uid))};
+-    int res = gCtls->bandwidthCtrl.addNiceApps(appUids);
++    std::vector<std::string> appStrUids = {std::to_string(abs(uid))};
++    int res = gCtls->bandwidthCtrl.addNiceApps(appStrUids);
+     return statusFromErrcode(res);
+ }
+ 
+ binder::Status NetdNativeService::bandwidthRemoveNiceApp(int32_t uid) {
+     NETD_LOCKING_RPC(gCtls->bandwidthCtrl.lock, PERM_NETWORK_STACK, PERM_MAINLINE_NETWORK_STACK);
+-    std::vector<uint32_t> appUids = {static_cast<uint32_t>(abs(uid))};
+-    int res = gCtls->bandwidthCtrl.removeNiceApps(appUids);
++    std::vector<std::string> appStrUids = {std::to_string(abs(uid))};
++    int res = gCtls->bandwidthCtrl.removeNiceApps(appStrUids);
+     return statusFromErrcode(res);
+ }
+ 
+diff --git a/server/NetworkController.cpp b/server/NetworkController.cpp
+index 602639cb..911cac88 100644
+--- a/server/NetworkController.cpp
++++ b/server/NetworkController.cpp
+@@ -150,12 +150,14 @@ NetworkController::NetworkController() :
+     // TODO: perhaps only remove the clsact on the interface which is added by
+     // RouteController::addInterfaceToPhysicalNetwork. Currently, the netd only
+     // attach the clsact to the interface for the physical network.
+-    const auto& ifaces = InterfaceController::getIfaceNames();
+-    if (isOk(ifaces)) {
+-        for (const std::string& iface : ifaces.value()) {
+-            if (int ifIndex = if_nametoindex(iface.c_str())) {
+-                // Ignore the error because the interface might not have a clsact.
+-                tcQdiscDelDevClsact(ifIndex);
++    if (bpf::isBpfSupported()) {
++        const auto& ifaces = InterfaceController::getIfaceNames();
++        if (isOk(ifaces)) {
++            for (const std::string& iface : ifaces.value()) {
++                if (int ifIndex = if_nametoindex(iface.c_str())) {
++                    // Ignore the error because the interface might not have a clsact.
++                    tcQdiscDelDevClsact(ifIndex);
++                }
+             }
+         }
+     }
+diff --git a/server/RouteController.cpp b/server/RouteController.cpp
+index ba305e69..c455d358 100644
+--- a/server/RouteController.cpp
++++ b/server/RouteController.cpp
+@@ -1060,6 +1060,8 @@ int RouteController::modifyRoute(uint16_t action, uint16_t flags, const char* in
+ }
+ 
+ static void maybeModifyQdiscClsact(const char* interface, bool add) {
++    if (!bpf::isBpfSupported()) return;
++
+     // The clsact attaching of v4- tun interface is triggered by ClatdController::maybeStartBpf
+     // because the clat is started before the v4- interface is added to the network and the
+     // clat startup needs to add {in, e}gress filters.
+diff --git a/server/TrafficController.cpp b/server/TrafficController.cpp
+index 1f678cbf..a2e6b3a8 100644
+--- a/server/TrafficController.cpp
++++ b/server/TrafficController.cpp
+@@ -52,16 +52,13 @@
+ #include "netdutils/DumpWriter.h"
+ #include "qtaguid/qtaguid.h"
+ 
++using namespace android::bpf;  // NOLINT(google-build-using-namespace): grandfathered
++
+ namespace android {
+ namespace net {
+ 
+ using base::StringPrintf;
+ using base::unique_fd;
+-using bpf::getSocketCookie;
+-using bpf::NONEXISTENT_COOKIE;
+-using bpf::OVERFLOW_COUNTERSET;
+-using bpf::retrieveProgram;
+-using bpf::synchronizeKernelRCU;
+ using netdutils::DumpWriter;
+ using netdutils::extract;
+ using netdutils::ScopedIndent;
+@@ -171,11 +168,14 @@ StatusOr<std::unique_ptr<NetlinkListenerInterface>> TrafficController::makeSkDes
+ }
+ 
+ TrafficController::TrafficController()
+-    : mPerUidStatsEntriesLimit(PER_UID_STATS_ENTRIES_LIMIT),
++    : mBpfEnabled(isBpfSupported()),
++      mPerUidStatsEntriesLimit(PER_UID_STATS_ENTRIES_LIMIT),
+       mTotalUidStatsEntriesLimit(TOTAL_UID_STATS_ENTRIES_LIMIT) {}
+ 
+ TrafficController::TrafficController(uint32_t perUidLimit, uint32_t totalLimit)
+-    : mPerUidStatsEntriesLimit(perUidLimit), mTotalUidStatsEntriesLimit(totalLimit) {}
++    : mBpfEnabled(isBpfSupported()),
++      mPerUidStatsEntriesLimit(perUidLimit),
++      mTotalUidStatsEntriesLimit(totalLimit) {}
+ 
+ Status TrafficController::initMaps() {
+     std::lock_guard guard(mMutex);
+@@ -248,6 +248,10 @@ static Status initPrograms() {
+ }
+ 
+ Status TrafficController::start() {
++    if (!mBpfEnabled) {
++        return netdutils::status::ok;
++    }
++
+     /* When netd restarts from a crash without total system reboot, the program
+      * is still attached to the cgroup, detach it so the program can be freed
+      * and we can load and attach new program into the target cgroup.
+@@ -311,6 +315,11 @@ int TrafficController::tagSocket(int sockFd, uint32_t tag, uid_t uid, uid_t call
+         return -EPERM;
+     }
+ 
++    if (!mBpfEnabled) {
++        if (legacy_tagSocket(sockFd, tag, uid)) return -errno;
++        return 0;
++    }
++
+     uint64_t sock_cookie = getSocketCookie(sockFd);
+     if (sock_cookie == NONEXISTENT_COOKIE) return -errno;
+     UidTagValue newKey = {.uid = (uint32_t)uid, .tag = tag};
+@@ -374,6 +383,10 @@ int TrafficController::tagSocket(int sockFd, uint32_t tag, uid_t uid, uid_t call
+ 
+ int TrafficController::untagSocket(int sockFd) {
+     std::lock_guard guard(mMutex);
++    if (!mBpfEnabled) {
++        if (legacy_untagSocket(sockFd)) return -errno;
++        return 0;
++    }
+     uint64_t sock_cookie = getSocketCookie(sockFd);
+ 
+     if (sock_cookie == NONEXISTENT_COOKIE) return -errno;
+@@ -391,6 +404,11 @@ int TrafficController::setCounterSet(int counterSetNum, uid_t uid, uid_t calling
+     std::lock_guard guard(mMutex);
+     if (!hasUpdateDeviceStatsPermission(callingUid)) return -EPERM;
+ 
++    if (!mBpfEnabled) {
++        if (legacy_setCounterSet(counterSetNum, uid)) return -errno;
++        return 0;
++    }
++
+     // The default counter set for all uid is 0, so deleting the current counterset for that uid
+     // will automatically set it to 0.
+     if (counterSetNum == 0) {
+@@ -419,6 +437,11 @@ int TrafficController::deleteTagData(uint32_t tag, uid_t uid, uid_t callingUid)
+     std::lock_guard guard(mMutex);
+     if (!hasUpdateDeviceStatsPermission(callingUid)) return -EPERM;
+ 
++    if (!mBpfEnabled) {
++        if (legacy_deleteTagData(tag, uid)) return -errno;
++        return 0;
++    }
++
+     // First we go through the cookieTagMap to delete the target uid tag combination. Or delete all
+     // the tags related to the uid if the tag is 0.
+     const auto deleteMatchedCookieEntries = [uid, tag](const uint64_t& key,
+@@ -479,6 +502,8 @@ int TrafficController::deleteTagData(uint32_t tag, uid_t uid, uid_t callingUid)
+ }
+ 
+ int TrafficController::addInterface(const char* name, uint32_t ifaceIndex) {
++    if (!mBpfEnabled) return 0;
++
+     IfaceValue iface;
+     if (ifaceIndex == 0) {
+         ALOGE("Unknown interface %s(%d)", name, ifaceIndex);
+@@ -508,6 +533,17 @@ Status TrafficController::updateOwnerMapEntry(UidOwnerMatchType match, uid_t uid
+     return netdutils::status::ok;
+ }
+ 
++UidOwnerMatchType TrafficController::jumpOpToMatch(BandwidthController::IptJumpOp jumpHandling) {
++    switch (jumpHandling) {
++        case BandwidthController::IptJumpReject:
++            return PENALTY_BOX_MATCH;
++        case BandwidthController::IptJumpReturn:
++            return HAPPY_BOX_MATCH;
++        case BandwidthController::IptJumpNoAdd:
++            return NO_MATCH;
++    }
++}
++
+ Status TrafficController::removeRule(uint32_t uid, UidOwnerMatchType match) {
+     auto oldMatch = mUidOwnerMap.readValue(uid);
+     if (oldMatch.ok()) {
+@@ -550,18 +586,30 @@ Status TrafficController::addRule(uint32_t uid, UidOwnerMatchType match, uint32_
+     return netdutils::status::ok;
+ }
+ 
+-Status TrafficController::updateUidOwnerMap(const std::vector<uint32_t>& appUids,
+-                                            UidOwnerMatchType matchType,
++Status TrafficController::updateUidOwnerMap(const std::vector<std::string>& appStrUids,
++                                            BandwidthController::IptJumpOp jumpHandling,
+                                             BandwidthController::IptOp op) {
+     std::lock_guard guard(mMutex);
+-    for (uint32_t uid : appUids) {
++    UidOwnerMatchType match = jumpOpToMatch(jumpHandling);
++    if (match == NO_MATCH) {
++        return statusFromErrno(
++                EINVAL, StringPrintf("invalid IptJumpOp: %d, command: %d", jumpHandling, match));
++    }
++    for (const auto& appStrUid : appStrUids) {
++        char* endPtr;
++        long uid = strtol(appStrUid.c_str(), &endPtr, 10);
++        if ((errno == ERANGE && (uid == LONG_MAX || uid == LONG_MIN)) ||
++            (endPtr == appStrUid.c_str()) || (*endPtr != '\0')) {
++               return statusFromErrno(errno, "invalid uid string:" + appStrUid);
++        }
++
+         if (op == BandwidthController::IptOpDelete) {
+-            RETURN_IF_NOT_OK(removeRule(uid, matchType));
++            RETURN_IF_NOT_OK(removeRule(uid, match));
+         } else if (op == BandwidthController::IptOpInsert) {
+-            RETURN_IF_NOT_OK(addRule(uid, matchType));
++            RETURN_IF_NOT_OK(addRule(uid, match));
+         } else {
+             // Cannot happen.
+-            return statusFromErrno(EINVAL, StringPrintf("invalid IptOp: %d, %d", op, matchType));
++            return statusFromErrno(EINVAL, StringPrintf("invalid IptOp: %d, %d", op, match));
+         }
+     }
+     return netdutils::status::ok;
+@@ -569,6 +617,10 @@ Status TrafficController::updateUidOwnerMap(const std::vector<uint32_t>& appUids
+ 
+ int TrafficController::changeUidOwnerRule(ChildChain chain, uid_t uid, FirewallRule rule,
+                                           FirewallType type) {
++    if (!mBpfEnabled) {
++        ALOGE("bpf is not set up, should use iptables rule");
++        return -ENOSYS;
++    }
+     Status res;
+     switch (chain) {
+         case DOZABLE:
+@@ -621,6 +673,10 @@ Status TrafficController::replaceRulesInMap(const UidOwnerMatchType match,
+ 
+ Status TrafficController::addUidInterfaceRules(const int iif,
+                                                const std::vector<int32_t>& uidsToAdd) {
++    if (!mBpfEnabled) {
++        ALOGW("UID ingress interface filtering not possible without BPF owner match");
++        return statusFromErrno(EOPNOTSUPP, "eBPF not supported");
++    }
+     if (!iif) {
+         return statusFromErrno(EINVAL, "Interface rule must specify interface");
+     }
+@@ -636,6 +692,10 @@ Status TrafficController::addUidInterfaceRules(const int iif,
+ }
+ 
+ Status TrafficController::removeUidInterfaceRules(const std::vector<int32_t>& uidsToDelete) {
++    if (!mBpfEnabled) {
++        ALOGW("UID ingress interface filtering not possible without BPF owner match");
++        return statusFromErrno(EOPNOTSUPP, "eBPF not supported");
++    }
+     std::lock_guard guard(mMutex);
+ 
+     for (auto uid : uidsToDelete) {
+@@ -708,9 +768,17 @@ int TrafficController::toggleUidOwnerMap(ChildChain chain, bool enable) {
+     return -res.code();
+ }
+ 
++bool TrafficController::getBpfEnabled() {
++    return mBpfEnabled;
++}
++
+ Status TrafficController::swapActiveStatsMap() {
+     std::lock_guard guard(mMutex);
+ 
++    if (!mBpfEnabled) {
++        return statusFromErrno(EOPNOTSUPP, "This device doesn't have eBPF support");
++    }
++
+     uint32_t key = CURRENT_STATS_MAP_CONFIGURATION_KEY;
+     auto oldConfiguration = mConfigurationMap.readValue(key);
+     if (!oldConfiguration.ok()) {
+@@ -753,9 +821,12 @@ void TrafficController::setPermissionForUids(int permission, const std::vector<u
+             // Clean up all permission information for the related uid if all the
+             // packages related to it are uninstalled.
+             mPrivilegedUser.erase(uid);
+-            Status ret = mUidPermissionMap.deleteValue(uid);
+-            if (!isOk(ret) && ret.code() != ENOENT) {
+-                ALOGE("Failed to clean up the permission for %u: %s", uid, strerror(ret.code()));
++            if (mBpfEnabled) {
++                Status ret = mUidPermissionMap.deleteValue(uid);
++                if (!isOk(ret) && ret.code() != ENOENT) {
++                    ALOGE("Failed to clean up the permission for %u: %s", uid,
++                          strerror(ret.code()));
++                }
+             }
+         }
+         return;
+@@ -770,6 +841,10 @@ void TrafficController::setPermissionForUids(int permission, const std::vector<u
+             mPrivilegedUser.erase(uid);
+         }
+ 
++        // Skip the bpf map operation if not supported.
++        if (!mBpfEnabled) {
++            continue;
++        }
+         // The map stores all the permissions that the UID has, except if the only permission
+         // the UID has is the INTERNET permission, then the UID should not appear in the map.
+         if (permission != INetd::PERMISSION_INTERNET) {
+@@ -825,6 +900,11 @@ void TrafficController::dump(DumpWriter& dw, bool verbose) {
+     dw.println("TrafficController");
+ 
+     ScopedIndent indentPreBpfModule(dw);
++    dw.println("BPF module status: %s", mBpfEnabled ? "enabled" : "disabled");
++
++    if (!mBpfEnabled) {
++        return;
++    }
+ 
+     dw.blankline();
+     dw.println("mCookieTagMap status: %s",
+diff --git a/server/TrafficController.h b/server/TrafficController.h
+index 2e799598..ba8406c2 100644
+--- a/server/TrafficController.h
++++ b/server/TrafficController.h
+@@ -77,6 +77,12 @@ class TrafficController {
+      */
+     int deleteTagData(uint32_t tag, uid_t uid, uid_t callingUid) EXCLUDES(mMutex);
+ 
++    /*
++     * Check if the current device have the bpf traffic stats accounting service
++     * running.
++     */
++    bool getBpfEnabled();
++
+     /*
+      * Swap the stats map config from current active stats map to the idle one.
+      */
+@@ -106,9 +112,9 @@ class TrafficController {
+             EXCLUDES(mMutex);
+     netdutils::Status removeUidInterfaceRules(const std::vector<int32_t>& uids) EXCLUDES(mMutex);
+ 
+-    netdutils::Status updateUidOwnerMap(const std::vector<uint32_t>& appStrUids,
+-                                        UidOwnerMatchType matchType, BandwidthController::IptOp op)
+-            EXCLUDES(mMutex);
++    netdutils::Status updateUidOwnerMap(const std::vector<std::string>& appStrUids,
++                                        BandwidthController::IptJumpOp jumpHandling,
++                                        BandwidthController::IptOp op) EXCLUDES(mMutex);
+     static const String16 DUMP_KEYWORD;
+ 
+     int toggleUidOwnerMap(ChildChain chain, bool enable) EXCLUDES(mMutex);
+@@ -202,6 +208,8 @@ class TrafficController {
+     netdutils::Status addRule(uint32_t uid, UidOwnerMatchType match, uint32_t iif = 0)
+             REQUIRES(mMutex);
+ 
++    bool mBpfEnabled;
++
+     // mMutex guards all accesses to mConfigurationMap, mUidOwnerMap, mUidPermissionMap,
+     // mStatsMapA, mStatsMapB and mPrivilegedUser. It is designed to solve the following
+     // problems:
+diff --git a/server/TrafficControllerTest.cpp b/server/TrafficControllerTest.cpp
+index 159fb086..5cc95f63 100644
+--- a/server/TrafficControllerTest.cpp
++++ b/server/TrafficControllerTest.cpp
+@@ -16,7 +16,6 @@
+  * TrafficControllerTest.cpp - unit tests for TrafficController.cpp
+  */
+ 
+-#include <cstdint>
+ #include <string>
+ #include <vector>
+ 
+@@ -219,10 +218,10 @@ class TrafficControllerTest : public ::testing::Test {
+         EXPECT_EQ(0, mTc.replaceUidOwnerMap(name, isAllowlist, uids));
+         checkEachUidValue(uids, match);
+     }
+-
+-    void expectUidOwnerMapValues(const std::vector<uint32_t>& appUids, uint8_t expectedRule,
++    void expectUidOwnerMapValues(const std::vector<std::string>& appStrUids, uint8_t expectedRule,
+                                  uint32_t expectedIif) {
+-        for (uint32_t uid : appUids) {
++        for (const std::string& strUid : appStrUids) {
++            uint32_t uid = stoi(strUid);
+             Result<UidOwnerValue> value = mFakeUidOwnerMap.readValue(uid);
+             EXPECT_RESULT_OK(value);
+             EXPECT_EQ(expectedRule, value.value().rule)
+@@ -616,87 +615,91 @@ TEST_F(TrafficControllerTest, TestReplaceSameChain) {
+ }
+ 
+ TEST_F(TrafficControllerTest, TestDenylistUidMatch) {
+-    std::vector<uint32_t> appUids = {1000, 1001, 10012};
+-    ASSERT_TRUE(isOk(
+-            mTc.updateUidOwnerMap(appUids, PENALTY_BOX_MATCH, BandwidthController::IptOpInsert)));
+-    expectUidOwnerMapValues(appUids, PENALTY_BOX_MATCH, 0);
+-    ASSERT_TRUE(isOk(
+-            mTc.updateUidOwnerMap(appUids, PENALTY_BOX_MATCH, BandwidthController::IptOpDelete)));
++    std::vector<std::string> appStrUids = {"1000", "1001", "10012"};
++    ASSERT_TRUE(isOk(mTc.updateUidOwnerMap(appStrUids, BandwidthController::IptJumpReject,
++                                           BandwidthController::IptOpInsert)));
++    expectUidOwnerMapValues(appStrUids, PENALTY_BOX_MATCH, 0);
++    ASSERT_TRUE(isOk(mTc.updateUidOwnerMap(appStrUids, BandwidthController::IptJumpReject,
++                                           BandwidthController::IptOpDelete)));
+     expectMapEmpty(mFakeUidOwnerMap);
+ }
+ 
+ TEST_F(TrafficControllerTest, TestAllowlistUidMatch) {
+-    std::vector<uint32_t> appUids = {1000, 1001, 10012};
+-    ASSERT_TRUE(isOk(
+-            mTc.updateUidOwnerMap(appUids, HAPPY_BOX_MATCH, BandwidthController::IptOpInsert)));
+-    expectUidOwnerMapValues(appUids, HAPPY_BOX_MATCH, 0);
+-    ASSERT_TRUE(isOk(
+-            mTc.updateUidOwnerMap(appUids, HAPPY_BOX_MATCH, BandwidthController::IptOpDelete)));
++    std::vector<std::string> appStrUids = {"1000", "1001", "10012"};
++    ASSERT_TRUE(isOk(mTc.updateUidOwnerMap(appStrUids, BandwidthController::IptJumpReturn,
++                                           BandwidthController::IptOpInsert)));
++    expectUidOwnerMapValues(appStrUids, HAPPY_BOX_MATCH, 0);
++    ASSERT_TRUE(isOk(mTc.updateUidOwnerMap(appStrUids, BandwidthController::IptJumpReturn,
++                                           BandwidthController::IptOpDelete)));
+     expectMapEmpty(mFakeUidOwnerMap);
+ }
+ 
+ TEST_F(TrafficControllerTest, TestReplaceMatchUid) {
+-    std::vector<uint32_t> appUids = {1000, 1001, 10012};
+-    // Add appUids to the denylist and expect that their values are all PENALTY_BOX_MATCH.
+-    ASSERT_TRUE(isOk(
+-            mTc.updateUidOwnerMap(appUids, PENALTY_BOX_MATCH, BandwidthController::IptOpInsert)));
+-    expectUidOwnerMapValues(appUids, PENALTY_BOX_MATCH, 0);
++    SKIP_IF_BPF_NOT_SUPPORTED;
++
++    std::vector<std::string> appStrUids = {"1000", "1001", "10012"};
++    // Add appStrUids to the denylist and expect that their values are all PENALTY_BOX_MATCH.
++    ASSERT_TRUE(isOk(mTc.updateUidOwnerMap(appStrUids, BandwidthController::IptJumpReject,
++                                           BandwidthController::IptOpInsert)));
++    expectUidOwnerMapValues(appStrUids, PENALTY_BOX_MATCH, 0);
+ 
+     // Add the same UIDs to the allowlist and expect that we get PENALTY_BOX_MATCH |
+     // HAPPY_BOX_MATCH.
+-    ASSERT_TRUE(isOk(
+-            mTc.updateUidOwnerMap(appUids, HAPPY_BOX_MATCH, BandwidthController::IptOpInsert)));
+-    expectUidOwnerMapValues(appUids, HAPPY_BOX_MATCH | PENALTY_BOX_MATCH, 0);
++    ASSERT_TRUE(isOk(mTc.updateUidOwnerMap(appStrUids, BandwidthController::IptJumpReturn,
++                                           BandwidthController::IptOpInsert)));
++    expectUidOwnerMapValues(appStrUids, HAPPY_BOX_MATCH | PENALTY_BOX_MATCH, 0);
+ 
+     // Remove the same UIDs from the allowlist and check the PENALTY_BOX_MATCH is still there.
+-    ASSERT_TRUE(isOk(
+-            mTc.updateUidOwnerMap(appUids, HAPPY_BOX_MATCH, BandwidthController::IptOpDelete)));
+-    expectUidOwnerMapValues(appUids, PENALTY_BOX_MATCH, 0);
++    ASSERT_TRUE(isOk(mTc.updateUidOwnerMap(appStrUids, BandwidthController::IptJumpReturn,
++                                           BandwidthController::IptOpDelete)));
++    expectUidOwnerMapValues(appStrUids, PENALTY_BOX_MATCH, 0);
+ 
+     // Remove the same UIDs from the denylist and check the map is empty.
+-    ASSERT_TRUE(isOk(
+-            mTc.updateUidOwnerMap(appUids, PENALTY_BOX_MATCH, BandwidthController::IptOpDelete)));
++    ASSERT_TRUE(isOk(mTc.updateUidOwnerMap(appStrUids, BandwidthController::IptJumpReject,
++                                           BandwidthController::IptOpDelete)));
+     ASSERT_FALSE(mFakeUidOwnerMap.getFirstKey().ok());
+ }
+ 
+ TEST_F(TrafficControllerTest, TestDeleteWrongMatchSilentlyFails) {
+-    std::vector<uint32_t> appUids = {1000, 1001, 10012};
++    std::vector<std::string> appStrUids = {"1000", "1001", "10012"};
++    SKIP_IF_BPF_NOT_SUPPORTED;
++
+     // If the uid does not exist in the map, trying to delete a rule about it will fail.
+-    ASSERT_FALSE(isOk(
+-            mTc.updateUidOwnerMap(appUids, HAPPY_BOX_MATCH, BandwidthController::IptOpDelete)));
++    ASSERT_FALSE(isOk(mTc.updateUidOwnerMap(appStrUids, BandwidthController::IptJumpReturn,
++                                            BandwidthController::IptOpDelete)));
+     expectMapEmpty(mFakeUidOwnerMap);
+ 
+-    // Add denylist rules for appUids.
+-    ASSERT_TRUE(isOk(
+-            mTc.updateUidOwnerMap(appUids, HAPPY_BOX_MATCH, BandwidthController::IptOpInsert)));
+-    expectUidOwnerMapValues(appUids, HAPPY_BOX_MATCH, 0);
++    // Add denylist rules for appStrUids.
++    ASSERT_TRUE(isOk(mTc.updateUidOwnerMap(appStrUids, BandwidthController::IptJumpReturn,
++                                           BandwidthController::IptOpInsert)));
++    expectUidOwnerMapValues(appStrUids, HAPPY_BOX_MATCH, 0);
+ 
+-    // Delete (non-existent) denylist rules for appUids, and check that this silently does
++    // Delete (non-existent) denylist rules for appStrUids, and check that this silently does
+     // nothing if the uid is in the map but does not have denylist match. This is required because
+     // NetworkManagementService will try to remove a uid from denylist after adding it to the
+     // allowlist and if the remove fails it will not update the uid status.
+-    ASSERT_TRUE(isOk(
+-            mTc.updateUidOwnerMap(appUids, PENALTY_BOX_MATCH, BandwidthController::IptOpDelete)));
+-    expectUidOwnerMapValues(appUids, HAPPY_BOX_MATCH, 0);
++    ASSERT_TRUE(isOk(mTc.updateUidOwnerMap(appStrUids, BandwidthController::IptJumpReject,
++                                           BandwidthController::IptOpDelete)));
++    expectUidOwnerMapValues(appStrUids, HAPPY_BOX_MATCH, 0);
+ }
+ 
+ TEST_F(TrafficControllerTest, TestAddUidInterfaceFilteringRules) {
+     int iif0 = 15;
+     ASSERT_TRUE(isOk(mTc.addUidInterfaceRules(iif0, {1000, 1001})));
+-    expectUidOwnerMapValues({1000, 1001}, IIF_MATCH, iif0);
++    expectUidOwnerMapValues({"1000", "1001"}, IIF_MATCH, iif0);
+ 
+     // Add some non-overlapping new uids. They should coexist with existing rules
+     int iif1 = 16;
+     ASSERT_TRUE(isOk(mTc.addUidInterfaceRules(iif1, {2000, 2001})));
+-    expectUidOwnerMapValues({1000, 1001}, IIF_MATCH, iif0);
+-    expectUidOwnerMapValues({2000, 2001}, IIF_MATCH, iif1);
++    expectUidOwnerMapValues({"1000", "1001"}, IIF_MATCH, iif0);
++    expectUidOwnerMapValues({"2000", "2001"}, IIF_MATCH, iif1);
+ 
+     // Overwrite some existing uids
+     int iif2 = 17;
+     ASSERT_TRUE(isOk(mTc.addUidInterfaceRules(iif2, {1000, 2000})));
+-    expectUidOwnerMapValues({1001}, IIF_MATCH, iif0);
+-    expectUidOwnerMapValues({2001}, IIF_MATCH, iif1);
+-    expectUidOwnerMapValues({1000, 2000}, IIF_MATCH, iif2);
++    expectUidOwnerMapValues({"1001"}, IIF_MATCH, iif0);
++    expectUidOwnerMapValues({"2001"}, IIF_MATCH, iif1);
++    expectUidOwnerMapValues({"1000", "2000"}, IIF_MATCH, iif2);
+ }
+ 
+ TEST_F(TrafficControllerTest, TestRemoveUidInterfaceFilteringRules) {
+@@ -704,18 +707,18 @@ TEST_F(TrafficControllerTest, TestRemoveUidInterfaceFilteringRules) {
+     int iif1 = 16;
+     ASSERT_TRUE(isOk(mTc.addUidInterfaceRules(iif0, {1000, 1001})));
+     ASSERT_TRUE(isOk(mTc.addUidInterfaceRules(iif1, {2000, 2001})));
+-    expectUidOwnerMapValues({1000, 1001}, IIF_MATCH, iif0);
+-    expectUidOwnerMapValues({2000, 2001}, IIF_MATCH, iif1);
++    expectUidOwnerMapValues({"1000", "1001"}, IIF_MATCH, iif0);
++    expectUidOwnerMapValues({"2000", "2001"}, IIF_MATCH, iif1);
+ 
+     // Rmove some uids
+     ASSERT_TRUE(isOk(mTc.removeUidInterfaceRules({1001, 2001})));
+-    expectUidOwnerMapValues({1000}, IIF_MATCH, iif0);
+-    expectUidOwnerMapValues({2000}, IIF_MATCH, iif1);
++    expectUidOwnerMapValues({"1000"}, IIF_MATCH, iif0);
++    expectUidOwnerMapValues({"2000"}, IIF_MATCH, iif1);
+     checkEachUidValue({1000, 2000}, IIF_MATCH);  // Make sure there are only two uids remaining
+ 
+     // Remove non-existent uids shouldn't fail
+     ASSERT_TRUE(isOk(mTc.removeUidInterfaceRules({2000, 3000})));
+-    expectUidOwnerMapValues({1000}, IIF_MATCH, iif0);
++    expectUidOwnerMapValues({"1000"}, IIF_MATCH, iif0);
+     checkEachUidValue({1000}, IIF_MATCH);  // Make sure there are only one uid remaining
+ 
+     // Remove everything
+@@ -725,26 +728,27 @@ TEST_F(TrafficControllerTest, TestRemoveUidInterfaceFilteringRules) {
+ 
+ TEST_F(TrafficControllerTest, TestUidInterfaceFilteringRulesCoexistWithExistingMatches) {
+     // Set up existing PENALTY_BOX_MATCH rules
+-    ASSERT_TRUE(isOk(mTc.updateUidOwnerMap({1000, 1001, 10012}, PENALTY_BOX_MATCH,
++    ASSERT_TRUE(isOk(mTc.updateUidOwnerMap({"1000", "1001", "10012"},
++                                           BandwidthController::IptJumpReject,
+                                            BandwidthController::IptOpInsert)));
+-    expectUidOwnerMapValues({1000, 1001, 10012}, PENALTY_BOX_MATCH, 0);
++    expectUidOwnerMapValues({"1000", "1001", "10012"}, PENALTY_BOX_MATCH, 0);
+ 
+     // Add some partially-overlapping uid owner rules and check result
+     int iif1 = 32;
+     ASSERT_TRUE(isOk(mTc.addUidInterfaceRules(iif1, {10012, 10013, 10014})));
+-    expectUidOwnerMapValues({1000, 1001}, PENALTY_BOX_MATCH, 0);
+-    expectUidOwnerMapValues({10012}, PENALTY_BOX_MATCH | IIF_MATCH, iif1);
+-    expectUidOwnerMapValues({10013, 10014}, IIF_MATCH, iif1);
++    expectUidOwnerMapValues({"1000", "1001"}, PENALTY_BOX_MATCH, 0);
++    expectUidOwnerMapValues({"10012"}, PENALTY_BOX_MATCH | IIF_MATCH, iif1);
++    expectUidOwnerMapValues({"10013", "10014"}, IIF_MATCH, iif1);
+ 
+     // Removing some PENALTY_BOX_MATCH rules should not change uid interface rule
+-    ASSERT_TRUE(isOk(mTc.updateUidOwnerMap({1001, 10012}, PENALTY_BOX_MATCH,
++    ASSERT_TRUE(isOk(mTc.updateUidOwnerMap({"1001", "10012"}, BandwidthController::IptJumpReject,
+                                            BandwidthController::IptOpDelete)));
+-    expectUidOwnerMapValues({1000}, PENALTY_BOX_MATCH, 0);
+-    expectUidOwnerMapValues({10012, 10013, 10014}, IIF_MATCH, iif1);
++    expectUidOwnerMapValues({"1000"}, PENALTY_BOX_MATCH, 0);
++    expectUidOwnerMapValues({"10012", "10013", "10014"}, IIF_MATCH, iif1);
+ 
+     // Remove all uid interface rules
+     ASSERT_TRUE(isOk(mTc.removeUidInterfaceRules({10012, 10013, 10014})));
+-    expectUidOwnerMapValues({1000}, PENALTY_BOX_MATCH, 0);
++    expectUidOwnerMapValues({"1000"}, PENALTY_BOX_MATCH, 0);
+     // Make sure these are the only uids left
+     checkEachUidValue({1000}, PENALTY_BOX_MATCH);
+ }
+@@ -753,31 +757,31 @@ TEST_F(TrafficControllerTest, TestUidInterfaceFilteringRulesCoexistWithNewMatche
+     int iif1 = 56;
+     // Set up existing uid interface rules
+     ASSERT_TRUE(isOk(mTc.addUidInterfaceRules(iif1, {10001, 10002})));
+-    expectUidOwnerMapValues({10001, 10002}, IIF_MATCH, iif1);
++    expectUidOwnerMapValues({"10001", "10002"}, IIF_MATCH, iif1);
+ 
+     // Add some partially-overlapping doze rules
+     EXPECT_EQ(0, mTc.replaceUidOwnerMap("fw_dozable", true, {10002, 10003}));
+-    expectUidOwnerMapValues({10001}, IIF_MATCH, iif1);
+-    expectUidOwnerMapValues({10002}, DOZABLE_MATCH | IIF_MATCH, iif1);
+-    expectUidOwnerMapValues({10003}, DOZABLE_MATCH, 0);
++    expectUidOwnerMapValues({"10001"}, IIF_MATCH, iif1);
++    expectUidOwnerMapValues({"10002"}, DOZABLE_MATCH | IIF_MATCH, iif1);
++    expectUidOwnerMapValues({"10003"}, DOZABLE_MATCH, 0);
+ 
+     // Introduce a third rule type (powersave) on various existing UIDs
+     EXPECT_EQ(0, mTc.replaceUidOwnerMap("fw_powersave", true, {10000, 10001, 10002, 10003}));
+-    expectUidOwnerMapValues({10000}, POWERSAVE_MATCH, 0);
+-    expectUidOwnerMapValues({10001}, POWERSAVE_MATCH | IIF_MATCH, iif1);
+-    expectUidOwnerMapValues({10002}, POWERSAVE_MATCH | DOZABLE_MATCH | IIF_MATCH, iif1);
+-    expectUidOwnerMapValues({10003}, POWERSAVE_MATCH | DOZABLE_MATCH, 0);
++    expectUidOwnerMapValues({"10000"}, POWERSAVE_MATCH, 0);
++    expectUidOwnerMapValues({"10001"}, POWERSAVE_MATCH | IIF_MATCH, iif1);
++    expectUidOwnerMapValues({"10002"}, POWERSAVE_MATCH | DOZABLE_MATCH | IIF_MATCH, iif1);
++    expectUidOwnerMapValues({"10003"}, POWERSAVE_MATCH | DOZABLE_MATCH, 0);
+ 
+     // Remove all doze rules
+     EXPECT_EQ(0, mTc.replaceUidOwnerMap("fw_dozable", true, {}));
+-    expectUidOwnerMapValues({10000}, POWERSAVE_MATCH, 0);
+-    expectUidOwnerMapValues({10001}, POWERSAVE_MATCH | IIF_MATCH, iif1);
+-    expectUidOwnerMapValues({10002}, POWERSAVE_MATCH | IIF_MATCH, iif1);
+-    expectUidOwnerMapValues({10003}, POWERSAVE_MATCH, 0);
++    expectUidOwnerMapValues({"10000"}, POWERSAVE_MATCH, 0);
++    expectUidOwnerMapValues({"10001"}, POWERSAVE_MATCH | IIF_MATCH, iif1);
++    expectUidOwnerMapValues({"10002"}, POWERSAVE_MATCH | IIF_MATCH, iif1);
++    expectUidOwnerMapValues({"10003"}, POWERSAVE_MATCH, 0);
+ 
+     // Remove all powersave rules, expect ownerMap to only have uid interface rules left
+     EXPECT_EQ(0, mTc.replaceUidOwnerMap("fw_powersave", true, {}));
+-    expectUidOwnerMapValues({10001, 10002}, IIF_MATCH, iif1);
++    expectUidOwnerMapValues({"10001", "10002"}, IIF_MATCH, iif1);
+     // Make sure these are the only uids left
+     checkEachUidValue({10001, 10002}, IIF_MATCH);
+ }
+-- 
+2.25.1
+
