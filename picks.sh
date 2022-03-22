@@ -26,6 +26,10 @@ set -eE
 ./vendor/lineage/build/tools/repopick.py 326692 # Skip screen on animation when wake and unlock via biometrics
 ./vendor/lineage/build/tools/repopick.py 326735 # Revert "base: add Trust usb restrictor"
 ./vendor/lineage/build/tools/repopick.py 326736 # Rewrite trust USB restriction handling
+./vendor/lineage/build/tools/repopick.py 322825 # Add CHANNEL_MODE_DUAL_CHANNEL constant
+./vendor/lineage/build/tools/repopick.py 322826 # Add Dual Channel into Bluetooth Audio Channel Mode developer options menu
+./vendor/lineage/build/tools/repopick.py 322827 # Allow SBC as HD audio codec in Bluetooth device configuration
+./vendor/lineage/build/tools/repopick.py 322828 # Explicitly make SBC Dual Channel an optional (HD) codec
 
 ## Project: LineageOS/android_lineage-sdk
 
@@ -34,6 +38,10 @@ set -eE
 ./vendor/lineage/build/tools/repopick.py 326737 # Move trust usb setting to global, and drop keyguard from name
 ./vendor/lineage/build/tools/repopick.py 326740 # Create LineageGlobalSettingListPreference
 ./vendor/lineage/build/tools/repopick.py 326980 # Fix Usb Restrictor if USB HAL 1.3+ is not present
+
+## Project: LineageOS/android_packages_apps_Bluetooth
+
+./vendor/lineage/build/tools/repopick.py 322838 # 322838: SBC Dual Channel (SBC HD Audio) support
 
 ## Project: LineageOS/android_packages_apps_CarrierConfig
 
@@ -77,6 +85,7 @@ set -eE
 ./vendor/lineage/build/tools/repopick.py 325928 # Settings: Apply SUW button theming to WiFi page
 ./vendor/lineage/build/tools/repopick.py 327013 # Settings: Accessibility wants fullscreen, too!
 ./vendor/lineage/build/tools/repopick.py 327067 # Settings: Use display version for, well, displayed version
+./vendor/lineage/build/tools/repopick.py 322833 # Add Dual Channel into Bluetooth Audio Channel Mode developer options menu
 
 ## Project: LineageOS/android_packages_apps_SetupWizard
 
@@ -121,6 +130,9 @@ set -eE
 ## Project: LineageOS/android_system_bt
 
 ./vendor/lineage/build/tools/repopick.py 319781 # Add option to change eSCO Transport Unit Size to 16
+./vendor/lineage/build/tools/repopick.py 322834 # Increase maximum Bluetooth SBC codec bitrate for SBC HD
+./vendor/lineage/build/tools/repopick.py 322835 # Explicit SBC Dual Channel (SBC HD) support
+./vendor/lineage/build/tools/repopick.py 322836 # Allow using alternative (higher) SBC HD bitrates with a property
 
 ## Project: LineageOS/android_system_core
 
