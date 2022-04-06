@@ -1,5 +1,5 @@
 # LineageOS 19.1 patches for 8890 support
-Just copy them to coresponding folder and git apply them
+Just copy them to coresponding folder and git apply them (or git am --signoff < file.patch)
 
 `picks.sh` is generated with [picklistmaker](https://github.com/AndyCGYan/picklistmaker), those are optional but some of them are needed for functionality like `326385` which is used to bring back legacy FunctionFS
 

@@ -3,14 +3,9 @@
 # Abort early on error
 set -eE
 
-## Project: LineageOS/android_frameworks_av
-
-./vendor/lineage/build/tools/repopick.py 320337 # Request to reset effect buffer in clearInputBuffer
-./vendor/lineage/build/tools/repopick.py 322937 # cameraserver: fix deadlock scenario in torchModeStatusChanged callback.
-
 ## Project: LineageOS/android_frameworks_base
 
-./vendor/lineage/build/tools/repopick.py 318763 # SystemUI: runtime configurable audio panel location
+./vendor/lineage/build/tools/repopick.py 318763/44 # SystemUI: runtime configurable audio panel location
 ./vendor/lineage/build/tools/repopick.py 320714 # SystemUI: add burnIn protection
 ./vendor/lineage/build/tools/repopick.py 320765 # SystemUI: Fix shutter sound
 ./vendor/lineage/build/tools/repopick.py 321337 # Deprioritize important developer notifications
@@ -21,6 +16,8 @@ set -eE
 ./vendor/lineage/build/tools/repopick.py 322827 # Allow SBC as HD audio codec in Bluetooth device configuration
 ./vendor/lineage/build/tools/repopick.py 322828 # Explicitly make SBC Dual Channel an optional (HD) codec
 ./vendor/lineage/build/tools/repopick.py 326692 # Skip screen on animation when wake and unlock via biometrics
+./vendor/lineage/build/tools/repopick.py 327934 # fonts: Use variable font for Roboto Regular
+./vendor/lineage/build/tools/repopick.py 327935 # SystemUI: Fix the unlock sound played repeatedly
 
 ## Project: LineageOS/android_packages_apps_Bluetooth
 
@@ -40,6 +37,10 @@ set -eE
 ./vendor/lineage/build/tools/repopick.py 325953 # DeskClock: Fix left button display
 ./vendor/lineage/build/tools/repopick.py 326383 # DeskClock: Remove legacy support
 ./vendor/lineage/build/tools/repopick.py 326994 # DeskClock: Remove compatibility to old APIs
+
+## Project: LineageOS/android_packages_apps_Gallery2
+
+./vendor/lineage/build/tools/repopick.py 328145 # Gallery2: Fix black on black text
 
 ## Project: LineageOS/android_packages_apps_LineageParts
 
@@ -63,15 +64,14 @@ set -eE
 ./vendor/lineage/build/tools/repopick.py 317967 # Enable crossfade when changing theme
 ./vendor/lineage/build/tools/repopick.py 317969 # Expose themed icon setting in ThemePicker
 ./vendor/lineage/build/tools/repopick.py 326714 # NavbarButtonsViewController: Support navbar layout inversion
-./vendor/lineage/build/tools/repopick.py 326988 # Trebuchet: Assume taskbar is disabled if its size is equal 0
 
 ## Project: LineageOS/android_packages_inputmethods_LatinIME
 
 ./vendor/lineage/build/tools/repopick.py 325405 # LatinIME: fit more emoji in a page
+./vendor/lineage/build/tools/repopick.py 325748 # LatinIME: add attr for vertical hint padding
 ./vendor/lineage/build/tools/repopick.py 325406 # LatinIME: Initial You
 ./vendor/lineage/build/tools/repopick.py 325437 # LatinIME: remove unused drawables
-./vendor/lineage/build/tools/repopick.py 325438 # LatinIME: show emoji key when language switch key is not shown
-./vendor/lineage/build/tools/repopick.py 325748 # LatinIME: add attr for vertical hint padding
+./vendor/lineage/build/tools/repopick.py 325438 # LatinIME: show emoji key when language switch key is not showing
 
 ## Project: LineageOS/android_packages_modules_Permission
 
@@ -85,6 +85,10 @@ set -eE
 ## Project: LineageOS/android_packages_overlays_Lineage
 
 ./vendor/lineage/build/tools/repopick.py 326989 # NavigationBarNoHint: Set taskbar_frame_height to 0dp
+
+## Project: LineageOS/android_packages_services_Telecomm
+
+./vendor/lineage/build/tools/repopick.py 327458 # Telecomm: Squashed phone_type switch support
 
 ## Project: LineageOS/android_system_bt
 
@@ -102,6 +106,7 @@ set -eE
 ./vendor/lineage/build/tools/repopick.py 317981 # device_config: Save discrete app op history for more permissions
 ./vendor/lineage/build/tools/repopick.py 317982 # device_config: Keep up to 7 days of permission usage history
 ./vendor/lineage/build/tools/repopick.py 325012 # lineage: Opt-in to shipping full recovery image by default
-./vendor/lineage/build/tools/repopick.py 326397 # roomservice: Support AOSP dependencies
-./vendor/lineage/build/tools/repopick.py 326712 # overlay: show vibration icon in collapsed statusbar
-./vendor/lineage/build/tools/repopick.py 326882 # build: tasks: kernel: Rework kernel fragments handling
+./vendor/lineage/build/tools/repopick.py 326712 # overlay: show all icons in collapsed statusbar
+./vendor/lineage/build/tools/repopick.py 327902 # overlays: Use rounded corners in SystemUI
+./vendor/lineage/build/tools/repopick.py 328170 # config: Disable remote keyguard animation until it's fixed
+./vendor/lineage/build/tools/repopick.py 328205 # config: Disable GMS OTA popup
