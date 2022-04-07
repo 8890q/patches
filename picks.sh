@@ -5,7 +5,6 @@ set -eE
 
 ## Project: LineageOS/android_frameworks_base
 
-./vendor/lineage/build/tools/repopick.py 318763/44 # SystemUI: runtime configurable audio panel location
 ./vendor/lineage/build/tools/repopick.py 320714 # SystemUI: add burnIn protection
 ./vendor/lineage/build/tools/repopick.py 320765 # SystemUI: Fix shutter sound
 ./vendor/lineage/build/tools/repopick.py 321337 # Deprioritize important developer notifications
@@ -16,8 +15,6 @@ set -eE
 ./vendor/lineage/build/tools/repopick.py 322827 # Allow SBC as HD audio codec in Bluetooth device configuration
 ./vendor/lineage/build/tools/repopick.py 322828 # Explicitly make SBC Dual Channel an optional (HD) codec
 ./vendor/lineage/build/tools/repopick.py 326692 # Skip screen on animation when wake and unlock via biometrics
-./vendor/lineage/build/tools/repopick.py 327934 # fonts: Use variable font for Roboto Regular
-./vendor/lineage/build/tools/repopick.py 327935 # SystemUI: Fix the unlock sound played repeatedly
 
 ## Project: LineageOS/android_packages_apps_Bluetooth
 
@@ -37,10 +34,6 @@ set -eE
 ./vendor/lineage/build/tools/repopick.py 325953 # DeskClock: Fix left button display
 ./vendor/lineage/build/tools/repopick.py 326383 # DeskClock: Remove legacy support
 ./vendor/lineage/build/tools/repopick.py 326994 # DeskClock: Remove compatibility to old APIs
-
-## Project: LineageOS/android_packages_apps_Gallery2
-
-./vendor/lineage/build/tools/repopick.py 328145 # Gallery2: Fix black on black text
 
 ## Project: LineageOS/android_packages_apps_LineageParts
 
@@ -72,6 +65,7 @@ set -eE
 ./vendor/lineage/build/tools/repopick.py 325406 # LatinIME: Initial You
 ./vendor/lineage/build/tools/repopick.py 325437 # LatinIME: remove unused drawables
 ./vendor/lineage/build/tools/repopick.py 325438 # LatinIME: show emoji key when language switch key is not showing
+./vendor/lineage/build/tools/repopick.py 328160 # LatinIME: update follow system theme label
 
 ## Project: LineageOS/android_packages_modules_Permission
 
@@ -109,4 +103,3 @@ set -eE
 ./vendor/lineage/build/tools/repopick.py 326712 # overlay: show all icons in collapsed statusbar
 ./vendor/lineage/build/tools/repopick.py 327902 # overlays: Use rounded corners in SystemUI
 ./vendor/lineage/build/tools/repopick.py 328170 # config: Disable remote keyguard animation until it's fixed
-./vendor/lineage/build/tools/repopick.py 328205 # config: Disable GMS OTA popup
