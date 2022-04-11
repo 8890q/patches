@@ -14,7 +14,20 @@ set -eE
 ./vendor/lineage/build/tools/repopick.py 322826 # Add Dual Channel into Bluetooth Audio Channel Mode developer options menu
 ./vendor/lineage/build/tools/repopick.py 322827 # Allow SBC as HD audio codec in Bluetooth device configuration
 ./vendor/lineage/build/tools/repopick.py 322828 # Explicitly make SBC Dual Channel an optional (HD) codec
+./vendor/lineage/build/tools/repopick.py 326160 # frameworks: Exempt location packages from location indicators
 ./vendor/lineage/build/tools/repopick.py 326692 # Skip screen on animation when wake and unlock via biometrics
+./vendor/lineage/build/tools/repopick.py 327687 # biometrics: Allow to disable haptic feedback on success authentication
+
+## Project: LineageOS/android_lineage-sdk
+
+./vendor/lineage/build/tools/repopick.py 327684 # lineage: res: Introduce config to disable biometrics success haptic feedback
+./vendor/lineage/build/tools/repopick.py 327685 # lineage-sdk: Add preference keys for biometrics success haptic feedback
+
+## Project: LineageOS/android_packages_apps_Backgrounds
+
+./vendor/lineage/build/tools/repopick.py 328434 # Revert "Include a limited set of wallpapers on devices with small /system"
+./vendor/lineage/build/tools/repopick.py 328435 # Remove jpeg check from generate_smallvariants.py
+./vendor/lineage/build/tools/repopick.py 328436 # [WIP] New wallpapers
 
 ## Project: LineageOS/android_packages_apps_Bluetooth
 
@@ -47,6 +60,7 @@ set -eE
 ## Project: LineageOS/android_packages_apps_Settings
 
 ./vendor/lineage/build/tools/repopick.py 322833 # Add Dual Channel into Bluetooth Audio Channel Mode developer options menu
+./vendor/lineage/build/tools/repopick.py 327686 # Settings: Add biometrics success haptic feedback preference
 
 ## Project: LineageOS/android_packages_apps_SetupWizard
 
@@ -66,6 +80,7 @@ set -eE
 ./vendor/lineage/build/tools/repopick.py 325437 # LatinIME: remove unused drawables
 ./vendor/lineage/build/tools/repopick.py 325438 # LatinIME: show emoji key when language switch key is not showing
 ./vendor/lineage/build/tools/repopick.py 328160 # LatinIME: update follow system theme label
+./vendor/lineage/build/tools/repopick.py 328419 # LatinIME: Update emojis
 
 ## Project: LineageOS/android_packages_modules_Permission
 
@@ -103,3 +118,4 @@ set -eE
 ./vendor/lineage/build/tools/repopick.py 326712 # overlay: show all icons in collapsed statusbar
 ./vendor/lineage/build/tools/repopick.py 327902 # overlays: Use rounded corners in SystemUI
 ./vendor/lineage/build/tools/repopick.py 328170 # config: Disable remote keyguard animation until it's fixed
+./vendor/lineage/build/tools/repopick.py 328453 # Update default wallpaper
