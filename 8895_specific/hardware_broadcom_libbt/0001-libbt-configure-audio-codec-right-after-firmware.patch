@@ -1,0 +1,156 @@
+From d92cba1c0702f2222d4fd2376fbb35d099f563a4 Mon Sep 17 00:00:00 2001
+From: z3DD3r <z3dd3r@gmail.com>
+Date: Wed, 19 Jun 2019 23:20:49 +0300
+Subject: [PATCH] libbt: configure audio codec right after firmware
+
+Fixes an issue with calls via bluetooth for devices with broadcom chip.
+Some devices has issues with audio calls due to removal of the 'pre-SCO'
+configuration step introduced in Oreo. In order to fix it we should configure
+audio codec (perform 'pre-SCO' configuration step) right after firmware upload.
+
+Configure vnd config for affected devices to enable this fix.
+Here is a list of available parameters:
+
+BTHW_FW_EXTENDED_CONFIGURATION
+ - Enable/disable fix. TRUE/FALSE. Default is FALSE
+
+BTHW_FW_EXTENDED_CONFIGURATION_SCO_CODEC
+ - SCO codec. Numeric value from the sco_codec_t enum. Default is SCO_CODEC_CVSD
+
+Change-Id: I068dc247b4b39010001cc124de144837c326ed03
+---
+ src/hardware.c | 57 +++++++++++++++++++++++++++++++++++++++++++++++++-
+ 1 file changed, 56 insertions(+), 1 deletion(-)
+
+diff --git a/src/hardware.c b/src/hardware.c
+index 8f96d60..efe1567 100644
+--- a/src/hardware.c
++++ b/src/hardware.c
+@@ -64,6 +64,14 @@
+ #define BTHWDBG(param, ...) {}
+ #endif
+ 
++#ifndef BTHW_FW_EXTENDED_CONFIGURATION
++#define BTHW_FW_EXTENDED_CONFIGURATION FALSE
++#endif
++
++#ifndef BTHW_FW_EXTENDED_CONFIGURATION_SCO_CODEC
++#define BTHW_FW_EXTENDED_CONFIGURATION_SCO_CODEC SCO_CODEC_CVSD
++#endif
++
+ #define FW_PATCHFILE_EXTENSION      ".hcd"
+ #define FW_PATCHFILE_EXTENSION_LEN  4
+ #define FW_PATCHFILE_PATH_MAXLEN    248 /* Local_Name length of return of
+@@ -263,6 +271,14 @@ static uint8_t sco_bus_wbs_clock_rate = INVALID_SCO_CLOCK_RATE;
+ static void hw_sco_i2spcm_config(uint16_t codec);
+ static void hw_sco_i2spcm_config_from_command(void *p_mem, uint16_t codec);
+ 
++/******************************************************************************
++**  SCO configuration related functions
++******************************************************************************/
++#if (SCO_CFG_INCLUDED == TRUE)
++void hw_sco_config(void);
++static int hw_set_SCO_codec(uint16_t codec);
++#endif
++
+ /******************************************************************************
+ **  Controller Initialization Static Functions
+ ******************************************************************************/
+@@ -850,7 +866,12 @@ void hw_config_cback(void *p_mem)
+             case HW_CFG_SET_BD_ADDR:
+                 ALOGI("vendor lib fwcfg completed");
+                 bt_vendor_cbacks->dealloc(p_buf);
++
++#if (SCO_CFG_INCLUDED == TRUE && BTHW_FW_EXTENDED_CONFIGURATION == TRUE)
++                hw_sco_config();
++#else
+                 bt_vendor_cbacks->fwcfg_cb(BT_VND_OP_RESULT_SUCCESS);
++#endif
+ 
+                 hw_cfg_cb.state = 0;
+ 
+@@ -884,7 +905,12 @@ void hw_config_cback(void *p_mem)
+ 
+                 ALOGI("vendor lib fwcfg completed");
+                 bt_vendor_cbacks->dealloc(p_buf);
++
++#if (SCO_CFG_INCLUDED == TRUE && BTHW_FW_EXTENDED_CONFIGURATION == TRUE)
++                hw_sco_config();
++#else
+                 bt_vendor_cbacks->fwcfg_cb(BT_VND_OP_RESULT_SUCCESS);
++#endif
+ 
+                 hw_cfg_cb.state = 0;
+ 
+@@ -1067,6 +1093,10 @@ static void hw_sco_i2spcm_cfg_cback(void *p_mem)
+     ALOGI("sco I2S/PCM config result %d [0-Success, 1-Fail]", status);
+     if (bt_vendor_cbacks)
+     {
++#if (BTHW_FW_EXTENDED_CONFIGURATION == TRUE)
++        bt_vendor_cbacks->fwcfg_cb(BT_VND_OP_RESULT_SUCCESS);
++        bt_vendor_cbacks->scocfg_cb(status);
++#endif
+         bt_vendor_cbacks->audio_state_cb(status);
+     }
+ }
+@@ -1312,6 +1342,15 @@ void hw_sco_config(void)
+      *  immediately with SCO_CODEC_CVSD by default.
+      */
+ 
++#if (BTHW_FW_EXTENDED_CONFIGURATION == TRUE)
++    uint8_t ret_val = hw_set_SCO_codec(BTHW_FW_EXTENDED_CONFIGURATION_SCO_CODEC);
++    if (ret_val == -1 && bt_vendor_cbacks)
++    {
++        bt_vendor_cbacks->fwcfg_cb(BT_VND_OP_RESULT_SUCCESS);
++        bt_vendor_cbacks->scocfg_cb(BT_VND_OP_RESULT_FAIL);
++        bt_vendor_cbacks->audio_state_cb(BT_VND_OP_RESULT_FAIL);
++    }
++#else
+     if (SCO_INTERFACE_I2S == sco_bus_interface) {
+         hw_sco_i2spcm_config(SCO_CODEC_CVSD);
+     }
+@@ -1320,6 +1359,7 @@ void hw_sco_config(void)
+     {
+         bt_vendor_cbacks->scocfg_cb(BT_VND_OP_RESULT_SUCCESS);
+     }
++#endif
+ }
+ 
+ static void hw_sco_i2spcm_config_from_command(void *p_mem, uint16_t codec) {
+@@ -1331,9 +1371,17 @@ static void hw_sco_i2spcm_config_from_command(void *p_mem, uint16_t codec) {
+         bt_vendor_cbacks->dealloc(p_evt_buf);
+ 
+     if (command_success)
++    {
+         hw_sco_i2spcm_config(codec);
++    }
+     else if (bt_vendor_cbacks)
++    {
++#if (BTHW_FW_EXTENDED_CONFIGURATION == TRUE)
++        bt_vendor_cbacks->fwcfg_cb(BT_VND_OP_RESULT_SUCCESS);
++        bt_vendor_cbacks->scocfg_cb(BT_VND_OP_RESULT_FAIL);
++#endif
+         bt_vendor_cbacks->audio_state_cb(BT_VND_OP_RESULT_FAIL);
++    }
+ }
+ 
+ 
+@@ -1396,7 +1444,14 @@ static void hw_sco_i2spcm_config(uint16_t codec)
+             return;
+     }
+ 
+-    bt_vendor_cbacks->audio_state_cb(BT_VND_OP_RESULT_FAIL);
++    if (bt_vendor_cbacks)
++    {
++#if (BTHW_FW_EXTENDED_CONFIGURATION == TRUE)
++        bt_vendor_cbacks->fwcfg_cb(BT_VND_OP_RESULT_SUCCESS);
++        bt_vendor_cbacks->scocfg_cb(BT_VND_OP_RESULT_FAIL);
++#endif
++        bt_vendor_cbacks->audio_state_cb(BT_VND_OP_RESULT_FAIL);
++    }
+ }
+ 
+ /*******************************************************************************
+-- 
+2.25.1
+

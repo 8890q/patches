@@ -1,0 +1,34 @@
+From 7e93bc3a47ba7b2f3a5cab944cf26215f0f5dd22 Mon Sep 17 00:00:00 2001
+From: ivanmeler <i_ivan@windowslive.com>
+Date: Mon, 11 Apr 2022 13:00:11 +0000
+Subject: [PATCH] Add back support for Audio HAL V2 this was removed in
+ b4443504f166b2e4a6590f06c2618071d51fb679
+
+Change-Id: I47b17e0e3ca44148dcbe0eabf345b3546ff2e618
+---
+ audio/common/all-versions/default/service/service.cpp | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/audio/common/all-versions/default/service/service.cpp b/audio/common/all-versions/default/service/service.cpp
+index bbc14adc6..72695c119 100644
+--- a/audio/common/all-versions/default/service/service.cpp
++++ b/audio/common/all-versions/default/service/service.cpp
+@@ -67,6 +67,7 @@ int main(int /* argc */, char* /* argv */ []) {
+             "android.hardware.audio@6.0::IDevicesFactory",
+             "android.hardware.audio@5.0::IDevicesFactory",
+             "android.hardware.audio@4.0::IDevicesFactory",
++            "android.hardware.audio@2.0::IDevicesFactory",
+         },
+         {
+             "Audio Effect API",
+@@ -74,6 +75,7 @@ int main(int /* argc */, char* /* argv */ []) {
+             "android.hardware.audio.effect@6.0::IEffectsFactory",
+             "android.hardware.audio.effect@5.0::IEffectsFactory",
+             "android.hardware.audio.effect@4.0::IEffectsFactory",
++            "android.hardware.audio.effect@2.0::IEffectsFactory",
+         }
+     };
+ 
+-- 
+2.25.1
+

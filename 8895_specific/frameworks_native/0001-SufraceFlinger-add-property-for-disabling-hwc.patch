@@ -1,0 +1,29 @@
+From 5e56c8e88bcd39bc045e1ebd997f15e148fa00a6 Mon Sep 17 00:00:00 2001
+From: arttttt <artem-bambalov@yandex.ru>
+Date: Thu, 26 Mar 2020 00:35:59 +0300
+Subject: [PATCH 1/1] SufraceFlinger: add property for disabling hwc
+
+Signed-off-by: arttttt <artem-bambalov@yandex.ru>
+Change-Id: I890015e707f337e418199170c022e143bac66939
+---
+ services/surfaceflinger/SurfaceFlinger.cpp | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/services/surfaceflinger/SurfaceFlinger.cpp b/services/surfaceflinger/SurfaceFlinger.cpp
+index 2048fd4a2..3399afff6 100644
+--- a/services/surfaceflinger/SurfaceFlinger.cpp
++++ b/services/surfaceflinger/SurfaceFlinger.cpp
+@@ -438,6 +438,10 @@ SurfaceFlinger::SurfaceFlinger(Factory& factory) : SurfaceFlinger(factory, SkipI
+     property_get("debug.sf.disable_client_composition_cache", value, "0");
+     mDisableClientCompositionCache = atoi(value);
+ 
++    property_get("debug.sf.disable_hwc", value, "0");
++    mDebugDisableHWC = atoi(value);
++    ALOGI_IF(mDebugDisableHWC, "Disabling use of hw composer");
++
+     // We should be reading 'persist.sys.sf.color_saturation' here
+     // but since /data may be encrypted, we need to wait until after vold
+     // comes online to attempt to read the property. The property is
+-- 
+2.20.1
+
