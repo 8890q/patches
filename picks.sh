@@ -14,7 +14,6 @@ set -eE
 ./vendor/lineage/build/tools/repopick.py 322826 # Add Dual Channel into Bluetooth Audio Channel Mode developer options menu
 ./vendor/lineage/build/tools/repopick.py 322827 # Allow SBC as HD audio codec in Bluetooth device configuration
 ./vendor/lineage/build/tools/repopick.py 322828 # Explicitly make SBC Dual Channel an optional (HD) codec
-./vendor/lineage/build/tools/repopick.py 326160 # frameworks: Exempt location packages from location indicators
 ./vendor/lineage/build/tools/repopick.py 326692 # Skip screen on animation when wake and unlock via biometrics
 ./vendor/lineage/build/tools/repopick.py 327687 # biometrics: Allow to disable haptic feedback on success authentication
 
@@ -27,11 +26,15 @@ set -eE
 
 ./vendor/lineage/build/tools/repopick.py 328434 # Revert "Include a limited set of wallpapers on devices with small /system"
 ./vendor/lineage/build/tools/repopick.py 328435 # Remove jpeg check from generate_smallvariants.py
-./vendor/lineage/build/tools/repopick.py 328436 # [WIP] New wallpapers
+./vendor/lineage/build/tools/repopick.py 328436 # New wallpapers
 
 ## Project: LineageOS/android_packages_apps_Bluetooth
 
 ./vendor/lineage/build/tools/repopick.py 322838 # SBC Dual Channel (SBC HD Audio) support
+
+## Project: LineageOS/android_packages_apps_Camera2
+
+./vendor/lineage/build/tools/repopick.py 328557 # Camera2: remove duplicate getDisplayRotation()
 
 ## Project: LineageOS/android_packages_apps_CarrierConfig
 
@@ -48,10 +51,13 @@ set -eE
 ./vendor/lineage/build/tools/repopick.py 326383 # DeskClock: Remove legacy support
 ./vendor/lineage/build/tools/repopick.py 326994 # DeskClock: Remove compatibility to old APIs
 
+## Project: LineageOS/android_packages_apps_Gallery2
+
+./vendor/lineage/build/tools/repopick.py 328558 # Gallery3D: remove hw keys check from TimeLineSlotView
+
 ## Project: LineageOS/android_packages_apps_LineageParts
 
 ./vendor/lineage/build/tools/repopick.py 326739 # Trust: Add option to always disable USB gadgets
-./vendor/lineage/build/tools/repopick.py 326877 # LineageParts: switch to 3-button navigation when disabling navbar
 
 ## Project: LineageOS/android_packages_apps_Messaging
 
@@ -115,7 +121,6 @@ set -eE
 ./vendor/lineage/build/tools/repopick.py 317981 # device_config: Save discrete app op history for more permissions
 ./vendor/lineage/build/tools/repopick.py 317982 # device_config: Keep up to 7 days of permission usage history
 ./vendor/lineage/build/tools/repopick.py 325012 # lineage: Opt-in to shipping full recovery image by default
-./vendor/lineage/build/tools/repopick.py 326712 # overlay: show all icons in collapsed statusbar
 ./vendor/lineage/build/tools/repopick.py 327902 # overlays: Use rounded corners in SystemUI
 ./vendor/lineage/build/tools/repopick.py 328170 # config: Disable remote keyguard animation until it's fixed
 ./vendor/lineage/build/tools/repopick.py 328453 # Update default wallpaper
