@@ -24,9 +24,7 @@ set -eE
 
 ## Project: LineageOS/android_packages_apps_Backgrounds
 
-./vendor/lineage/build/tools/repopick.py 328434 # Revert "Include a limited set of wallpapers on devices with small /system"
-./vendor/lineage/build/tools/repopick.py 328435 # Remove jpeg check from generate_smallvariants.py
-./vendor/lineage/build/tools/repopick.py 328436 # New wallpapers
+./vendor/lineage/build/tools/repopick.py 328810 # Backgrounds: use old wallpapers optionally
 
 ## Project: LineageOS/android_packages_apps_Bluetooth
 
@@ -53,7 +51,7 @@ set -eE
 
 ## Project: LineageOS/android_packages_apps_Gallery2
 
-./vendor/lineage/build/tools/repopick.py 328558 # Gallery3D: remove hw keys check from TimeLineSlotView
+./vendor/lineage/build/tools/repopick.py 328558 # Gallery2: remove hw keys check from TimeLineSlotView
 
 ## Project: LineageOS/android_packages_apps_LineageParts
 
@@ -80,12 +78,6 @@ set -eE
 
 ## Project: LineageOS/android_packages_inputmethods_LatinIME
 
-./vendor/lineage/build/tools/repopick.py 325405 # LatinIME: fit more emoji in a page
-./vendor/lineage/build/tools/repopick.py 325748 # LatinIME: add attr for vertical hint padding
-./vendor/lineage/build/tools/repopick.py 325406 # LatinIME: Initial You
-./vendor/lineage/build/tools/repopick.py 325437 # LatinIME: remove unused drawables
-./vendor/lineage/build/tools/repopick.py 325438 # LatinIME: show emoji key when language switch key is not showing
-./vendor/lineage/build/tools/repopick.py 328160 # LatinIME: update follow system theme label
 ./vendor/lineage/build/tools/repopick.py 328419 # LatinIME: Update emojis
 
 ## Project: LineageOS/android_packages_modules_Permission
@@ -121,6 +113,4 @@ set -eE
 ./vendor/lineage/build/tools/repopick.py 317981 # device_config: Save discrete app op history for more permissions
 ./vendor/lineage/build/tools/repopick.py 317982 # device_config: Keep up to 7 days of permission usage history
 ./vendor/lineage/build/tools/repopick.py 325012 # lineage: Opt-in to shipping full recovery image by default
-./vendor/lineage/build/tools/repopick.py 327902 # overlays: Use rounded corners in SystemUI
-./vendor/lineage/build/tools/repopick.py 328170 # config: Disable remote keyguard animation until it's fixed
-./vendor/lineage/build/tools/repopick.py 328453 # Update default wallpaper
+./vendor/lineage/build/tools/repopick.py 328958 # apns: add We
