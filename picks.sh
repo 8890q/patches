@@ -22,10 +22,6 @@ set -eE
 ./vendor/lineage/build/tools/repopick.py 327684 # lineage: res: Introduce config to disable biometrics success haptic feedback
 ./vendor/lineage/build/tools/repopick.py 327685 # lineage-sdk: Add preference keys for biometrics success haptic feedback
 
-## Project: LineageOS/android_packages_apps_Backgrounds
-
-./vendor/lineage/build/tools/repopick.py 328810 # Backgrounds: use old wallpapers optionally
-
 ## Project: LineageOS/android_packages_apps_Bluetooth
 
 ./vendor/lineage/build/tools/repopick.py 322838 # SBC Dual Channel (SBC HD Audio) support
@@ -33,25 +29,16 @@ set -eE
 ## Project: LineageOS/android_packages_apps_Camera2
 
 ./vendor/lineage/build/tools/repopick.py 328557 # Camera2: remove duplicate getDisplayRotation()
+./vendor/lineage/build/tools/repopick.py 330701 # Camera2: import quickReader module from Snap
+./vendor/lineage/build/tools/repopick.py 330702 # Camera2: add QR code launcher shortcut
 
 ## Project: LineageOS/android_packages_apps_CarrierConfig
 
 ./vendor/lineage/build/tools/repopick.py 320749 # Fix voicemail for Bouygues Telecom France
 
-## Project: LineageOS/android_packages_apps_DeskClock
-
-./vendor/lineage/build/tools/repopick.py 324512 # DeskClock: Remove unused drawables
-./vendor/lineage/build/tools/repopick.py 325330 # DeskClock: Add FLAG_IMMUTABLE
-./vendor/lineage/build/tools/repopick.py 325331 # DeskClock: Make sure int values are unique
-./vendor/lineage/build/tools/repopick.py 325332 # DeskClock: Material Me? No YOU!
-./vendor/lineage/build/tools/repopick.py 325367 # DeskClock: Add gradle
-./vendor/lineage/build/tools/repopick.py 325953 # DeskClock: Fix left button display
-./vendor/lineage/build/tools/repopick.py 326383 # DeskClock: Remove legacy support
-./vendor/lineage/build/tools/repopick.py 326994 # DeskClock: Remove compatibility to old APIs
-
 ## Project: LineageOS/android_packages_apps_Gallery2
 
-./vendor/lineage/build/tools/repopick.py 328558 # Gallery2: remove hw keys check from TimeLineSlotView
+./vendor/lineage/build/tools/repopick.py 328558 # Gallery2: improve scroll position when re-entering TimeLineSlotView
 
 ## Project: LineageOS/android_packages_apps_LineageParts
 
@@ -66,40 +53,23 @@ set -eE
 ./vendor/lineage/build/tools/repopick.py 322833 # Add Dual Channel into Bluetooth Audio Channel Mode developer options menu
 ./vendor/lineage/build/tools/repopick.py 327686 # Settings: Add biometrics success haptic feedback preference
 
-## Project: LineageOS/android_packages_apps_SetupWizard
-
-./vendor/lineage/build/tools/repopick.py 323145 # SUW: Enable status bar outside of FinishActivity
-
 ## Project: LineageOS/android_packages_apps_Trebuchet
 
 ./vendor/lineage/build/tools/repopick.py 317967 # Enable crossfade when changing theme
 ./vendor/lineage/build/tools/repopick.py 317969 # Expose themed icon setting in ThemePicker
 ./vendor/lineage/build/tools/repopick.py 326714 # NavbarButtonsViewController: Support navbar layout inversion
-
-## Project: LineageOS/android_packages_inputmethods_LatinIME
-
-./vendor/lineage/build/tools/repopick.py 328419 # LatinIME: Update emojis
+./vendor/lineage/build/tools/repopick.py 329276 # Trebuchet: Refresh app icons on colors changed
 
 ## Project: LineageOS/android_packages_modules_Permission
 
-./vendor/lineage/build/tools/repopick.py 317972 # PermissionController: Enable usage timeline for all permission groups
 ./vendor/lineage/build/tools/repopick.py 317973 # PermissionController: Show up to 7 days of permission usage history
 
 ## Project: LineageOS/android_packages_modules_adb
 
 ./vendor/lineage/build/tools/repopick.py 326385 # adb: Bring back support for legacy FunctionFS
 
-## Project: LineageOS/android_packages_overlays_Lineage
-
-./vendor/lineage/build/tools/repopick.py 326989 # NavigationBarNoHint: Set taskbar_frame_height to 0dp
-
-## Project: LineageOS/android_packages_services_Telecomm
-
-./vendor/lineage/build/tools/repopick.py 327458 # Telecomm: Squashed phone_type switch support
-
 ## Project: LineageOS/android_system_bt
 
-./vendor/lineage/build/tools/repopick.py 319781 # Add option to change eSCO Transport Unit Size to 16
 ./vendor/lineage/build/tools/repopick.py 322834 # Increase maximum Bluetooth SBC codec bitrate for SBC HD
 ./vendor/lineage/build/tools/repopick.py 322835 # Explicit SBC Dual Channel (SBC HD) support
 ./vendor/lineage/build/tools/repopick.py 322836 # Allow using alternative (higher) SBC HD bitrates with a property
@@ -110,7 +80,5 @@ set -eE
 
 ## Project: LineageOS/android_vendor_lineage
 
-./vendor/lineage/build/tools/repopick.py 317981 # device_config: Save discrete app op history for more permissions
 ./vendor/lineage/build/tools/repopick.py 317982 # device_config: Keep up to 7 days of permission usage history
-./vendor/lineage/build/tools/repopick.py 325012 # lineage: Opt-in to shipping full recovery image by default
 ./vendor/lineage/build/tools/repopick.py 328958 # apns: add We
