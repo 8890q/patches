@@ -3,11 +3,6 @@
 # Abort early on error
 set -eE
 
-## Project: LineageOS/android_device_lineage_sepolicy
-
-./vendor/lineage/build/tools/repopick.py 330086 # sepolicy: add hal_lineage_batterylifeextender
-./vendor/lineage/build/tools/repopick.py 330087 # sepolicy: add super fast charge interface
-
 ## Project: LineageOS/android_frameworks_base
 
 ./vendor/lineage/build/tools/repopick.py 320714 # SystemUI: add burnIn protection
@@ -22,17 +17,10 @@ set -eE
 ./vendor/lineage/build/tools/repopick.py 326692 # Skip screen on animation when wake and unlock via biometrics
 ./vendor/lineage/build/tools/repopick.py 327687 # biometrics: Allow to disable haptic feedback on success authentication
 
-## Project: LineageOS/android_hardware_lineage_interfaces
-
-./vendor/lineage/build/tools/repopick.py 330084 # lineage/interfaces: add batterylifeextender HAL
-./vendor/lineage/build/tools/repopick.py 330085 # fastcharge: add super fast charge support
-
 ## Project: LineageOS/android_lineage-sdk
 
 ./vendor/lineage/build/tools/repopick.py 327684 # lineage: res: Introduce config to disable biometrics success haptic feedback
 ./vendor/lineage/build/tools/repopick.py 327685 # lineage-sdk: Add preference keys for biometrics success haptic feedback
-./vendor/lineage/build/tools/repopick.py 329106 # lineage-sdk: Add setting for battery health saver feature
-./vendor/lineage/build/tools/repopick.py 329107 # lineage-sdk: Add support for battery health saver tile
 
 ## Project: LineageOS/android_packages_apps_Bluetooth
 
@@ -64,8 +52,6 @@ set -eE
 
 ./vendor/lineage/build/tools/repopick.py 322833 # Add Dual Channel into Bluetooth Audio Channel Mode developer options menu
 ./vendor/lineage/build/tools/repopick.py 327686 # Settings: Add biometrics success haptic feedback preference
-./vendor/lineage/build/tools/repopick.py 330082 # Settings: add Protect battery toggle
-./vendor/lineage/build/tools/repopick.py 330083 # Settings: add super fast charge toggle
 
 ## Project: LineageOS/android_packages_apps_Trebuchet
 
