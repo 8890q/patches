@@ -16,6 +16,7 @@ set -eE
 ./vendor/lineage/build/tools/repopick.py 322828 # Explicitly make SBC Dual Channel an optional (HD) codec
 ./vendor/lineage/build/tools/repopick.py 326692 # Skip screen on animation when wake and unlock via biometrics
 ./vendor/lineage/build/tools/repopick.py 327687 # biometrics: Allow to disable haptic feedback on success authentication
+./vendor/lineage/build/tools/repopick.py 330781 # PermissionManager: fix NPE in getIndicatorExemptedPackages
 
 ## Project: LineageOS/android_lineage-sdk
 
