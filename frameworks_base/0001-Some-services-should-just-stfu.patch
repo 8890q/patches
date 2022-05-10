@@ -1,0 +1,84 @@
+From 2212290c5e3c928a275ef664674e3359e036280f Mon Sep 17 00:00:00 2001
+From: ivanmeler <i_ivan@windowslive.com>
+Date: Mon, 9 May 2022 12:17:37 +0000
+Subject: [PATCH] Some services should just stfu
+
+Change-Id: I025ac0a8afdbaa254b4569938ab88bcc4b3a43f8
+---
+ .../android/permission/PermissionManager.java   |  5 +++++
+ .../systemui/privacy/PrivacyItemController.kt   | 17 ++++++++++++++---
+ 2 files changed, 19 insertions(+), 3 deletions(-)
+
+diff --git a/core/java/android/permission/PermissionManager.java b/core/java/android/permission/PermissionManager.java
+index fe3f72d2c260..88da0575d1c9 100644
+--- a/core/java/android/permission/PermissionManager.java
++++ b/core/java/android/permission/PermissionManager.java
+@@ -91,6 +91,9 @@ public final class PermissionManager {
+             "permission grant or revoke changed gids";
+ 
+     private static final String SYSTEM_PKG = "android";
++    private static final String BLUETOOTH_PKG = "com.android.bluetooth";
++    private static final String PHONE_SERVICES_PKG = "com.android.phone";
++
+ 
+     /**
+      * Refuse to install package if groups of permissions are bad
+@@ -948,6 +951,8 @@ public final class PermissionManager {
+         updateIndicatorExemptedPackages(context);
+         ArraySet<String> pkgNames = new ArraySet<>();
+         pkgNames.add(SYSTEM_PKG);
++        pkgNames.add(BLUETOOTH_PKG);
++        pkgNames.add(PHONE_SERVICES_PKG);
+         for (int i = 0; i < INDICATOR_EXEMPTED_PACKAGES.length; i++) {
+             String exemptedPackage = INDICATOR_EXEMPTED_PACKAGES[i];
+             if (exemptedPackage != null) {
+diff --git a/packages/SystemUI/src/com/android/systemui/privacy/PrivacyItemController.kt b/packages/SystemUI/src/com/android/systemui/privacy/PrivacyItemController.kt
+index e072b4a3646c..19365ce67a12 100644
+--- a/packages/SystemUI/src/com/android/systemui/privacy/PrivacyItemController.kt
++++ b/packages/SystemUI/src/com/android/systemui/privacy/PrivacyItemController.kt
+@@ -57,6 +57,15 @@ class PrivacyItemController @Inject constructor(
+ 
+     @VisibleForTesting
+     internal companion object {
++        val LOCATION_WHITELIST_PKG = arrayOf(
++            "com.android.bluetooth",
++            "com.android.networkstack.tethering",
++            "com.android.phone",
++            "com.android.systemui",
++            "com.google.android.gms.location.history",
++            "com.google.android.googlequicksearchbox",
++            "com.google.android.settings.intelligence",
++        )
+         val OPS_MIC_CAMERA = intArrayOf(AppOpsManager.OP_CAMERA,
+                 AppOpsManager.OP_PHONE_CALL_CAMERA, AppOpsManager.OP_RECORD_AUDIO,
+                 AppOpsManager.OP_PHONE_CALL_MICROPHONE)
+@@ -147,7 +156,8 @@ class PrivacyItemController @Inject constructor(
+             active: Boolean
+         ) {
+             // Check if we care about this code right now
+-            if (code in OPS_LOCATION && !locationAvailable) {
++            if (code in OPS_LOCATION && !locationAvailable
++                    || packageName in LOCATION_WHITELIST_PKG) {
+                 return
+             }
+             val userId = UserHandle.getUserId(uid)
+@@ -319,7 +329,8 @@ class PrivacyItemController @Inject constructor(
+             AppOpsManager.OP_RECORD_AUDIO -> PrivacyType.TYPE_MICROPHONE
+             else -> return null
+         }
+-        if (type == PrivacyType.TYPE_LOCATION && !locationAvailable) {
++        if (type == PrivacyType.TYPE_LOCATION && !locationAvailable
++                || appOpItem.packageName in LOCATION_WHITELIST_PKG) {
+             return null
+         }
+         val app = PrivacyApplication(appOpItem.packageName, appOpItem.uid)
+@@ -381,4 +392,4 @@ class PrivacyItemController @Inject constructor(
+             listeningCanceller = delegate.executeDelayed({ setListeningState() }, 0L)
+         }
+     }
+-}
+\ No newline at end of file
++}
+-- 
+2.34.1
+
