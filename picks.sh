@@ -6,7 +6,6 @@ set -eE
 ## Project: LineageOS/android_frameworks_base
 
 ./vendor/lineage/build/tools/repopick.py 320714 # SystemUI: add burnIn protection
-./vendor/lineage/build/tools/repopick.py 320765 # SystemUI: Fix shutter sound
 ./vendor/lineage/build/tools/repopick.py 321337 # Deprioritize important developer notifications
 ./vendor/lineage/build/tools/repopick.py 321338 # Allow disabling important developer notifications
 ./vendor/lineage/build/tools/repopick.py 321339 # Allow disabling USB notifications
@@ -16,7 +15,6 @@ set -eE
 ./vendor/lineage/build/tools/repopick.py 322828 # Explicitly make SBC Dual Channel an optional (HD) codec
 ./vendor/lineage/build/tools/repopick.py 326692 # Skip screen on animation when wake and unlock via biometrics
 ./vendor/lineage/build/tools/repopick.py 327687 # biometrics: Allow to disable haptic feedback on success authentication
-./vendor/lineage/build/tools/repopick.py 330781 # PermissionManager: fix NPE in getIndicatorExemptedPackages
 
 ## Project: LineageOS/android_lineage-sdk
 
@@ -32,6 +30,7 @@ set -eE
 ./vendor/lineage/build/tools/repopick.py 328557 # Camera2: remove duplicate getDisplayRotation()
 ./vendor/lineage/build/tools/repopick.py 330701 # Camera2: import quickReader module from Snap
 ./vendor/lineage/build/tools/repopick.py 330702 # Camera2: add QR code launcher shortcut
+./vendor/lineage/build/tools/repopick.py 331508 # Camera2: add QR scanner QS tile
 
 ## Project: LineageOS/android_packages_apps_CarrierConfig
 
