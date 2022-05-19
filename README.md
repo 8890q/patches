@@ -7,6 +7,5 @@ those are optional but some of them are needed for functionality like `326385` w
 frameworks/base patch is there because some services are too spamy due to bug google introduced in aosp
 its not needed at all but you might want to use it (Not device or rom specific at all but some roms already have fix merged)
 
-Patches here are used to make device without bpf boot and work properly (As of now there is no 3.18 eBPF port)
- 
-8895_specific patches are only needed on 8 series (s8,s8+ and note8) till we get working hwc on it
+Patches here are used to make device without bpf boot and work properly (As of now there is no 3.18 eBPF port and 4.4 needs upstream to .302 first)
+
