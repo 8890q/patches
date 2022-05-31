@@ -32,10 +32,6 @@ set -eE
 ./vendor/lineage/build/tools/repopick.py 330702 # Camera2: add QR code launcher shortcut
 ./vendor/lineage/build/tools/repopick.py 331508 # Camera2: add QR scanner QS tile
 
-## Project: LineageOS/android_packages_apps_CarrierConfig
-
-./vendor/lineage/build/tools/repopick.py 320749 # Fix voicemail for Bouygues Telecom France
-
 ## Project: LineageOS/android_packages_apps_Gallery2
 
 ./vendor/lineage/build/tools/repopick.py 328558 # Gallery2: improve scroll position when re-entering TimeLineSlotView
@@ -82,3 +78,4 @@ set -eE
 
 ./vendor/lineage/build/tools/repopick.py 317982 # device_config: Keep up to 7 days of permission usage history
 ./vendor/lineage/build/tools/repopick.py 328958 # apns: add We
+
