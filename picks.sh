@@ -28,9 +28,6 @@ set -eE
 ## Project: LineageOS/android_packages_apps_Camera2
 
 ./vendor/lineage/build/tools/repopick.py 328557 # Camera2: remove duplicate getDisplayRotation()
-./vendor/lineage/build/tools/repopick.py 330701 # Camera2: import quickReader module from Snap
-./vendor/lineage/build/tools/repopick.py 330702 # Camera2: add QR code launcher shortcut
-./vendor/lineage/build/tools/repopick.py 331508 # Camera2: add QR scanner QS tile
 
 ## Project: LineageOS/android_packages_apps_Gallery2
 
@@ -39,10 +36,6 @@ set -eE
 ## Project: LineageOS/android_packages_apps_LineageParts
 
 ./vendor/lineage/build/tools/repopick.py 326739 # Trust: Add option to always disable USB gadgets
-
-## Project: LineageOS/android_packages_apps_Messaging
-
-./vendor/lineage/build/tools/repopick.py 324405 # Add support for text/vCard and text/vCalendar MIME type
 
 ## Project: LineageOS/android_packages_apps_Settings
 
@@ -70,12 +63,7 @@ set -eE
 ./vendor/lineage/build/tools/repopick.py 322835 # Explicit SBC Dual Channel (SBC HD) support
 ./vendor/lineage/build/tools/repopick.py 322836 # Allow using alternative (higher) SBC HD bitrates with a property
 
-## Project: LineageOS/android_system_core
-
-./vendor/lineage/build/tools/repopick.py 317912 # init: Don't run update_sys_usb_config if /data isn't mounted
-
 ## Project: LineageOS/android_vendor_lineage
 
 ./vendor/lineage/build/tools/repopick.py 317982 # device_config: Keep up to 7 days of permission usage history
 ./vendor/lineage/build/tools/repopick.py 328958 # apns: add We
-
