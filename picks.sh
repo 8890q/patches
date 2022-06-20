@@ -6,9 +6,6 @@ set -eE
 ## Project: LineageOS/android_frameworks_base
 
 ./vendor/lineage/build/tools/repopick.py 320714 # SystemUI: add burnIn protection
-./vendor/lineage/build/tools/repopick.py 321337 # Deprioritize important developer notifications
-./vendor/lineage/build/tools/repopick.py 321338 # Allow disabling important developer notifications
-./vendor/lineage/build/tools/repopick.py 321339 # Allow disabling USB notifications
 ./vendor/lineage/build/tools/repopick.py 322825 # Add CHANNEL_MODE_DUAL_CHANNEL constant
 ./vendor/lineage/build/tools/repopick.py 322826 # Add Dual Channel into Bluetooth Audio Channel Mode developer options menu
 ./vendor/lineage/build/tools/repopick.py 322827 # Allow SBC as HD audio codec in Bluetooth device configuration
@@ -24,18 +21,6 @@ set -eE
 ## Project: LineageOS/android_packages_apps_Bluetooth
 
 ./vendor/lineage/build/tools/repopick.py 322838 # SBC Dual Channel (SBC HD Audio) support
-
-## Project: LineageOS/android_packages_apps_Camera2
-
-./vendor/lineage/build/tools/repopick.py 328557 # Camera2: remove duplicate getDisplayRotation()
-
-## Project: LineageOS/android_packages_apps_Gallery2
-
-./vendor/lineage/build/tools/repopick.py 328558 # Gallery2: improve scroll position when re-entering TimeLineSlotView
-
-## Project: LineageOS/android_packages_apps_LineageParts
-
-./vendor/lineage/build/tools/repopick.py 326739 # Trust: Add option to always disable USB gadgets
 
 ## Project: LineageOS/android_packages_apps_Settings
 
@@ -55,7 +40,7 @@ set -eE
 
 ## Project: LineageOS/android_packages_modules_adb
 
-./vendor/lineage/build/tools/repopick.py 326385 # adb: Bring back support for legacy FunctionFS
+./vendor/lineage/build/tools/repopick.py 326385 -f # adb: Bring back support for legacy FunctionFS
 
 ## Project: LineageOS/android_system_bt
 
@@ -67,3 +52,4 @@ set -eE
 
 ./vendor/lineage/build/tools/repopick.py 317982 # device_config: Keep up to 7 days of permission usage history
 ./vendor/lineage/build/tools/repopick.py 328958 # apns: add We
+
