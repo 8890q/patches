@@ -1,0 +1,27 @@
+From 5a98f2bfe3440441afa7aa587af915509c0b16f1 Mon Sep 17 00:00:00 2001
+From: ivanmeler <i_ivan@windowslive.com>
+Date: Tue, 4 Oct 2022 10:36:01 +0000
+Subject: [PATCH] Do not load bpf on legacy platforms
+
+---
+ bpfloader/BpfLoader.cpp | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/bpfloader/BpfLoader.cpp b/bpfloader/BpfLoader.cpp
+index bc72811..7f09ab0 100644
+--- a/bpfloader/BpfLoader.cpp
++++ b/bpfloader/BpfLoader.cpp
+@@ -194,8 +194,8 @@ int main(int argc, char** argv) {
+             ALOGE("If this triggers randomly, you might be hitting some memory allocation "
+                   "problems or startup script race.");
+             ALOGE("--- DO NOT EXPECT SYSTEM TO BOOT SUCCESSFULLY ---");
+-            sleep(20);
+-            return 2;
++            android::base::SetProperty("bpf.progs_loaded", "1");
++            return 0;
+         }
+     }
+ 
+-- 
+2.34.1
+

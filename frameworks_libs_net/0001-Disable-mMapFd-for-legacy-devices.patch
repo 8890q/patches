@@ -1,0 +1,24 @@
+From b091cf9c0f27afe4c550279ff1f0075ebf90fc79 Mon Sep 17 00:00:00 2001
+From: ivanmeler <i_ivan@windowslive.com>
+Date: Tue, 4 Oct 2022 10:20:51 +0000
+Subject: [PATCH] Disable mMapFd for legacy devices
+
+---
+ common/native/bpf_headers/include/bpf/BpfMap.h | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/common/native/bpf_headers/include/bpf/BpfMap.h b/common/native/bpf_headers/include/bpf/BpfMap.h
+index 2bee2ee..45c3b55 100644
+--- a/common/native/bpf_headers/include/bpf/BpfMap.h
++++ b/common/native/bpf_headers/include/bpf/BpfMap.h
+@@ -50,7 +50,6 @@ class BpfMap {
+     // flag must be within BPF_OBJ_FLAG_MASK, ie. 0, BPF_F_RDONLY, BPF_F_WRONLY
+     BpfMap<Key, Value>(const char* pathname, uint32_t flags) {
+         mMapFd.reset(mapRetrieve(pathname, flags));
+-        if (mMapFd < 0) abort();
+         if (isAtLeastKernelVersion(4, 14, 0)) {
+             if (bpfGetFdKeySize(mMapFd) != sizeof(Key)) abort();
+             if (bpfGetFdValueSize(mMapFd) != sizeof(Value)) abort();
+-- 
+2.34.1
+
