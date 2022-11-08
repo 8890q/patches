@@ -1,0 +1,46 @@
+From 6500dcef19ca2c9cd76728ad8860834f49e463e5 Mon Sep 17 00:00:00 2001
+From: ivanmeler <i_ivan@windowslive.com>
+Date: Wed, 9 Nov 2022 08:02:17 +0000
+Subject: [PATCH] Add support for non bpf usecase
+
+Change-Id: Ie42e2abb162000671b95cca3061c19b8d1c833a1
+---
+ bpfloader/BpfLoader.cpp | 22 ----------------------
+ 1 file changed, 22 deletions(-)
+
+diff --git a/bpfloader/BpfLoader.cpp b/bpfloader/BpfLoader.cpp
+index 5cd80b7..b1d47c6 100644
+--- a/bpfloader/BpfLoader.cpp
++++ b/bpfloader/BpfLoader.cpp
+@@ -186,28 +186,6 @@ int main(int argc, char** argv) {
+         createSysFsBpfSubDir(location.prefix);
+     }
+ 
+-    // Load all ELF objects, create programs and maps, and pin them
+-    for (const auto& location : locations) {
+-        if (loadAllElfObjects(location) != 0) {
+-            ALOGE("=== CRITICAL FAILURE LOADING BPF PROGRAMS FROM %s ===", location.dir);
+-            ALOGE("If this triggers reliably, you're probably missing kernel options or patches.");
+-            ALOGE("If this triggers randomly, you might be hitting some memory allocation "
+-                  "problems or startup script race.");
+-            ALOGE("--- DO NOT EXPECT SYSTEM TO BOOT SUCCESSFULLY ---");
+-            sleep(20);
+-            return 2;
+-        }
+-    }
+-
+-    int key = 1;
+-    int value = 123;
+-    android::base::unique_fd map(
+-            android::bpf::createMap(BPF_MAP_TYPE_ARRAY, sizeof(key), sizeof(value), 2, 0));
+-    if (android::bpf::writeToMapEntry(map, &key, &value, BPF_ANY)) {
+-        ALOGE("Critical kernel bug - failure to write into index 1 of 2 element bpf map array.");
+-        return 1;
+-    }
+-
+     if (android::base::SetProperty("bpf.progs_loaded", "1") == false) {
+         ALOGE("Failed to set bpf.progs_loaded property");
+         return 1;
+-- 
+2.34.1
+

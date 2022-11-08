@@ -1,0 +1,164 @@
+From e2ca3d4916090254a98b8c0682fbdd6ce17b413f Mon Sep 17 00:00:00 2001
+From: ivanmeler <i_ivan@windowslive.com>
+Date: Wed, 9 Nov 2022 07:55:47 +0000
+Subject: [PATCH] Add support for non bpf usecase
+
+Change-Id: Ia8e9d09f0f1e2aa04ff27e12412cd895320c988e
+---
+ netd/NetdUpdatable.cpp                        |  4 --
+ .../libs/libnetworkstats/BpfNetworkStats.cpp  | 64 +------------------
+ .../server/net/NetworkStatsService.java       | 34 ----------
+ 3 files changed, 2 insertions(+), 100 deletions(-)
+
+diff --git a/netd/NetdUpdatable.cpp b/netd/NetdUpdatable.cpp
+index f0997fc15..446cd4496 100644
+--- a/netd/NetdUpdatable.cpp
++++ b/netd/NetdUpdatable.cpp
+@@ -29,10 +29,6 @@ int libnetd_updatable_init(const char* cg2_path) {
+ 
+     android::net::gNetdUpdatable = android::net::NetdUpdatable::getInstance();
+     android::netdutils::Status ret = android::net::gNetdUpdatable->mBpfHandler.init(cg2_path);
+-    if (!android::netdutils::isOk(ret)) {
+-        LOG(ERROR) << __func__ << ": BPF handler init failed";
+-        return -ret.code();
+-    }
+     return 0;
+ }
+ 
+diff --git a/service-t/native/libs/libnetworkstats/BpfNetworkStats.cpp b/service-t/native/libs/libnetworkstats/BpfNetworkStats.cpp
+index 9ebef4d6d..0948598df 100644
+--- a/service-t/native/libs/libnetworkstats/BpfNetworkStats.cpp
++++ b/service-t/native/libs/libnetworkstats/BpfNetworkStats.cpp
+@@ -40,10 +40,6 @@ namespace bpf {
+ 
+ using base::Result;
+ 
+-// The target map for stats reading should be the inactive map, which is opposite
+-// from the config value.
+-static constexpr char const* STATS_MAP_PATH[] = {STATS_MAP_B_PATH, STATS_MAP_A_PATH};
+-
+ int bpfGetUidStatsInternal(uid_t uid, Stats* stats,
+                            const BpfMap<uint32_t, StatsValue>& appUidStatsMap) {
+     auto statsEntry = appUidStatsMap.readValue(uid);
+@@ -186,49 +182,7 @@ int parseBpfNetworkStatsDetailInternal(std::vector<stats_line>* lines,
+ int parseBpfNetworkStatsDetail(std::vector<stats_line>* lines,
+                                const std::vector<std::string>& limitIfaces, int limitTag,
+                                int limitUid) {
+-    BpfMapRO<uint32_t, IfaceValue> ifaceIndexNameMap(IFACE_INDEX_NAME_MAP_PATH);
+-    if (!ifaceIndexNameMap.isValid()) {
+-        int ret = -errno;
+-        ALOGE("get ifaceIndexName map fd failed: %s", strerror(errno));
+-        return ret;
+-    }
+-
+-    BpfMapRO<uint32_t, uint32_t> configurationMap(CONFIGURATION_MAP_PATH);
+-    if (!configurationMap.isValid()) {
+-        int ret = -errno;
+-        ALOGE("get configuration map fd failed: %s", strerror(errno));
+-        return ret;
+-    }
+-    auto configuration = configurationMap.readValue(CURRENT_STATS_MAP_CONFIGURATION_KEY);
+-    if (!configuration.ok()) {
+-        ALOGE("Cannot read the old configuration from map: %s",
+-              configuration.error().message().c_str());
+-        return -configuration.error().code();
+-    }
+-    const char* statsMapPath = STATS_MAP_PATH[configuration.value()];
+-    BpfMap<StatsKey, StatsValue> statsMap(statsMapPath);
+-    if (!statsMap.isValid()) {
+-        int ret = -errno;
+-        ALOGE("get stats map fd failed: %s, path: %s", strerror(errno), statsMapPath);
+-        return ret;
+-    }
+-
+-    // It is safe to read and clear the old map now since the
+-    // networkStatsFactory should call netd to swap the map in advance already.
+-    int ret = parseBpfNetworkStatsDetailInternal(lines, limitIfaces, limitTag, limitUid, statsMap,
+-                                                 ifaceIndexNameMap);
+-    if (ret) {
+-        ALOGE("parse detail network stats failed: %s", strerror(errno));
+-        return ret;
+-    }
+-
+-    Result<void> res = statsMap.clear();
+-    if (!res.ok()) {
+-        ALOGE("Clean up current stats map failed: %s", strerror(res.error().code()));
+-        return -res.error().code();
+-    }
+-
+-    return 0;
++    return -ENOENT;
+ }
+ 
+ int parseBpfNetworkStatsDevInternal(std::vector<stats_line>* lines,
+@@ -262,21 +216,7 @@ int parseBpfNetworkStatsDevInternal(std::vector<stats_line>* lines,
+ }
+ 
+ int parseBpfNetworkStatsDev(std::vector<stats_line>* lines) {
+-    int ret = 0;
+-    BpfMapRO<uint32_t, IfaceValue> ifaceIndexNameMap(IFACE_INDEX_NAME_MAP_PATH);
+-    if (!ifaceIndexNameMap.isValid()) {
+-        ret = -errno;
+-        ALOGE("get ifaceIndexName map fd failed: %s", strerror(errno));
+-        return ret;
+-    }
+-
+-    BpfMapRO<uint32_t, StatsValue> ifaceStatsMap(IFACE_STATS_MAP_PATH);
+-    if (!ifaceStatsMap.isValid()) {
+-        ret = -errno;
+-        ALOGE("get ifaceStats map fd failed: %s", strerror(errno));
+-        return ret;
+-    }
+-    return parseBpfNetworkStatsDevInternal(lines, ifaceStatsMap, ifaceIndexNameMap);
++    return -ENOENT;
+ }
+ 
+ uint64_t combineUidTag(const uid_t uid, const uint32_t tag) {
+diff --git a/service-t/src/com/android/server/net/NetworkStatsService.java b/service-t/src/com/android/server/net/NetworkStatsService.java
+index 4f0f3411a..22b80df9e 100644
+--- a/service-t/src/com/android/server/net/NetworkStatsService.java
++++ b/service-t/src/com/android/server/net/NetworkStatsService.java
+@@ -2421,40 +2421,6 @@ public class NetworkStatsService extends INetworkStatsService.Stub {
+      * @param uid
+      */
+     private void deleteKernelTagData(int uid) {
+-        try {
+-            mCookieTagMap.forEach((key, value) -> {
+-                // If SkDestroyListener deletes the socket tag while this code is running,
+-                // forEach will either restart iteration from the beginning or return null,
+-                // depending on when the deletion happens.
+-                // If it returns null, continue iteration to delete the data and in fact it would
+-                // just iterate from first key because BpfMap#getNextKey would return first key
+-                // if the current key is not exist.
+-                if (value != null && value.uid == uid) {
+-                    try {
+-                        mCookieTagMap.deleteEntry(key);
+-                    } catch (ErrnoException e) {
+-                        logErrorIfNotErrNoent(e, "Failed to delete data(cookie = " + key + ")");
+-                    }
+-                }
+-            });
+-        } catch (ErrnoException e) {
+-            Log.e(TAG, "Failed to delete tag data from cookie tag map", e);
+-        }
+-
+-        deleteStatsMapTagData(mStatsMapA, uid);
+-        deleteStatsMapTagData(mStatsMapB, uid);
+-
+-        try {
+-            mUidCounterSetMap.deleteEntry(new U32(uid));
+-        } catch (ErrnoException e) {
+-            logErrorIfNotErrNoent(e, "Failed to delete tag data from uid counter set map");
+-        }
+-
+-        try {
+-            mAppUidStatsMap.deleteEntry(new UidStatsMapKey(uid));
+-        } catch (ErrnoException e) {
+-            logErrorIfNotErrNoent(e, "Failed to delete tag data from app uid stats map");
+-        }
+     }
+ 
+     /**
+-- 
+2.34.1
+

@@ -1,14 +1,15 @@
-From b091cf9c0f27afe4c550279ff1f0075ebf90fc79 Mon Sep 17 00:00:00 2001
+From 64b0bd22d47933ac42a8018c734b0a9bc7ddd43b Mon Sep 17 00:00:00 2001
 From: ivanmeler <i_ivan@windowslive.com>
-Date: Tue, 4 Oct 2022 10:20:51 +0000
-Subject: [PATCH] Disable mMapFd for legacy devices
+Date: Wed, 9 Nov 2022 07:58:28 +0000
+Subject: [PATCH] Add support for non bpf usecase
 
+Change-Id: I88ab11e60330da9c35cb2c2fe574e2eadda1e0b1
 ---
- common/native/bpf_headers/include/bpf/BpfMap.h | 1 -
- 1 file changed, 1 deletion(-)
+ common/native/bpf_headers/include/bpf/BpfMap.h | 2 --
+ 1 file changed, 2 deletions(-)
 
 diff --git a/common/native/bpf_headers/include/bpf/BpfMap.h b/common/native/bpf_headers/include/bpf/BpfMap.h
-index 2bee2ee..45c3b55 100644
+index 2bee2ee..57e4573 100644
 --- a/common/native/bpf_headers/include/bpf/BpfMap.h
 +++ b/common/native/bpf_headers/include/bpf/BpfMap.h
 @@ -50,7 +50,6 @@ class BpfMap {
@@ -19,6 +20,14 @@ index 2bee2ee..45c3b55 100644
          if (isAtLeastKernelVersion(4, 14, 0)) {
              if (bpfGetFdKeySize(mMapFd) != sizeof(Key)) abort();
              if (bpfGetFdValueSize(mMapFd) != sizeof(Value)) abort();
+@@ -62,7 +61,6 @@ class BpfMap {
+ 
+     BpfMap<Key, Value>(bpf_map_type map_type, uint32_t max_entries, uint32_t map_flags = 0) {
+         mMapFd.reset(createMap(map_type, sizeof(Key), sizeof(Value), max_entries, map_flags));
+-        if (mMapFd < 0) abort();
+     }
+ 
+     base::Result<Key> getFirstKey() const {
 -- 
 2.34.1
 
