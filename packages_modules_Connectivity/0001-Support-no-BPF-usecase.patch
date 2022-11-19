@@ -1,0 +1,69 @@
+From b0e9ef8927fc4b32ad623f0c46a9f4b60247adde Mon Sep 17 00:00:00 2001
+From: ivanmeler <i_ivan@windowslive.com>
+Date: Sat, 19 Nov 2022 14:37:40 +0000
+Subject: [PATCH] Support no BPF usecase
+
+Change-Id: I2252d1e62f5a4f018d6019d6c432c090fcb1c1ce
+---
+ netd/BpfHandler.cpp                                   | 11 +++++++++--
+ .../native/libs/libnetworkstats/BpfNetworkStats.cpp   |  4 ++--
+ .../com/android/server/net/NetworkStatsService.java   |  1 +
+ 3 files changed, 12 insertions(+), 4 deletions(-)
+
+diff --git a/netd/BpfHandler.cpp b/netd/BpfHandler.cpp
+index 6ae26c38f..8262f7530 100644
+--- a/netd/BpfHandler.cpp
++++ b/netd/BpfHandler.cpp
+@@ -71,8 +71,15 @@ static Status initPrograms(const char* cg2_path) {
+         ALOGE("Failed to open the cgroup directory: %s", strerror(ret));
+         return statusFromErrno(ret, "Open the cgroup directory failed");
+     }
+-    RETURN_IF_NOT_OK(attachProgramToCgroup(BPF_EGRESS_PROG_PATH, cg_fd, BPF_CGROUP_INET_EGRESS));
+-    RETURN_IF_NOT_OK(attachProgramToCgroup(BPF_INGRESS_PROG_PATH, cg_fd, BPF_CGROUP_INET_INGRESS));
++    auto ret = attachProgramToCgroup(BPF_EGRESS_PROG_PATH, cg_fd, BPF_CGROUP_INET_EGRESS);
++    if (!isOk(ret)) {
++        ALOGE("Failed loading egress program");
++    }
++
++    auto ret2 = attachProgramToCgroup(BPF_INGRESS_PROG_PATH, cg_fd, BPF_CGROUP_INET_INGRESS);
++    if (!isOk(ret)) {
++        ALOGE("Failed loading ingress program");
++    }
+ 
+     // For the devices that support cgroup socket filter, the socket filter
+     // should be loaded successfully by bpfloader. So we attach the filter to
+diff --git a/service-t/native/libs/libnetworkstats/BpfNetworkStats.cpp b/service-t/native/libs/libnetworkstats/BpfNetworkStats.cpp
+index 9ebef4d6d..ee30f3db3 100644
+--- a/service-t/native/libs/libnetworkstats/BpfNetworkStats.cpp
++++ b/service-t/native/libs/libnetworkstats/BpfNetworkStats.cpp
+@@ -102,13 +102,13 @@ int bpfGetIfaceStatsInternal(const char* iface, Stats* stats,
+ int bpfGetIfaceStats(const char* iface, Stats* stats) {
+     BpfMapRO<uint32_t, StatsValue> ifaceStatsMap(IFACE_STATS_MAP_PATH);
+     int ret;
+-    if (!ifaceStatsMap.isValid()) {
++    if (!ifaceStatsMap.isValid() || !ifaceStatsMap.isOk()) {
+         ret = -errno;
+         ALOGE("get ifaceStats map fd failed: %s", strerror(errno));
+         return ret;
+     }
+     BpfMapRO<uint32_t, IfaceValue> ifaceIndexNameMap(IFACE_INDEX_NAME_MAP_PATH);
+-    if (!ifaceIndexNameMap.isValid()) {
++    if (!ifaceIndexNameMap.isValid() || !ifaceStatsMap.isOk()) {
+         ret = -errno;
+         ALOGE("get ifaceIndexName map fd failed: %s", strerror(errno));
+         return ret;
+diff --git a/service-t/src/com/android/server/net/NetworkStatsService.java b/service-t/src/com/android/server/net/NetworkStatsService.java
+index 4f0f3411a..d45e8fa58 100644
+--- a/service-t/src/com/android/server/net/NetworkStatsService.java
++++ b/service-t/src/com/android/server/net/NetworkStatsService.java
+@@ -2421,6 +2421,7 @@ public class NetworkStatsService extends INetworkStatsService.Stub {
+      * @param uid
+      */
+     private void deleteKernelTagData(int uid) {
++        if(mCookieTagMap == null) return;
+         try {
+             mCookieTagMap.forEach((key, value) -> {
+                 // If SkDestroyListener deletes the socket tag while this code is running,
+-- 
+2.34.1
+
