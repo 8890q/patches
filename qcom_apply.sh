@@ -12,6 +12,3 @@ cd ../../
 cd frameworks/base
 git am --signoff < ~/patches/frameworks_base/0001-Some-services-should-just-stfu.patch
 cd ../../
-cd bionic
-git am --signoff < ../device/samsung/heroqlte/patches/bionic.patch
-cd ../
