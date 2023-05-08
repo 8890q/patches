@@ -12,4 +12,6 @@ cd ../../
 cd frameworks/base
 git reset --hard HEAD~1
 cd ../../
-
+cd bionic
+git reset --hard HEAD~1
+cd ../
