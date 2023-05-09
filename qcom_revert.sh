@@ -2,11 +2,8 @@
 
 cd system/netd
 git reset --hard HEAD~1
-cd ../../
-cd packages/modules/adb
-git reset --hard HEAD~1
-cd ../../../
-cd system/bpf
+cd ../
+cd bpf
 git reset --hard HEAD~1
 cd ../../
 cd frameworks/base
