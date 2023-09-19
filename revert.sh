@@ -24,7 +24,10 @@ echo 'skipping system/security patch revert'
 cd ../../
 cd frameworks/native
 git reset --hard HEAD~1
-cd ../../
+cd ../
+cd base
+git reset --hard HEAD~1
+cd ../..
 cd system/core
 git reset --hard HEAD~1
 cd ../../

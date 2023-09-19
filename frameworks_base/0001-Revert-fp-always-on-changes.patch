@@ -1,0 +1,193 @@
+From 0efbdf9e7a4371d3d0d43ac7084f992314e4561d Mon Sep 17 00:00:00 2001
+From: ivanmeler <i_ivan@windowslive.com>
+Date: Tue, 19 Sep 2023 08:42:17 +0000
+Subject: [PATCH] Revert fp always on changes
+
+Change-Id: I5a6330db3d8de2a8009b0490766c0c2b2e8e6fd2
+---
+ .../keyguard/KeyguardUpdateMonitor.java       | 45 +++++++++++++++++-
+ ...gerprintInteractiveToAuthProviderImpl.java | 47 -------------------
+ .../biometrics/dagger/BiometricsModule.kt     |  7 ---
+ 3 files changed, 44 insertions(+), 55 deletions(-)
+ delete mode 100644 packages/SystemUI/src/com/android/systemui/biometrics/FingerprintInteractiveToAuthProviderImpl.java
+
+diff --git a/packages/SystemUI/src/com/android/keyguard/KeyguardUpdateMonitor.java b/packages/SystemUI/src/com/android/keyguard/KeyguardUpdateMonitor.java
+index e154695e56e31..e960201a5daa7 100644
+--- a/packages/SystemUI/src/com/android/keyguard/KeyguardUpdateMonitor.java
++++ b/packages/SystemUI/src/com/android/keyguard/KeyguardUpdateMonitor.java
+@@ -335,6 +335,7 @@ public class KeyguardUpdateMonitor implements TrustManager.TrustListener, Dumpab
+             mCallbacks = Lists.newArrayList();
+     private ContentObserver mDeviceProvisionedObserver;
+     private final ContentObserver mTimeFormatChangeObserver;
++    private ContentObserver mSettingsChangeObserver;
+ 
+     private boolean mSwitchingUser;
+ 
+@@ -376,6 +377,8 @@ public class KeyguardUpdateMonitor implements TrustManager.TrustListener, Dumpab
+     private int mPostureState = DEVICE_POSTURE_UNKNOWN;
+     private FingerprintInteractiveToAuthProvider mFingerprintInteractiveToAuthProvider;
+ 
++    private boolean mFingerprintWakeAndUnlock;
++
+     /**
+      * Short delay before restarting fingerprint authentication after a successful try. This should
+      * be slightly longer than the time between onFingerprintAuthenticated and
+@@ -2183,6 +2186,8 @@ public class KeyguardUpdateMonitor implements TrustManager.TrustListener, Dumpab
+                 R.integer.config_face_auth_supported_posture);
+         mFaceWakeUpTriggersConfig = faceWakeUpTriggersConfig;
+ 
++        updateFingerprintSettings();
++
+         mHandler = new Handler(mainLooper) {
+             @Override
+             public void handleMessage(Message msg) {
+@@ -2408,6 +2413,28 @@ public class KeyguardUpdateMonitor implements TrustManager.TrustListener, Dumpab
+                 false, mTimeFormatChangeObserver, UserHandle.USER_ALL);
+ 
+         mFingerprintInteractiveToAuthProvider = interactiveToAuthProvider.orElse(null);
++
++        mSettingsChangeObserver = new ContentObserver(mHandler) {
++            @Override
++            public void onChange(boolean selfChange) {
++                updateFingerprintSettings();
++            }
++        };
++        mContext.getContentResolver().registerContentObserver(
++                Settings.Secure.getUriFor(Settings.Secure.SFPS_PERFORMANT_AUTH_ENABLED),
++                false, mSettingsChangeObserver, UserHandle.USER_ALL);
++    }
++
++    private void updateFingerprintSettings() {
++        boolean defFingerprintSettings = mContext.getResources().getBoolean(
++                org.lineageos.platform.internal.R.bool.config_fingerprintWakeAndUnlock);
++        if (defFingerprintSettings) {
++            mFingerprintWakeAndUnlock = Settings.Secure.getIntForUser(mContext.getContentResolver(),
++                    Settings.Secure.SFPS_PERFORMANT_AUTH_ENABLED,
++                    1, UserHandle.USER_CURRENT) == 1;
++        } else {
++            mFingerprintWakeAndUnlock = defFingerprintSettings;
++        }
+     }
+ 
+     private void initializeSimState() {
+@@ -2805,7 +2832,18 @@ public class KeyguardUpdateMonitor implements TrustManager.TrustListener, Dumpab
+         final int user = getCurrentUser();
+         final boolean userDoesNotHaveTrust = !getUserHasTrust(user);
+         final boolean shouldListenForFingerprintAssistant = shouldListenForFingerprintAssistant();
+-        final boolean shouldListenKeyguardState =
++        final boolean shouldListenKeyguardState;
++        if (!mFingerprintWakeAndUnlock) {
++            shouldListenKeyguardState =
++                (isKeyguardVisible()
++                        || mPrimaryBouncerIsOrWillBeShowing
++                        || shouldListenForFingerprintAssistant
++                        || (mKeyguardOccluded && mIsDreaming))
++                        && mDeviceInteractive && !mGoingToSleep && !mKeyguardGoingAway
++                        || (mKeyguardOccluded && userDoesNotHaveTrust
++                            && (mOccludingAppRequestingFp || isUdfps || mAlternateBouncerShowing));
++        } else {
++            shouldListenKeyguardState =
+                 isKeyguardVisible()
+                         || !mDeviceInteractive
+                         || (mPrimaryBouncerIsOrWillBeShowing && !mKeyguardGoingAway)
+@@ -2814,6 +2852,7 @@ public class KeyguardUpdateMonitor implements TrustManager.TrustListener, Dumpab
+                         || (mKeyguardOccluded && mIsDreaming)
+                         || (mKeyguardOccluded && userDoesNotHaveTrust
+                             && (mOccludingAppRequestingFp || isUdfps || mAlternateBouncerShowing));
++        }
+ 
+         // Only listen if this KeyguardUpdateMonitor belongs to the primary user. There is an
+         // instance of KeyguardUpdateMonitor for each user but KeyguardUpdateMonitor is user-aware.
+@@ -4022,6 +4061,10 @@ public class KeyguardUpdateMonitor implements TrustManager.TrustListener, Dumpab
+             mContext.getContentResolver().unregisterContentObserver(mTimeFormatChangeObserver);
+         }
+ 
++        if (mSettingsChangeObserver != null) {
++            mContext.getContentResolver().unregisterContentObserver(mSettingsChangeObserver);
++        }
++
+         mUserTracker.removeCallback(mUserChangedCallback);
+ 
+         TaskStackChangeListeners.getInstance().unregisterTaskStackListener(mTaskStackListener);
+diff --git a/packages/SystemUI/src/com/android/systemui/biometrics/FingerprintInteractiveToAuthProviderImpl.java b/packages/SystemUI/src/com/android/systemui/biometrics/FingerprintInteractiveToAuthProviderImpl.java
+deleted file mode 100644
+index 0878079376c82..0000000000000
+--- a/packages/SystemUI/src/com/android/systemui/biometrics/FingerprintInteractiveToAuthProviderImpl.java
++++ /dev/null
+@@ -1,47 +0,0 @@
+-/*
+- * Copyright (C) 2023 ArrowOS
+- *
+- * Licensed under the Apache License, Version 2.0 (the "License");
+- * you may not use this file except in compliance with the License.
+- * You may obtain a copy of the License at
+- *
+- *      http://www.apache.org/licenses/LICENSE-2.0
+- *
+- * Unless required by applicable law or agreed to in writing, software
+- * distributed under the License is distributed on an "AS IS" BASIS,
+- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- * See the License for the specific language governing permissions and
+- * limitations under the License.
+- */
+-
+-package com.android.systemui.biometrics;
+-
+-import android.content.Context;
+-import android.provider.Settings;
+-
+-import javax.inject.Inject;
+-
+-public class FingerprintInteractiveToAuthProviderImpl implements
+-        FingerprintInteractiveToAuthProvider {
+-
+-    private final Context mContext;
+-    private final int mDefaultValue;
+-
+-    @Inject
+-    public FingerprintInteractiveToAuthProviderImpl(Context context) {
+-        mContext = context;
+-        mDefaultValue = context.getResources().getBoolean(
+-                org.lineageos.platform.internal.R.bool.config_fingerprintWakeAndUnlock) ? 1 : 0;
+-    }
+-
+-    public boolean isEnabled(int userId) {
+-        int value = Settings.Secure.getIntForUser(mContext.getContentResolver(),
+-                Settings.Secure.SFPS_PERFORMANT_AUTH_ENABLED, -1, userId);
+-        if (value == -1) {
+-            value = mDefaultValue;
+-            Settings.Secure.putIntForUser(mContext.getContentResolver(),
+-                    Settings.Secure.SFPS_PERFORMANT_AUTH_ENABLED, value, userId);
+-        }
+-        return value == 0;
+-    }
+-}
+diff --git a/packages/SystemUI/src/com/android/systemui/biometrics/dagger/BiometricsModule.kt b/packages/SystemUI/src/com/android/systemui/biometrics/dagger/BiometricsModule.kt
+index a5828f705ea13..b5d81f2539161 100644
+--- a/packages/SystemUI/src/com/android/systemui/biometrics/dagger/BiometricsModule.kt
++++ b/packages/SystemUI/src/com/android/systemui/biometrics/dagger/BiometricsModule.kt
+@@ -16,10 +16,7 @@
+ 
+ package com.android.systemui.biometrics.dagger
+ 
+-import android.content.Context
+ import com.android.systemui.dagger.SysUISingleton
+-import com.android.systemui.biometrics.FingerprintInteractiveToAuthProvider
+-import com.android.systemui.biometrics.FingerprintInteractiveToAuthProviderImpl
+ import com.android.systemui.util.concurrency.ThreadFactory
+ import dagger.Module
+ import dagger.Provides
+@@ -39,10 +36,6 @@ object BiometricsModule {
+     @BiometricsBackground
+     fun providesPluginExecutor(threadFactory: ThreadFactory): Executor =
+         threadFactory.buildExecutorOnNewThread("biometrics")
+-
+-    @Provides
+-    fun providesFingerprintInteractiveToAuth(ctx: Context): FingerprintInteractiveToAuthProvider =
+-        FingerprintInteractiveToAuthProviderImpl(ctx);
+ }
+ 
+ /**
+-- 
+2.25.1
+

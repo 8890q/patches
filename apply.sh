@@ -23,7 +23,10 @@ git am --signoff < ~/patches/system_security/0001-keystore-hackup.patch
 cd ../../
 cd frameworks/native
 git am --signoff < ~/patches/frameworks_native/0001-Disable-gpu-service.patch
-cd ../../
+cd ..
+cd base
+git am --signoff < ~/patches/frameworks_base/0001-Revert-fp-always-on-changes.patch
+cd ../..
 cd system/core
 git am --signoff < ~/patches/system_core/0001-Add-no-BPF-usecase-support.patch
 cd ../../
