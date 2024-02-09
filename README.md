@@ -3,9 +3,6 @@ Just copy them to coresponding folder and git apply them (or git am --signoff < 
 
 Simplest way to apply patches is to clone this repo to ~/patches copy apply.sh script to root of your android source dir and run apply.sh
 
-For now there are only 8895 patches.
+Patches for bpf less kernel for 8890 will be added here
 
-https://review.lineageos.org/c/LineageOS/android_device_razer_cheryl/+/378601
-to replace libhidl patch soon
-
-these patches will be fully removed and replaced with bpf patches needed for 8890
+system/security patch is dealing with broken gk/ks
