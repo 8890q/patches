@@ -3,7 +3,9 @@ Just copy them to coresponding folder and git apply them (or git am --signoff < 
 
 Simplest way to apply patches is to clone this repo to ~/patches copy apply.sh script to root of your android source dir and run apply.sh
 
-For now there are only 8895 patches, we can get rid of most of them (switch to aidl clearkey drm, wifi and hacked libhidlbase from older ver)
-system security will stay till gk is fully working
+For now there are only 8895 patches.
+
+https://review.lineageos.org/c/LineageOS/android_device_razer_cheryl/+/378601
+to replace libhidl patch soon
 
 these patches will be fully removed and replaced with bpf patches needed for 8890
