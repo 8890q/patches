@@ -11,7 +11,7 @@ echo "skipping frameworks/native"
 cd ../
 cd libs/net/
 git reset --hard HEAD~1
-cd ../../
+cd ../../../
 cd packages/modules/adb
 git reset --hard HEAD~1
 cd ../
@@ -27,9 +27,9 @@ cd ../
 cd core
 git reset --hard HEAD~3
 cd ../
-cd ../netd
+cd netd
 git reset --hard HEAD~3
 cd ../
-cd system/security/
+cd security/
 echo "skipping system/security"
 cd ../../

@@ -7,7 +7,7 @@ cd frameworks/base/
 git am --signoff < ~/patches/frameworks_base/0001-Revert-Revert-Treat-process-group-creation-failure-d.patch
 git am --signoff < ~/patches/frameworks_base/0002-Ignore-cgroup-creation-errors.patch
 git am --signoff < ~/patches/frameworks_base/0003-Revert-CachedAppOptimizer-use-new-cgroup-api-for-fre.patch
-git am --signoff < ~/patches/frameworks_base/0003-Revert-CachedAppOptimizer-use-new-cgroup-api-for-fre.patch
+git am --signoff < ~/patches/frameworks_base/0004-Revert-CachedAppOptimizer-remove-native-freezer-enab.patch
 git am --signoff < ~/patches/frameworks_base/0005-Revert-CachedAppOptimizer-don-t-hardcode-freezer-pat.patch
 git am --signoff < ~/patches/frameworks_base/0006-CachedAppOptimizer-revert-freezer-to-cgroups-v1.patch
 cd ../
@@ -16,7 +16,7 @@ git am --signoff < ~/patches/frameworks_native/0001-renderengine-gles-unconditio
 cd ..
 cd libs/net/
 git am --signoff < ~/patches/frameworks_libs_net/0001-Restore-back-the-behavior-of-isValid-It-is-legal-to-.patch
-cd ../../
+cd ../../../
 cd packages/modules/adb
 git am --signoff < ~/patches/packages_modules_adb/0001-adb-Bring-back-support-for-legacy-FunctionFS.patch
 cd ../
@@ -42,7 +42,7 @@ git am --signoff < ~/patches/system_core/0001-Fix-support-for-devices-without-cg
 git am --signoff < ~/patches/system_core/0002-reboot-must-be-fast-on-legacy-too.patch
 git am --signoff < ~/patches/system_core/0003-Revert-libprocessgroup-switch-freezer-to-cgroup-v2.patch
 cd ../
-cd ../netd
+cd netd
 git am --signoff < ~/patches/system_netd/0001-Don-t-fail-on-FTP-conntracking-failing.patch
 git am --signoff < ~/patches/system_netd/0002-Support-no-bpf-usecase.patch
 git am --signoff < ~/patches/system_netd/0003-Don-t-abort-in-case-of-cgroup-bpf-setup-fail-since-s.patch
