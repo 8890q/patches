@@ -1,0 +1,28 @@
+From 678589b8ebe7800ead109ceedc47dd95f7b0cf1b Mon Sep 17 00:00:00 2001
+From: ivanmeler <i_ivan@windowslive.com>
+Date: Sun, 11 Feb 2024 18:47:02 +0000
+Subject: [PATCH 6/6] Fix null pointer crash on bpfless devicess
+
+Change-Id: I062196714319b49976fe357dde79ec28f072bac8
+---
+ service/src/com/android/server/BpfNetMaps.java | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/service/src/com/android/server/BpfNetMaps.java b/service/src/com/android/server/BpfNetMaps.java
+index 999c854634..682869c4ce 100644
+--- a/service/src/com/android/server/BpfNetMaps.java
++++ b/service/src/com/android/server/BpfNetMaps.java
+@@ -1003,6 +1003,10 @@ public class BpfNetMaps {
+ 
+     private <K extends Struct, V extends Struct> int getMapSize(IBpfMap<K, V> map)
+             throws ErrnoException {
++        if (map == null) {
++            // Handle null map gracefully
++            return 0;
++        }
+         // forEach could restart iteration from the beginning if there is a concurrent entry
+         // deletion. netd and skDestroyListener could delete CookieTagMap entry concurrently.
+         // So using Set to count the number of entry in the map.
+-- 
+2.25.1
+

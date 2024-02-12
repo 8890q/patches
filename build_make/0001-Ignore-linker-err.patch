@@ -1,0 +1,28 @@
+From 648cfadacc8ecefba087979128089bf870e7bf89 Mon Sep 17 00:00:00 2001
+From: ivanmeler <i_ivan@windowslive.com>
+Date: Tue, 6 Feb 2024 13:29:41 +0000
+Subject: [PATCH] Ignore linker err
+
+Change-Id: If851fa49ef8657c850e839eb7f53952ad39e4836
+Signed-off-by: ivanmeler <i_ivan@windowslive.com>
+---
+ core/main.mk | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/core/main.mk b/core/main.mk
+index ae96884d3e..a2c99cd8f4 100644
+--- a/core/main.mk
++++ b/core/main.mk
+@@ -1099,8 +1099,7 @@ endef
+ # $(1): the prefix of the module doing the linking
+ # $(2): the prefix of the linked module
+ define link-type-error
+-$(shell $(call echo-error,$($(1).MAKEFILE),"$(call link-type-name,$(1)) ($($(1).TYPE)) can not link against $(call link-type-name,$(2)) ($(3))"))\
+-$(eval link_type_error := true)
++$(shell $(call echo-warning,$($(1).MAKEFILE),"$(call link-type-name,$(1)) ($($(1).TYPE)) can not link against $(call link-type-name,$(2)) ($(3))"))
+ endef
+ 
+ link-type-missing :=
+-- 
+2.25.1
+

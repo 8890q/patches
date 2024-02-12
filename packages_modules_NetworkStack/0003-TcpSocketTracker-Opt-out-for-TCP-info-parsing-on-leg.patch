@@ -1,0 +1,88 @@
+From 2bc1f80bf47a90e5d293e8ea5f22232798face1a Mon Sep 17 00:00:00 2001
+From: Bruno Martins <bgcngm@gmail.com>
+Date: Wed, 14 Oct 2020 16:08:13 +0100
+Subject: [PATCH 3/3] TcpSocketTracker: Opt-out for TCP info parsing on legacy
+ kernels
+
+This feature requires netlink features that are unsupported on
+kernel versions lower than 4.4, therefore opt-out for it in such
+cases and avoid constantly crashing TcpSocketTracker.
+
+Change-Id: I128ed1d0dcb6ca07eef1179f1ef036ccaad64e52
+---
+ .../netlink/TcpSocketTracker.java             | 36 ++++++++++++++++++-
+ 1 file changed, 35 insertions(+), 1 deletion(-)
+
+diff --git a/src/com/android/networkstack/netlink/TcpSocketTracker.java b/src/com/android/networkstack/netlink/TcpSocketTracker.java
+index 60ebf782..3fb0ffeb 100644
+--- a/src/com/android/networkstack/netlink/TcpSocketTracker.java
++++ b/src/com/android/networkstack/netlink/TcpSocketTracker.java
+@@ -48,8 +48,10 @@ import android.provider.DeviceConfig;
+ import android.system.ErrnoException;
+ import android.system.Os;
+ import android.system.StructTimeval;
++import android.text.TextUtils;
+ import android.util.Log;
+ import android.util.LongSparseArray;
++import android.util.Pair;
+ import android.util.SparseArray;
+ 
+ import androidx.annotation.NonNull;
+@@ -76,6 +78,8 @@ import java.nio.ByteBuffer;
+ import java.util.ArrayList;
+ import java.util.Base64;
+ import java.util.List;
++import java.util.regex.Matcher;
++import java.util.regex.Pattern;
+ 
+ /**
+  * Class for NetworkStack to send a SockDiag request and parse the returned tcp info.
+@@ -486,6 +490,35 @@ public class TcpSocketTracker {
+         mDependencies.removeBroadcastReceiver(mDeviceIdleReceiver);
+     }
+ 
++    private static boolean isTcpInfoParsingSupportedByKernel() {
++        final String kVersionString = Os.uname().release;
++        return compareMajorMinorVersion(kVersionString, "4.4") >= 0;
++    }
++
++    private static int compareMajorMinorVersion(final String s1, final String s2) {
++        final Pair<Integer, Integer> v1 = getVersionFromString(s1);
++        final Pair<Integer, Integer> v2 = getVersionFromString(s2);
++
++        if (v1.first == v2.first) {
++            return Integer.compare(v1.second, v2.second);
++        } else {
++            return Integer.compare(v1.first, v2.first);
++        }
++    }
++
++    private static Pair<Integer, Integer> getVersionFromString(String version) {
++        // Only gets major and minor number of the version string.
++        final Pattern versionPattern = Pattern.compile("^(\\d+)(\\.(\\d+))?.*");
++        final Matcher m = versionPattern.matcher(version);
++        if (m.matches()) {
++            final int major = Integer.parseInt(m.group(1));
++            final int minor = TextUtils.isEmpty(m.group(3)) ? 0 : Integer.parseInt(m.group(3));
++            return new Pair<>(major, minor);
++        } else {
++            return new Pair<>(0, 0);
++        }
++    }
++
+     /**
+      * Corresponds to {@code struct rtattr} from bionic/libc/kernel/uapi/linux/rtnetlink.h
+      *
+@@ -639,7 +672,8 @@ public class TcpSocketTracker {
+         public boolean isTcpInfoParsingSupported() {
+             // Request tcp info from NetworkStack directly needs extra SELinux permission added
+             // after Q release.
+-            return ShimUtils.isReleaseOrDevelopmentApiAbove(Build.VERSION_CODES.Q);
++            return ShimUtils.isReleaseOrDevelopmentApiAbove(Build.VERSION_CODES.Q) &&
++                    isTcpInfoParsingSupportedByKernel();
+         }
+ 
+         /**
+-- 
+2.25.1
+

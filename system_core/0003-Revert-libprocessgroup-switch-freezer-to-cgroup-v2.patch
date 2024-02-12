@@ -1,0 +1,142 @@
+From 4b1e2799a0ecddfeb54bcdd3e3cdb5c6f24ee0fc Mon Sep 17 00:00:00 2001
+From: Yaroslav Zviezda <acroreiser@gmail.com>
+Date: Tue, 28 Dec 2021 22:19:28 +0300
+Subject: [PATCH 3/3] Revert "libprocessgroup: switch freezer to cgroup v2"
+
+Updated for U.
+
+This reverts commit 510f89ec0ed82b07638f0e08f7b70d4c232f49c0.
+
+Change-Id: I27c06d3185c62038bcee1331d060606c7400109f
+---
+ libprocessgroup/profiles/cgroups.json       | 15 ++++++++
+ libprocessgroup/profiles/task_profiles.json | 40 +++++++++++++++++----
+ rootdir/init.rc                             | 10 ++++++
+ 3 files changed, 58 insertions(+), 7 deletions(-)
+
+diff --git a/libprocessgroup/profiles/cgroups.json b/libprocessgroup/profiles/cgroups.json
+index 3e4393df2..e7d0df064 100644
+--- a/libprocessgroup/profiles/cgroups.json
++++ b/libprocessgroup/profiles/cgroups.json
+@@ -28,6 +28,21 @@
+       "UID": "root",
+       "GID": "system",
+       "Optional": true
++    },
++    {
++      "Controller": "schedtune",
++      "Path": "/dev/stune",
++      "Mode": "0755",
++      "UID": "system",
++      "GID": "system",
++      "Optional": true
++    },
++    {
++      "Controller": "freezer",
++      "Path": "/dev/freezer",
++      "Mode": "0755",
++      "UID": "system",
++      "GID": "system"
+     }
+   ],
+   "Cgroups2": {
+diff --git a/libprocessgroup/profiles/task_profiles.json b/libprocessgroup/profiles/task_profiles.json
+index 1fc66ba10..ede753537 100644
+--- a/libprocessgroup/profiles/task_profiles.json
++++ b/libprocessgroup/profiles/task_profiles.json
+@@ -75,7 +75,7 @@
+     {
+       "Name": "FreezerState",
+       "Controller": "freezer",
+-      "File": "cgroup.freeze"
++      "File": "frozen/freezer.state"
+     }
+   ],
+ 
+@@ -97,11 +97,11 @@
+       "Name": "Frozen",
+       "Actions": [
+         {
+-          "Name": "SetAttribute",
++          "Name": "JoinCgroup",
+           "Params":
+           {
+-            "Name": "FreezerState",
+-            "Value": "1"
++            "Controller": "freezer",
++            "Path": "frozen"
+           }
+         }
+       ]
+@@ -110,11 +110,11 @@
+       "Name": "Unfrozen",
+       "Actions": [
+         {
+-          "Name": "SetAttribute",
++          "Name": "JoinCgroup",
+           "Params":
+           {
+-            "Name": "FreezerState",
+-            "Value": "0"
++            "Controller": "freezer",
++            "Path": ""
+           }
+         }
+       ]
+@@ -622,6 +622,32 @@
+           }
+         }
+       ]
++    },
++    {
++      "Name": "FreezerThawed",
++      "Actions": [
++        {
++          "Name": "SetAttribute",
++          "Params":
++          {
++            "Name": "FreezerState",
++            "Value": "THAWED"
++          }
++        }
++      ]
++    },
++    {
++      "Name": "FreezerFrozen",
++      "Actions": [
++        {
++          "Name": "SetAttribute",
++          "Params":
++          {
++            "Name": "FreezerState",
++            "Value": "FROZEN"
++          }
++        }
++      ]
+     }
+   ],
+ 
+diff --git a/rootdir/init.rc b/rootdir/init.rc
+index 7da264611..b99e54eb9 100644
+--- a/rootdir/init.rc
++++ b/rootdir/init.rc
+@@ -409,6 +409,16 @@ on init
+     chmod 0664 /dev/cpuset/cgroup.procs
+     chmod 0664 /dev/cpuset/camera-daemon/cgroup.procs
+ 
++    # freezer cgroup entries
++    mkdir /dev/freezer/frozen
++    write /dev/freezer/frozen/freezer.state FROZEN
++    chown system system /dev/freezer/cgroup.procs
++    chown system system /dev/freezer/frozen
++    chown system system /dev/freezer/frozen/freezer.state
++    chown system system /dev/freezer/frozen/cgroup.procs
++
++    chmod 0664 /dev/freezer/frozen/freezer.state
++
+     # make the PSI monitor accessible to others
+     chown system system /proc/pressure/memory
+     chmod 0664 /proc/pressure/memory
+-- 
+2.25.1
+
