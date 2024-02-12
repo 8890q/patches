@@ -6,6 +6,9 @@ cd ../../
 cd frameworks/base/
 git reset --hard HEAD~6
 cd ../
+cd native/
+echo "skipping frameworks/native"
+cd ../
 cd libs/net/
 git reset --hard HEAD~1
 cd ../../

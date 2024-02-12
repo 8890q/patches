@@ -11,6 +11,9 @@ git am --signoff < ~/patches/frameworks_base/0003-Revert-CachedAppOptimizer-use-
 git am --signoff < ~/patches/frameworks_base/0005-Revert-CachedAppOptimizer-don-t-hardcode-freezer-pat.patch
 git am --signoff < ~/patches/frameworks_base/0006-CachedAppOptimizer-revert-freezer-to-cgroups-v1.patch
 cd ../
+cd native/
+git am --signoff < ~/patches/frameworks_native/0001-renderengine-gles-unconditionally-skip-PostRenderCle.patch
+cd ..
 cd libs/net/
 git am --signoff < ~/patches/frameworks_libs_net/0001-Restore-back-the-behavior-of-isValid-It-is-legal-to-.patch
 cd ../../
