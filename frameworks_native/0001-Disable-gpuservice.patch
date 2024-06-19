@@ -1,0 +1,22 @@
+From c30e19f666216e7f72956ea6c9974ad7612a112b Mon Sep 17 00:00:00 2001
+From: ivanmeler <i_ivan@windowslive.com>
+Date: Wed, 19 Jun 2024 18:43:42 +0000
+Subject: [PATCH 1/2] Disable gpuservice
+
+Change-Id: Icb60cae30c07444ef08881f06387055e21b491d7
+---
+ services/gpuservice/gpuservice.rc | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/services/gpuservice/gpuservice.rc b/services/gpuservice/gpuservice.rc
+index 0da8bd3812..b5b271402d 100644
+--- a/services/gpuservice/gpuservice.rc
++++ b/services/gpuservice/gpuservice.rc
+@@ -2,3 +2,4 @@ service gpu /system/bin/gpuservice
+     class core
+     user gpu_service
+     group graphics readtracefs
++    disabled
+-- 
+2.25.1
+

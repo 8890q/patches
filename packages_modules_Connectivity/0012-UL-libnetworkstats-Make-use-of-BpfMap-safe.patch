@@ -1,0 +1,104 @@
+From b645b3aef94fb54a754b02be865ef8cd1d5b5d4f Mon Sep 17 00:00:00 2001
+From: z3DD3r <z3dd3r@gmail.com>
+Date: Sat, 20 Apr 2024 20:31:37 +0300
+Subject: [PATCH 12/12] [UL] libnetworkstats: Make use of BpfMap safe
+
+---
+ .../libs/libnetworkstats/BpfNetworkStats.cpp  | 48 +++++++++++++++++++
+ 1 file changed, 48 insertions(+)
+
+diff --git a/service-t/native/libs/libnetworkstats/BpfNetworkStats.cpp b/service-t/native/libs/libnetworkstats/BpfNetworkStats.cpp
+index 31013972b8..261a61f8e0 100644
+--- a/service-t/native/libs/libnetworkstats/BpfNetworkStats.cpp
++++ b/service-t/native/libs/libnetworkstats/BpfNetworkStats.cpp
+@@ -53,6 +53,10 @@ int bpfGetUidStatsInternal(uid_t uid, StatsValue* stats,
+ 
+ int bpfGetUidStats(uid_t uid, StatsValue* stats) {
+     static BpfMapRO<uint32_t, StatsValue> appUidStatsMap(APP_UID_STATS_MAP_PATH);
++    if (!appUidStatsMap.isValid() || !appUidStatsMap.isOk()) {
++        ALOGE("get map fd failed: %s", strerror(errno));
++        return -errno;
++    }
+     return bpfGetUidStatsInternal(uid, stats, appUidStatsMap);
+ }
+ 
+@@ -85,7 +89,17 @@ int bpfGetIfaceStatsInternal(const char* iface, StatsValue* stats,
+ 
+ int bpfGetIfaceStats(const char* iface, StatsValue* stats) {
+     static BpfMapRO<uint32_t, StatsValue> ifaceStatsMap(IFACE_STATS_MAP_PATH);
++    if (!ifaceStatsMap.isValid() || !ifaceStatsMap.isOk()) {
++        ALOGE("get map fd failed: %s", strerror(errno));
++        return -errno;
++    }
++
+     static BpfMapRO<uint32_t, IfaceValue> ifaceIndexNameMap(IFACE_INDEX_NAME_MAP_PATH);
++    if (!ifaceIndexNameMap.isValid() || !ifaceIndexNameMap.isOk()) {
++        ALOGE("get map fd failed: %s", strerror(errno));
++        return -errno;
++    }
++
+     return bpfGetIfaceStatsInternal(iface, stats, ifaceStatsMap, ifaceIndexNameMap);
+ }
+ 
+@@ -102,6 +116,10 @@ int bpfGetIfIndexStatsInternal(uint32_t ifindex, StatsValue* stats,
+ 
+ int bpfGetIfIndexStats(int ifindex, StatsValue* stats) {
+     static BpfMapRO<uint32_t, StatsValue> ifaceStatsMap(IFACE_STATS_MAP_PATH);
++    if (!ifaceStatsMap.isValid() || !ifaceStatsMap.isOk()) {
++        ALOGE("get map fd failed: %s", strerror(errno));
++        return -errno;
++    }
+     return bpfGetIfIndexStatsInternal(ifindex, stats, ifaceStatsMap);
+ }
+ 
+@@ -167,9 +185,29 @@ int parseBpfNetworkStatsDetailInternal(std::vector<stats_line>& lines,
+ 
+ int parseBpfNetworkStatsDetail(std::vector<stats_line>* lines) {
+     static BpfMapRO<uint32_t, IfaceValue> ifaceIndexNameMap(IFACE_INDEX_NAME_MAP_PATH);
++    if (!ifaceIndexNameMap.isValid() || !ifaceIndexNameMap.isOk()) {
++        ALOGE("get map fd failed: %s", strerror(errno));
++        return -errno;
++    }
++
+     static BpfMapRO<uint32_t, uint32_t> configurationMap(CONFIGURATION_MAP_PATH);
++    if (!configurationMap.isValid() || !configurationMap.isOk()) {
++        ALOGE("get map fd failed: %s", strerror(errno));
++        return -errno;
++    }
++
+     static BpfMap<StatsKey, StatsValue> statsMapA(STATS_MAP_A_PATH);
++    if (!statsMapA.isValid() || !statsMapA.isOk()) {
++        ALOGE("get map fd failed: %s", strerror(errno));
++        return -errno;
++    }
++
+     static BpfMap<StatsKey, StatsValue> statsMapB(STATS_MAP_B_PATH);
++    if (!statsMapB.isValid() || !statsMapB.isOk()) {
++        ALOGE("get map fd failed: %s", strerror(errno));
++        return -errno;
++    }
++
+     auto configuration = configurationMap.readValue(CURRENT_STATS_MAP_CONFIGURATION_KEY);
+     if (!configuration.ok()) {
+         ALOGE("Cannot read the old configuration from map: %s",
+@@ -243,7 +281,17 @@ int parseBpfNetworkStatsDevInternal(std::vector<stats_line>& lines,
+ 
+ int parseBpfNetworkStatsDev(std::vector<stats_line>* lines) {
+     static BpfMapRO<uint32_t, IfaceValue> ifaceIndexNameMap(IFACE_INDEX_NAME_MAP_PATH);
++    if (!ifaceIndexNameMap.isValid() || !ifaceIndexNameMap.isOk()) {
++        ALOGE("get map fd failed: %s", strerror(errno));
++        return -errno;
++    }
++
+     static BpfMapRO<uint32_t, StatsValue> ifaceStatsMap(IFACE_STATS_MAP_PATH);
++    if (!ifaceStatsMap.isValid() || !ifaceStatsMap.isOk()) {
++        ALOGE("get map fd failed: %s", strerror(errno));
++        return -errno;
++    }
++
+     return parseBpfNetworkStatsDevInternal(*lines, ifaceStatsMap, ifaceIndexNameMap);
+ }
+ 
+-- 
+2.25.1
+

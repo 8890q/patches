@@ -1,0 +1,27 @@
+From 68b7f9c2010b8d933e7b4768f06dc92958c8b49f Mon Sep 17 00:00:00 2001
+From: Yaroslav Zviezda <acroreiser@gmail.com>
+Date: Sun, 31 Mar 2024 21:32:02 +0300
+Subject: [PATCH 6/8] [UL] Requesting tcp info via netlink socket is NOT
+ supported
+
+Change-Id: Iec515ea5e50f1bb0ad929e78661363f33dd5bc64
+---
+ src/com/android/networkstack/netlink/TcpSocketTracker.java | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/com/android/networkstack/netlink/TcpSocketTracker.java b/src/com/android/networkstack/netlink/TcpSocketTracker.java
+index dd849324..bda6ff14 100644
+--- a/src/com/android/networkstack/netlink/TcpSocketTracker.java
++++ b/src/com/android/networkstack/netlink/TcpSocketTracker.java
+@@ -686,7 +686,7 @@ public class TcpSocketTracker {
+         public boolean isTcpInfoParsingSupported() {
+             // Request tcp info from NetworkStack directly needs extra SELinux permission added
+             // after Q release.
+-            return ShimUtils.isReleaseOrDevelopmentApiAbove(Build.VERSION_CODES.Q);
++            return false;
+         }
+ 
+         /**
+-- 
+2.25.1
+

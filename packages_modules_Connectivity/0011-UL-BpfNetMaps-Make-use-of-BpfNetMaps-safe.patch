@@ -1,0 +1,444 @@
+From 846ada11fd29c850e2ed75fedacf0e9e19f7b8e9 Mon Sep 17 00:00:00 2001
+From: z3DD3r <z3dd3r@gmail.com>
+Date: Sat, 20 Apr 2024 19:12:46 +0300
+Subject: [PATCH 11/12] [UL] BpfNetMaps: Make use of BpfNetMaps safe
+
+---
+ .../src/com/android/server/BpfNetMaps.java    | 266 ++++++++++--------
+ 1 file changed, 156 insertions(+), 110 deletions(-)
+
+diff --git a/service/src/com/android/server/BpfNetMaps.java b/service/src/com/android/server/BpfNetMaps.java
+index fae518c739..fa335c4b13 100644
+--- a/service/src/com/android/server/BpfNetMaps.java
++++ b/service/src/com/android/server/BpfNetMaps.java
+@@ -243,14 +243,16 @@ public class BpfNetMaps {
+             sConfigurationMap = getConfigurationMap();
+         }
+         try {
+-            sConfigurationMap.updateEntry(UID_RULES_CONFIGURATION_KEY,
+-                    new U32(UID_RULES_DEFAULT_CONFIGURATION));
++            if (sConfigurationMap != null)
++                sConfigurationMap.updateEntry(UID_RULES_CONFIGURATION_KEY,
++                        new U32(UID_RULES_DEFAULT_CONFIGURATION));
+         } catch (ErrnoException e) {
+             throw new IllegalStateException("Failed to initialize uid rules configuration", e);
+         }
+         try {
+-            sConfigurationMap.updateEntry(CURRENT_STATS_MAP_CONFIGURATION_KEY,
+-                    new U32(STATS_SELECT_MAP_A));
++            if (sConfigurationMap != null)
++                sConfigurationMap.updateEntry(CURRENT_STATS_MAP_CONFIGURATION_KEY,
++                        new U32(STATS_SELECT_MAP_A));
+         } catch (ErrnoException e) {
+             throw new IllegalStateException("Failed to initialize current stats configuration", e);
+         }
+@@ -259,7 +261,8 @@ public class BpfNetMaps {
+             sUidOwnerMap = getUidOwnerMap();
+         }
+         try {
+-            sUidOwnerMap.clear();
++            if (sUidOwnerMap != null)
++                sUidOwnerMap.clear();
+         } catch (ErrnoException e) {
+             throw new IllegalStateException("Failed to initialize uid owner map", e);
+         }
+@@ -276,7 +279,8 @@ public class BpfNetMaps {
+             sDataSaverEnabledMap = getDataSaverEnabledMap();
+         }
+         try {
+-            sDataSaverEnabledMap.updateEntry(DATA_SAVER_ENABLED_KEY, new U8(DATA_SAVER_DISABLED));
++            if (sDataSaverEnabledMap != null)
++                sDataSaverEnabledMap.updateEntry(DATA_SAVER_ENABLED_KEY, new U8(DATA_SAVER_DISABLED));
+         } catch (ErrnoException e) {
+             throw new IllegalStateException("Failed to initialize data saver configuration", e);
+         }
+@@ -285,7 +289,8 @@ public class BpfNetMaps {
+             sIngressDiscardMap = getIngressDiscardMap();
+         }
+         try {
+-            sIngressDiscardMap.clear();
++            if (sIngressDiscardMap != null)
++                sIngressDiscardMap.clear();
+         } catch (ErrnoException e) {
+             throw new IllegalStateException("Failed to initialize ingress discard map", e);
+         }
+@@ -382,23 +387,25 @@ public class BpfNetMaps {
+ 
+     private void removeRule(final int uid, final long match, final String caller) {
+         try {
+-            synchronized (sUidOwnerMap) {
+-                final UidOwnerValue oldMatch = sUidOwnerMap.getValue(new S32(uid));
++            if (sUidOwnerMap != null) {
++                synchronized (sUidOwnerMap) {
++                    final UidOwnerValue oldMatch = sUidOwnerMap.getValue(new S32(uid));
+ 
+-                if (oldMatch == null) {
+-                    throw new ServiceSpecificException(ENOENT,
+-                            "sUidOwnerMap does not have entry for uid: " + uid);
+-                }
++                    if (oldMatch == null) {
++                        throw new ServiceSpecificException(ENOENT,
++                                "sUidOwnerMap does not have entry for uid: " + uid);
++                    }
+ 
+-                final UidOwnerValue newMatch = new UidOwnerValue(
+-                        (match == IIF_MATCH) ? 0 : oldMatch.iif,
+-                        oldMatch.rule & ~match
+-                );
++                    final UidOwnerValue newMatch = new UidOwnerValue(
++                            (match == IIF_MATCH) ? 0 : oldMatch.iif,
++                            oldMatch.rule & ~match
++                    );
+ 
+-                if (newMatch.rule == 0) {
+-                    sUidOwnerMap.deleteEntry(new S32(uid));
+-                } else {
+-                    sUidOwnerMap.updateEntry(new S32(uid), newMatch);
++                    if (newMatch.rule == 0) {
++                        sUidOwnerMap.deleteEntry(new S32(uid));
++                    } else {
++                        sUidOwnerMap.updateEntry(new S32(uid), newMatch);
++                    }
+                 }
+             }
+         } catch (ErrnoException e) {
+@@ -414,22 +421,24 @@ public class BpfNetMaps {
+         }
+ 
+         try {
+-            synchronized (sUidOwnerMap) {
+-                final UidOwnerValue oldMatch = sUidOwnerMap.getValue(new S32(uid));
+-
+-                final UidOwnerValue newMatch;
+-                if (oldMatch != null) {
+-                    newMatch = new UidOwnerValue(
+-                            (match == IIF_MATCH) ? iif : oldMatch.iif,
+-                            oldMatch.rule | match
+-                    );
+-                } else {
+-                    newMatch = new UidOwnerValue(
+-                            iif,
+-                            match
+-                    );
++            if (sUidOwnerMap != null) {
++                synchronized (sUidOwnerMap) {
++                    final UidOwnerValue oldMatch = sUidOwnerMap.getValue(new S32(uid));
++
++                    final UidOwnerValue newMatch;
++                    if (oldMatch != null) {
++                        newMatch = new UidOwnerValue(
++                                (match == IIF_MATCH) ? iif : oldMatch.iif,
++                                oldMatch.rule | match
++                        );
++                    } else {
++                        newMatch = new UidOwnerValue(
++                                iif,
++                                match
++                        );
++                    }
++                    sUidOwnerMap.updateEntry(new S32(uid), newMatch);
+                 }
+-                sUidOwnerMap.updateEntry(new S32(uid), newMatch);
+             }
+         } catch (ErrnoException e) {
+             throw new ServiceSpecificException(e.errno,
+@@ -513,9 +522,11 @@ public class BpfNetMaps {
+         final long match = getMatchByFirewallChain(childChain);
+         try {
+             synchronized (sUidRulesConfigBpfMapLock) {
+-                final U32 config = sConfigurationMap.getValue(UID_RULES_CONFIGURATION_KEY);
+-                final long newConfig = enable ? (config.val | match) : (config.val & ~match);
+-                sConfigurationMap.updateEntry(UID_RULES_CONFIGURATION_KEY, new U32(newConfig));
++                if (sConfigurationMap != null) {
++                    final U32 config = sConfigurationMap.getValue(UID_RULES_CONFIGURATION_KEY);
++                    final long newConfig = enable ? (config.val | match) : (config.val & ~match);
++                    sConfigurationMap.updateEntry(UID_RULES_CONFIGURATION_KEY, new U32(newConfig));
++                }
+             }
+         } catch (ErrnoException e) {
+             throw new ServiceSpecificException(e.errno,
+@@ -538,7 +549,9 @@ public class BpfNetMaps {
+     @Deprecated
+     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+     public boolean isChainEnabled(final int childChain) {
+-        return BpfNetMapsReader.isChainEnabled(sConfigurationMap, childChain);
++        if (sConfigurationMap != null)
++            return BpfNetMapsReader.isChainEnabled(sConfigurationMap, childChain);
++        return false;
+     }
+ 
+     private Set<Integer> asSet(final int[] uids) {
+@@ -573,23 +586,25 @@ public class BpfNetMaps {
+         final Set<Integer> uidSet = asSet(uids);
+         final Set<Integer> uidSetToRemoveRule = new ArraySet<>();
+         try {
+-            synchronized (sUidOwnerMap) {
+-                sUidOwnerMap.forEach((uid, config) -> {
+-                    // config could be null if there is a concurrent entry deletion.
+-                    // http://b/220084230. But sUidOwnerMap update must be done while holding a
+-                    // lock, so this should not happen.
+-                    if (config == null) {
+-                        Log.wtf(TAG, "sUidOwnerMap entry was deleted while holding a lock");
+-                    } else if (!uidSet.contains((int) uid.val) && (config.rule & match) != 0) {
+-                        uidSetToRemoveRule.add((int) uid.val);
+-                    }
+-                });
++            if (sUidOwnerMap != null) {
++                synchronized (sUidOwnerMap) {
++                    sUidOwnerMap.forEach((uid, config) -> {
++                        // config could be null if there is a concurrent entry deletion.
++                        // http://b/220084230. But sUidOwnerMap update must be done while holding a
++                        // lock, so this should not happen.
++                        if (config == null) {
++                            Log.wtf(TAG, "sUidOwnerMap entry was deleted while holding a lock");
++                        } else if (!uidSet.contains((int) uid.val) && (config.rule & match) != 0) {
++                            uidSetToRemoveRule.add((int) uid.val);
++                        }
++                    });
+ 
+-                for (final int uid : uidSetToRemoveRule) {
+-                    removeRule(uid, match, "replaceUidChain");
+-                }
+-                for (final int uid : uids) {
+-                    addRule(uid, match, "replaceUidChain");
++                    for (final int uid : uidSetToRemoveRule) {
++                        removeRule(uid, match, "replaceUidChain");
++                    }
++                    for (final int uid : uids) {
++                        addRule(uid, match, "replaceUidChain");
++                    }
+                 }
+             }
+         } catch (ErrnoException | ServiceSpecificException e) {
+@@ -636,22 +651,26 @@ public class BpfNetMaps {
+      */
+     // TODO: Migrate the callers to use {@link BpfNetMapsReader#getUidRule} instead.
+     public int getUidRule(final int childChain, final int uid) {
+-        return BpfNetMapsReader.getUidRule(sUidOwnerMap, childChain, uid);
++        if (sUidOwnerMap != null)
++            return BpfNetMapsReader.getUidRule(sUidOwnerMap, childChain, uid);
++        return 0;
+     }
+ 
+     private Set<Integer> getUidsMatchEnabled(final int childChain) throws ErrnoException {
+         final long match = getMatchByFirewallChain(childChain);
+         Set<Integer> uids = new ArraySet<>();
+-        synchronized (sUidOwnerMap) {
+-            sUidOwnerMap.forEach((uid, val) -> {
+-                if (val == null) {
+-                    Log.wtf(TAG, "sUidOwnerMap entry was deleted while holding a lock");
+-                } else {
+-                    if ((val.rule & match) != 0) {
+-                        uids.add(uid.val);
++        if (sUidOwnerMap != null) {
++            synchronized (sUidOwnerMap) {
++                sUidOwnerMap.forEach((uid, val) -> {
++                    if (val == null) {
++                        Log.wtf(TAG, "sUidOwnerMap entry was deleted while holding a lock");
++                    } else {
++                        if ((val.rule & match) != 0) {
++                            uids.add(uid.val);
++                        }
+                     }
+-                }
+-            });
++                });
++            }
+         }
+         return uids;
+     }
+@@ -799,13 +818,15 @@ public class BpfNetMaps {
+         throwIfPreT("swapActiveStatsMap is not available on pre-T devices");
+ 
+         try {
+-            synchronized (sCurrentStatsMapConfigLock) {
+-                final long config = sConfigurationMap.getValue(
+-                        CURRENT_STATS_MAP_CONFIGURATION_KEY).val;
+-                final long newConfig = (config == STATS_SELECT_MAP_A)
+-                        ? STATS_SELECT_MAP_B : STATS_SELECT_MAP_A;
+-                sConfigurationMap.updateEntry(CURRENT_STATS_MAP_CONFIGURATION_KEY,
+-                        new U32(newConfig));
++            if (sConfigurationMap != null) {
++                synchronized (sCurrentStatsMapConfigLock) {
++                    final long config = sConfigurationMap.getValue(
++                            CURRENT_STATS_MAP_CONFIGURATION_KEY).val;
++                    final long newConfig = (config == STATS_SELECT_MAP_A)
++                            ? STATS_SELECT_MAP_B : STATS_SELECT_MAP_A;
++                    sConfigurationMap.updateEntry(CURRENT_STATS_MAP_CONFIGURATION_KEY,
++                            new U32(newConfig));
++                }
+             }
+         } catch (ErrnoException e) {
+             throw new ServiceSpecificException(e.errno, "Failed to swap active stats map");
+@@ -842,7 +863,8 @@ public class BpfNetMaps {
+         if (permissions == PERMISSION_UNINSTALLED || permissions == PERMISSION_INTERNET) {
+             for (final int uid : uids) {
+                 try {
+-                    sUidPermissionMap.deleteEntry(new S32(uid));
++                    if (sUidPermissionMap != null)
++                        sUidPermissionMap.deleteEntry(new S32(uid));
+                 } catch (ErrnoException e) {
+                     Log.e(TAG, "Failed to remove uid " + uid + " from permission map: " + e);
+                 }
+@@ -852,7 +874,8 @@ public class BpfNetMaps {
+ 
+         for (final int uid : uids) {
+             try {
+-                sUidPermissionMap.updateEntry(new S32(uid), new U8((short) permissions));
++                if (sUidPermissionMap != null)
++                    sUidPermissionMap.updateEntry(new S32(uid), new U8((short) permissions));
+             } catch (ErrnoException e) {
+                 Log.e(TAG, "Failed to set permission "
+                         + permissions + " to uid " + uid + ": " + e);
+@@ -873,8 +896,10 @@ public class BpfNetMaps {
+         throwIfPreT("setDataSaverEnabled is not available on pre-T devices");
+ 
+         try {
+-            final short config = enable ? DATA_SAVER_ENABLED : DATA_SAVER_DISABLED;
+-            sDataSaverEnabledMap.updateEntry(DATA_SAVER_ENABLED_KEY, new U8(config));
++            if (sDataSaverEnabledMap != null) {
++                final short config = enable ? DATA_SAVER_ENABLED : DATA_SAVER_DISABLED;
++                sDataSaverEnabledMap.updateEntry(DATA_SAVER_ENABLED_KEY, new U8(config));
++            }
+         } catch (ErrnoException e) {
+             throw new ServiceSpecificException(e.errno, "Unable to set data saver: "
+                     + Os.strerror(e.errno));
+@@ -897,8 +922,9 @@ public class BpfNetMaps {
+             return;
+         }
+         try {
+-            sIngressDiscardMap.updateEntry(new IngressDiscardKey(address),
+-                    new IngressDiscardValue(ifIndex, ifIndex));
++            if (sIngressDiscardMap != null)
++                sIngressDiscardMap.updateEntry(new IngressDiscardKey(address),
++                        new IngressDiscardValue(ifIndex, ifIndex));
+         } catch (ErrnoException e) {
+             Log.e(TAG, "Failed to set ingress discard rule for " + address + "("
+                     + iface + "), " + e);
+@@ -914,7 +940,8 @@ public class BpfNetMaps {
+     public void removeIngressDiscardRule(final InetAddress address) {
+         throwIfPreT("removeIngressDiscardRule is not available on pre-T devices");
+         try {
+-            sIngressDiscardMap.deleteEntry(new IngressDiscardKey(address));
++            if (sIngressDiscardMap != null)
++                sIngressDiscardMap.deleteEntry(new IngressDiscardKey(address));
+         } catch (ErrnoException e) {
+             Log.e(TAG, "Failed to remove ingress discard rule for " + address + ", " + e);
+         }
+@@ -951,8 +978,12 @@ public class BpfNetMaps {
+         }
+ 
+         try {
+-            data.add(mDeps.buildStatsEvent(getMapSize(sCookieTagMap), getMapSize(sUidOwnerMap),
+-                    getMapSize(sUidPermissionMap)));
++            if (sUidOwnerMap != null && sCookieTagMap != null && sUidPermissionMap != null) {
++                data.add(mDeps.buildStatsEvent(getMapSize(sCookieTagMap), getMapSize(sUidOwnerMap),
++                        getMapSize(sUidPermissionMap)));
++            } else {
++                return StatsManager.PULL_SKIP;
++            }
+         } catch (ErrnoException e) {
+             Log.e(TAG, "Failed to pull NETWORK_BPF_MAP_INFO atom: " + e);
+             return StatsManager.PULL_SKIP;
+@@ -986,8 +1017,10 @@ public class BpfNetMaps {
+ 
+     private void dumpOwnerMatchConfig(final IndentingPrintWriter pw) {
+         try {
+-            final long match = sConfigurationMap.getValue(UID_RULES_CONFIGURATION_KEY).val;
+-            pw.println("current ownerMatch configuration: " + match + " " + matchToString(match));
++            if (sConfigurationMap != null) {
++                final long match = sConfigurationMap.getValue(UID_RULES_CONFIGURATION_KEY).val;
++                pw.println("current ownerMatch configuration: " + match + " " + matchToString(match));
++            }
+         } catch (ErrnoException e) {
+             pw.println("Failed to read ownerMatch configuration: " + e);
+         }
+@@ -995,10 +1028,12 @@ public class BpfNetMaps {
+ 
+     private void dumpCurrentStatsMapConfig(final IndentingPrintWriter pw) {
+         try {
+-            final long config = sConfigurationMap.getValue(CURRENT_STATS_MAP_CONFIGURATION_KEY).val;
+-            final String currentStatsMap =
+-                    (config == STATS_SELECT_MAP_A) ? "SELECT_MAP_A" : "SELECT_MAP_B";
+-            pw.println("current statsMap configuration: " + config + " " + currentStatsMap);
++            if (sConfigurationMap != null) {
++                final long config = sConfigurationMap.getValue(CURRENT_STATS_MAP_CONFIGURATION_KEY).val;
++                final String currentStatsMap =
++                        (config == STATS_SELECT_MAP_A) ? "SELECT_MAP_A" : "SELECT_MAP_B";
++                pw.println("current statsMap configuration: " + config + " " + currentStatsMap);
++            }
+         } catch (ErrnoException e) {
+             pw.println("Falied to read current statsMap configuration: " + e);
+         }
+@@ -1006,9 +1041,11 @@ public class BpfNetMaps {
+ 
+     private void dumpDataSaverConfig(final IndentingPrintWriter pw) {
+         try {
+-            final short config = sDataSaverEnabledMap.getValue(DATA_SAVER_ENABLED_KEY).val;
+-            // Any non-zero value converted from short to boolean is true by convention.
+-            pw.println("sDataSaverEnabledMap: " + (config != DATA_SAVER_DISABLED));
++            if (sDataSaverEnabledMap != null) {
++                final short config = sDataSaverEnabledMap.getValue(DATA_SAVER_ENABLED_KEY).val;
++                // Any non-zero value converted from short to boolean is true by convention.
++                pw.println("sDataSaverEnabledMap: " + (config != DATA_SAVER_DISABLED));
++            }
+         } catch (ErrnoException e) {
+             pw.println("Failed to read data saver configuration: " + e);
+         }
+@@ -1047,25 +1084,34 @@ public class BpfNetMaps {
+             // NetworkStatsService also dumps CookieTagMap and NetworkStatsService is a right place
+             // to dump CookieTagMap. But the TagSocketTest in CTS depends on this dump so the tests
+             // need to be updated before remove the dump from BpfNetMaps.
+-            BpfDump.dumpMap(sCookieTagMap, pw, "sCookieTagMap",
+-                    (key, value) -> "cookie=" + key.socketCookie
+-                            + " tag=0x" + Long.toHexString(value.tag)
+-                            + " uid=" + value.uid);
+-            BpfDump.dumpMap(sUidOwnerMap, pw, "sUidOwnerMap",
+-                    (uid, match) -> {
+-                        if ((match.rule & IIF_MATCH) != 0) {
+-                            // TODO: convert interface index to interface name by IfaceIndexNameMap
+-                            return uid.val + " " + matchToString(match.rule) + " " + match.iif;
+-                        } else {
+-                            return uid.val + " " + matchToString(match.rule);
+-                        }
+-                    });
+-            BpfDump.dumpMap(sUidPermissionMap, pw, "sUidPermissionMap",
+-                    (uid, permission) -> uid.val + " " + permissionToString(permission.val));
+-            BpfDump.dumpMap(sIngressDiscardMap, pw, "sIngressDiscardMap",
+-                    (key, value) -> "[" + key.dstAddr + "]: "
+-                            + value.iif1 + "(" + mDeps.getIfName(value.iif1) + "), "
+-                            + value.iif2 + "(" + mDeps.getIfName(value.iif2) + ")");
++            if (sCookieTagMap != null) {
++                BpfDump.dumpMap(sCookieTagMap, pw, "sCookieTagMap",
++                        (key, value) -> "cookie=" + key.socketCookie
++                                + " tag=0x" + Long.toHexString(value.tag)
++                                + " uid=" + value.uid);
++            }
++
++            if (sUidOwnerMap != null) {
++                BpfDump.dumpMap(sUidOwnerMap, pw, "sUidOwnerMap",
++                        (uid, match) -> {
++                            if ((match.rule & IIF_MATCH) != 0) {
++                                // TODO: convert interface index to interface name by IfaceIndexNameMap
++                                return uid.val + " " + matchToString(match.rule) + " " + match.iif;
++                            } else {
++                                return uid.val + " " + matchToString(match.rule);
++                            }
++                        });
++            }
++            if (sUidPermissionMap != null) {
++                BpfDump.dumpMap(sUidPermissionMap, pw, "sUidPermissionMap",
++                        (uid, permission) -> uid.val + " " + permissionToString(permission.val));
++            }
++            if (sIngressDiscardMap != null) {
++                BpfDump.dumpMap(sIngressDiscardMap, pw, "sIngressDiscardMap",
++                        (key, value) -> "[" + key.dstAddr + "]: "
++                                + value.iif1 + "(" + mDeps.getIfName(value.iif1) + "), "
++                                + value.iif2 + "(" + mDeps.getIfName(value.iif2) + ")");
++            }
+             dumpDataSaverConfig(pw);
+             pw.decreaseIndent();
+         }
+-- 
+2.25.1
+

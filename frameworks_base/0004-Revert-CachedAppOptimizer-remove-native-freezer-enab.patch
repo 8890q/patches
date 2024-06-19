@@ -1,0 +1,93 @@
+From aeb56c77181402586209e09dff2c10cdee3a8d4f Mon Sep 17 00:00:00 2001
+From: Yaroslav Zviezda <acroreiser@gmail.com>
+Date: Sat, 6 Nov 2021 01:27:33 +0300
+Subject: [PATCH 4/6] Revert "CachedAppOptimizer: remove native freezer
+ enabling code"
+
+Adapted for U.
+
+This reverts commit f354af53bef47ac79c6f487d93ee688179dddde9.
+
+Change-Id: I74da883baead2113cb506f85cbdf826dbc141646
+---
+ .../android/server/am/CachedAppOptimizer.java | 21 +++++++++++++++----
+ ...m_android_server_am_CachedAppOptimizer.cpp | 17 +++++++++++++++
+ 2 files changed, 34 insertions(+), 4 deletions(-)
+
+diff --git a/services/core/java/com/android/server/am/CachedAppOptimizer.java b/services/core/java/com/android/server/am/CachedAppOptimizer.java
+index d0ab287785e3..4c654844fa21 100644
+--- a/services/core/java/com/android/server/am/CachedAppOptimizer.java
++++ b/services/core/java/com/android/server/am/CachedAppOptimizer.java
+@@ -1045,6 +1045,18 @@ public final class CachedAppOptimizer {
+         return true;
+     }
+ 
++    /**
++     * Enable or disable the freezer. When enable == false all frozen processes are unfrozen,
++     * but aren't removed from the freezer. While in this state, processes can be added or removed
++     * by using Process.setProcessFrozen(), but they wouldn't be actually frozen until the freezer
++     * is enabled. If enable == true all processes in the freezer are frozen.
++     *
++     * @param enable Specify whether to enable (true) or disable (false) the freezer.
++     *
++     * @hide
++     */
++    private static native void enableFreezerInternal(boolean enable);
++
+     /**
+      * Informs binder that a process is about to be frozen. If freezer is enabled on a process via
+      * this method, this method will synchronously dispatch all pending transactions to the
+@@ -1101,10 +1113,11 @@ public final class CachedAppOptimizer {
+                 // Also check freezer binder ioctl
+                 Slog.d(TAG_AM, "Checking binder freezer ioctl");
+                 getBinderFreezeInfo(Process.myPid());
+-
+-                // Check if task_profiles.json contains invalid profiles
+-                Slog.d(TAG_AM, "Checking freezer profiles");
+-                supported = isFreezerProfileValid();
++                supported = true;
++                // This is a workaround after reverting the cgroup v2 uid/pid hierarchy due to
++                // http://b/179006802.
++                // TODO: remove once the uid/pid hierarchy is restored
++                enableFreezerInternal(true);
+             } else {
+                 Slog.e(TAG_AM, "Unexpected value in cgroup.freeze");
+             }
+diff --git a/services/core/jni/com_android_server_am_CachedAppOptimizer.cpp b/services/core/jni/com_android_server_am_CachedAppOptimizer.cpp
+index b1e18f2b350b..6a0587d61c3a 100644
+--- a/services/core/jni/com_android_server_am_CachedAppOptimizer.cpp
++++ b/services/core/jni/com_android_server_am_CachedAppOptimizer.cpp
+@@ -526,6 +526,21 @@ static void com_android_server_am_CachedAppOptimizer_compactProcess(JNIEnv*, job
+     compactProcessOrFallback(pid, compactionFlags);
+ }
+ 
++static void com_android_server_am_CachedAppOptimizer_enableFreezerInternal(
++        JNIEnv *env, jobject clazz, jboolean enable) {
++    bool success = true;
++
++    if (enable) {
++        success = SetTaskProfiles(0, {"FreezerEnabled"}, true);
++    } else {
++        success = SetTaskProfiles(0, {"FreezerDisabled"}, true);
++    }
++
++    if (!success) {
++        jniThrowException(env, "java/lang/RuntimeException", "Unknown error");
++    }
++}
++
+ static jint com_android_server_am_CachedAppOptimizer_freezeBinder(JNIEnv* env, jobject clazz,
+                                                                   jint pid, jboolean freeze,
+                                                                   jint timeout_ms) {
+@@ -585,6 +600,8 @@ static const JNINativeMethod sMethods[] = {
+          (void*)com_android_server_am_CachedAppOptimizer_getMemoryFreedCompaction},
+         {"compactSystem", "()V", (void*)com_android_server_am_CachedAppOptimizer_compactSystem},
+         {"compactProcess", "(II)V", (void*)com_android_server_am_CachedAppOptimizer_compactProcess},
++        {"enableFreezerInternal", "(Z)V",
++         (void*)com_android_server_am_CachedAppOptimizer_enableFreezerInternal},
+         {"freezeBinder", "(IZI)I", (void*)com_android_server_am_CachedAppOptimizer_freezeBinder},
+         {"getBinderFreezeInfo", "(I)I",
+          (void*)com_android_server_am_CachedAppOptimizer_getBinderFreezeInfo},
+-- 
+2.25.1
+

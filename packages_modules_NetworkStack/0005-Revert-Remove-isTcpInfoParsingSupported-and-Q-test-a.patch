@@ -1,0 +1,293 @@
+From e7d1a3fae27ae87f1f22a9c5472c3b96b3d52680 Mon Sep 17 00:00:00 2001
+From: Yaroslav Zviezda <acroreiser@gmail.com>
+Date: Tue, 2 Apr 2024 23:49:13 +0300
+Subject: [PATCH 5/8] Revert "Remove isTcpInfoParsingSupported and Q test
+ annotations"
+
+This reverts commit d2f699c4608939e2f5a7589f6385b56d27243dfe.
+
+Change-Id: Iab1753134d0c2566f77436b18fa31dbadf0bc7f5
+---
+ .../netlink/TcpSocketTracker.java             | 23 ++++++++
+ .../netlink/TcpSocketTrackerTest.java         | 59 +++++++++++++++++--
+ .../connectivity/NetworkMonitorTest.java      |  9 +++
+ 3 files changed, 87 insertions(+), 4 deletions(-)
+
+diff --git a/src/com/android/networkstack/netlink/TcpSocketTracker.java b/src/com/android/networkstack/netlink/TcpSocketTracker.java
+index 4b66c0ae..dd849324 100644
+--- a/src/com/android/networkstack/netlink/TcpSocketTracker.java
++++ b/src/com/android/networkstack/netlink/TcpSocketTracker.java
+@@ -73,6 +73,7 @@ import com.android.net.module.util.netlink.StructInetDiagMsg;
+ import com.android.net.module.util.netlink.StructNlAttr;
+ import com.android.net.module.util.netlink.StructNlMsgHdr;
+ import com.android.networkstack.apishim.NetworkShimImpl;
++import com.android.networkstack.apishim.common.ShimUtils;
+ import com.android.networkstack.apishim.common.UnsupportedApiLevelException;
+ 
+ import java.io.FileDescriptor;
+@@ -199,6 +200,9 @@ public class TcpSocketTracker {
+         mNetworkMark = (parcel != null) ? parcel.mark : NetlinkUtils.UNKNOWN_MARK;
+         mNetworkMask = (parcel != null) ? parcel.mask : NetlinkUtils.NULL_MASK;
+ 
++        // Request tcp info from NetworkStack directly needs extra SELinux permission added after Q
++        // release.
++        if (!mDependencies.isTcpInfoParsingSupported()) return;
+         // Build SocketDiag messages.
+         for (final int family : ADDRESS_FAMILIES) {
+             mSockDiagMsg.put(
+@@ -228,6 +232,7 @@ public class TcpSocketTracker {
+      * @Return if this polling request is sent to kernel and executes successfully or not.
+      */
+     public boolean pollSocketsInfo() {
++        if (!mDependencies.isTcpInfoParsingSupported()) return false;
+         // Traffic will be restricted in doze mode. TCP info may not reflect the correct network
+         // behavior.
+         // TODO: Traffic may be restricted by other reason. Get the restriction info from bpf in T+.
+@@ -421,6 +426,8 @@ public class TcpSocketTracker {
+      * statemachine thread of NetworkMonitor.
+      */
+     public boolean isDataStallSuspected() {
++        if (!mDependencies.isTcpInfoParsingSupported()) return false;
++
+         // Skip checking data stall since the traffic will be restricted and it will not be real
+         // network stall.
+         // TODO: Traffic may be restricted by other reason. Get the restriction info from bpf in T+.
+@@ -468,6 +475,7 @@ public class TcpSocketTracker {
+      * @return the latest packet fail percentage. -1 denotes that there is no available data.
+      */
+     public int getLatestPacketFailPercentage() {
++        if (!mDependencies.isTcpInfoParsingSupported()) return -1;
+         // Only return fail rate if device sent enough packets.
+         if (getSentSinceLastRecv() < getMinPacketsThreshold()) return -1;
+         return mLatestPacketFailPercentage;
+@@ -478,11 +486,13 @@ public class TcpSocketTracker {
+      * between each polling period, not an accurate number.
+      */
+     public int getSentSinceLastRecv() {
++        if (!mDependencies.isTcpInfoParsingSupported()) return -1;
+         return mSentSinceLastRecv;
+     }
+ 
+     /** Return the number of the packets received in the latest polling cycle. */
+     public int getLatestReceivedCount() {
++        if (!mDependencies.isTcpInfoParsingSupported()) return -1;
+         return mLatestReceivedCount;
+     }
+ 
+@@ -520,6 +530,10 @@ public class TcpSocketTracker {
+ 
+     /** Stops monitoring and releases resources. */
+     public void quit() {
++        // Do not need to unregister receiver and listener since registration is skipped
++        // in the constructor.
++        if (!mDependencies.isTcpInfoParsingSupported()) return;
++
+         mDependencies.removeDeviceConfigChangedListener(mConfigListener);
+         mDependencies.removeBroadcastReceiver(mDeviceIdleReceiver);
+     }
+@@ -666,6 +680,15 @@ public class TcpSocketTracker {
+             return DeviceConfigUtils.getDeviceConfigPropertyInt(namespace, name, defaultValue);
+         }
+ 
++        /**
++         * Return if request tcp info via netlink socket is supported or not.
++         */
++        public boolean isTcpInfoParsingSupported() {
++            // Request tcp info from NetworkStack directly needs extra SELinux permission added
++            // after Q release.
++            return ShimUtils.isReleaseOrDevelopmentApiAbove(Build.VERSION_CODES.Q);
++        }
++
+         /**
+          * Receive the request message from kernel via given fd.
+          */
+diff --git a/tests/unit/src/com/android/networkstack/netlink/TcpSocketTrackerTest.java b/tests/unit/src/com/android/networkstack/netlink/TcpSocketTrackerTest.java
+index ab9816cf..c3ed328c 100644
+--- a/tests/unit/src/com/android/networkstack/netlink/TcpSocketTrackerTest.java
++++ b/tests/unit/src/com/android/networkstack/netlink/TcpSocketTrackerTest.java
+@@ -27,14 +27,17 @@ import static com.android.net.module.util.NetworkStackConstants.DNS_OVER_TLS_POR
+ import static junit.framework.Assert.assertEquals;
+ import static junit.framework.Assert.assertFalse;
+ import static junit.framework.Assert.assertTrue;
+-
++import static org.junit.Assume.assumeTrue;
+ import static org.mockito.ArgumentMatchers.anyBoolean;
+ import static org.mockito.ArgumentMatchers.anyInt;
+ import static org.mockito.ArgumentMatchers.eq;
+ import static org.mockito.Mockito.any;
++import static org.mockito.Mockito.atLeastOnce;
+ import static org.mockito.Mockito.doReturn;
++import static org.mockito.Mockito.never;
+ import static org.mockito.Mockito.times;
+ import static org.mockito.Mockito.verify;
++import static org.mockito.Mockito.verifyNoMoreInteractions;
+ import static org.mockito.Mockito.when;
+ 
+ import android.content.BroadcastReceiver;
+@@ -56,7 +59,9 @@ import androidx.test.runner.AndroidJUnit4;
+ import com.android.modules.utils.build.SdkLevel;
+ import com.android.net.module.util.netlink.NetlinkUtils;
+ import com.android.net.module.util.netlink.StructNlMsgHdr;
++import com.android.networkstack.apishim.ConstantsShim;
+ import com.android.testutils.DevSdkIgnoreRule;
++import com.android.testutils.DevSdkIgnoreRule.IgnoreAfter;
+ import com.android.testutils.DevSdkIgnoreRule.IgnoreUpTo;
+ 
+ import libcore.util.HexEncoding;
+@@ -141,6 +146,7 @@ public class TcpSocketTrackerTest {
+         mOldWtfHandler =
+                 Log.setWtfHandler((tag, what, system) -> Log.e(tag, what.getMessage(), what));
+         when(mDependencies.getNetd()).thenReturn(mNetd);
++        when(mDependencies.isTcpInfoParsingSupported()).thenReturn(true);
+         when(mDependencies.connectToKernel()).thenReturn(new FileDescriptor());
+         when(mDependencies.getDeviceConfigPropertyInt(
+                 eq(NAMESPACE_CONNECTIVITY),
+@@ -208,10 +214,15 @@ public class TcpSocketTrackerTest {
+         assertFalse(NetlinkUtils.enoughBytesRemainForValidNlMsg(buffer));
+     }
+ 
+-    @Test
++    @Test @IgnoreUpTo(Build.VERSION_CODES.Q) // TCP info parsing is not supported on Q
+     public void testPollSocketsInfo() throws Exception {
++        // This test requires shims that provide API 30 access
++        assumeTrue(ConstantsShim.VERSION >= Build.VERSION_CODES.R);
++        when(mDependencies.isTcpInfoParsingSupported()).thenReturn(false);
+         final TcpSocketTracker tst = new TcpSocketTracker(mDependencies, mNetwork);
++        assertFalse(tst.pollSocketsInfo());
+ 
++        when(mDependencies.isTcpInfoParsingSupported()).thenReturn(true);
+         // No enough bytes remain for a valid NlMsg.
+         final ByteBuffer invalidBuffer = ByteBuffer.allocate(1);
+         invalidBuffer.order(ByteOrder.nativeOrder());
+@@ -307,6 +318,29 @@ public class TcpSocketTrackerTest {
+     }
+ 
+     @Test
++    public void testTcpInfoParsingUnsupported() {
++        doReturn(false).when(mDependencies).isTcpInfoParsingSupported();
++        final TcpSocketTracker tst = new TcpSocketTracker(mDependencies, mNetwork);
++        verify(mDependencies).getNetd();
++
++        assertFalse(tst.pollSocketsInfo());
++        assertEquals(-1, tst.getLatestPacketFailPercentage());
++        assertEquals(-1, tst.getLatestReceivedCount());
++        assertEquals(-1, tst.getSentSinceLastRecv());
++        assertFalse(tst.isDataStallSuspected());
++
++        verify(mDependencies, atLeastOnce()).isTcpInfoParsingSupported();
++        verify(mDependencies, atLeastOnce()).shouldDisableInLightDoze();
++        verifyNoMoreInteractions(mDependencies);
++
++        // Verify that no un-registration for the device configuration listener and broadcast
++        // receiver if TcpInfo parsing is not supported.
++        tst.quit();
++        verify(mDependencies, never()).removeDeviceConfigChangedListener(any());
++        verify(mDependencies, never()).removeBroadcastReceiver(any());
++    }
++
++    @Test @IgnoreUpTo(Build.VERSION_CODES.Q)
+     public void testTcpInfoParsingWithMultipleMsgs() throws Exception {
+         final TcpSocketTracker tst = new TcpSocketTracker(mDependencies, mNetwork);
+ 
+@@ -553,8 +587,11 @@ public class TcpSocketTrackerTest {
+                 + "0000000000000000"; // deliverRate = 0
+     }
+ 
+-    @Test
++    @Test @IgnoreUpTo(Build.VERSION_CODES.Q)
+     public void testTcpInfoParsingWithDozeMode() throws Exception {
++        // This test requires shims that provide API 30 access
++        assumeTrue(ConstantsShim.VERSION >= Build.VERSION_CODES.R);
++
+         final TcpSocketTracker tst = new TcpSocketTracker(mDependencies, mNetwork);
+         final ArgumentCaptor<BroadcastReceiver> receiverCaptor =
+                 ArgumentCaptor.forClass(BroadcastReceiver.class);
+@@ -642,6 +679,18 @@ public class TcpSocketTrackerTest {
+         doReturn(tcpBufferV6, tcpBufferV4).when(mDependencies).recvMessage(any());
+     }
+ 
++    @Test @IgnoreAfter(Build.VERSION_CODES.Q)
++    public void testTcpInfoParsingNotSupportedOnQ() {
++        assertFalse(new TcpSocketTracker.Dependencies(mContext)
++                .isTcpInfoParsingSupported());
++    }
++
++    @Test @IgnoreUpTo(Build.VERSION_CODES.Q)
++    public void testTcpInfoParsingSupportedFromR() {
++        assertTrue(new TcpSocketTracker.Dependencies(mContext)
++                .isTcpInfoParsingSupported());
++    }
++
+     private static final String BAD_DIAG_MSG_HEX =
+         // struct nlmsghdr.
+             "00000058"      // length = 1476395008
+@@ -669,8 +718,10 @@ public class TcpSocketTrackerTest {
+     private static final byte[] BAD_SOCK_DIAG_MSG_BYTES =
+         HexEncoding.decode(BAD_DIAG_MSG_HEX.toCharArray(), false);
+ 
+-    @Test
++    @Test @IgnoreUpTo(Build.VERSION_CODES.Q) // TCP info parsing is not supported on Q
+     public void testPollSocketsInfo_BadFormat() throws Exception {
++        // This test requires shims that provide API 30 access
++        assumeTrue(ConstantsShim.VERSION >= Build.VERSION_CODES.R);
+         final TcpSocketTracker tst = new TcpSocketTracker(mDependencies, mNetwork);
+         setupNormalTestTcpInfo();
+         assertTrue(tst.pollSocketsInfo());
+diff --git a/tests/unit/src/com/android/server/connectivity/NetworkMonitorTest.java b/tests/unit/src/com/android/server/connectivity/NetworkMonitorTest.java
+index 79617ddb..9dcca8cd 100644
+--- a/tests/unit/src/com/android/server/connectivity/NetworkMonitorTest.java
++++ b/tests/unit/src/com/android/server/connectivity/NetworkMonitorTest.java
+@@ -614,6 +614,10 @@ public class NetworkMonitorTest {
+                 0, mCreatedNetworkMonitors.size());
+         assertEquals("BroadcastReceiver still registered after disconnect",
+                 0, mRegisteredReceivers.size());
++        if (mTstDependencies.isTcpInfoParsingSupported()) {
++            verify(mTstDependencies, times(networkMonitors.length))
++                    .removeDeviceConfigChangedListener(any());
++        }
+     }
+ 
+     private void initHttpConnection(HttpURLConnection connection) {
+@@ -716,6 +720,7 @@ public class NetworkMonitorTest {
+         setNetworkCapabilities(nm, nc);
+         HandlerUtils.waitForIdle(nm.getHandler(), HANDLER_TIMEOUT_MS);
+         mCreatedNetworkMonitors.add(nm);
++        doReturn(false).when(mTstDependencies).isTcpInfoParsingSupported();
+ 
+         return nm;
+     }
+@@ -1867,6 +1872,7 @@ public class NetworkMonitorTest {
+     public void testIsDataStall_SkipEvaluateOnValidationNotRequiredNetwork() {
+         // Make DNS and TCP stall condition satisfied.
+         setDataStallEvaluationType(DATA_STALL_EVALUATION_TYPE_DNS | DATA_STALL_EVALUATION_TYPE_TCP);
++        doReturn(true).when(mTstDependencies).isTcpInfoParsingSupported();
+         doReturn(0).when(mTst).getLatestReceivedCount();
+         doReturn(true).when(mTst).isDataStallSuspected();
+         final WrappedNetworkMonitor nm = makeMonitor(CELL_NO_INTERNET_CAPABILITIES);
+@@ -1901,6 +1907,7 @@ public class NetworkMonitorTest {
+ 
+     @Test
+     public void testIsDataStall_EvaluationTcp() throws Exception {
++        doReturn(true).when(mTstDependencies).isTcpInfoParsingSupported();
+         // Evaluate TCP only. Expect ignoring DNS signal.
+         setDataStallEvaluationType(DATA_STALL_EVALUATION_TYPE_TCP);
+         WrappedNetworkMonitor wrappedMonitor = makeMonitor(CELL_METERED_CAPABILITIES);
+@@ -2346,6 +2353,7 @@ public class NetworkMonitorTest {
+     @Test
+     public void testDataStall_setOpportunisticMode() {
+         setDataStallEvaluationType(DATA_STALL_EVALUATION_TYPE_TCP);
++        doReturn(true).when(mTstDependencies).isTcpInfoParsingSupported();
+         WrappedNetworkMonitor wnm = makeCellNotMeteredNetworkMonitor();
+         InOrder inOrder = inOrder(mTst);
+         // Initialized with default value.
+@@ -2450,6 +2458,7 @@ public class NetworkMonitorTest {
+     }
+ 
+     private void setupTcpDataStall() {
++        doReturn(true).when(mTstDependencies).isTcpInfoParsingSupported();
+         doReturn(0).when(mTst).getLatestReceivedCount();
+         doReturn(TEST_TCP_FAIL_RATE).when(mTst).getLatestPacketFailPercentage();
+         doReturn(TEST_TCP_PACKET_COUNT).when(mTst).getSentSinceLastRecv();
+-- 
+2.25.1
+

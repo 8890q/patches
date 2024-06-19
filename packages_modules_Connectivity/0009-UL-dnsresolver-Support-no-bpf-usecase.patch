@@ -1,0 +1,55 @@
+From e70d8ad8d9f8fbbd22e687da055b6f21e57f9ffd Mon Sep 17 00:00:00 2001
+From: z3DD3r <z3dd3r@gmail.com>
+Date: Tue, 16 Apr 2024 12:36:46 +0300
+Subject: [PATCH 09/12] [UL] dnsresolver: Support no-bpf usecase
+
+---
+ DnsResolver/DnsBpfHelper.cpp | 22 +++++++++++++++++-----
+ 1 file changed, 17 insertions(+), 5 deletions(-)
+
+diff --git a/DnsResolver/DnsBpfHelper.cpp b/DnsResolver/DnsBpfHelper.cpp
+index de8bef5860..232902dfc9 100644
+--- a/DnsResolver/DnsBpfHelper.cpp
++++ b/DnsResolver/DnsBpfHelper.cpp
+@@ -38,9 +38,19 @@ base::Result<void> DnsBpfHelper::init() {
+     return base::Error(EOPNOTSUPP);
+   }
+ 
+-  RETURN_IF_RESULT_NOT_OK(mConfigurationMap.init(CONFIGURATION_MAP_PATH));
+-  RETURN_IF_RESULT_NOT_OK(mUidOwnerMap.init(UID_OWNER_MAP_PATH));
+-  RETURN_IF_RESULT_NOT_OK(mDataSaverEnabledMap.init(DATA_SAVER_ENABLED_MAP_PATH));
++  auto ret1 = mConfigurationMap.init(CONFIGURATION_MAP_PATH);
++  if (!ret1.ok()) {
++    LOG(ERROR) << __func__ << ": Failed mConfigurationMap.init";
++  }
++  auto ret2 = mUidOwnerMap.init(UID_OWNER_MAP_PATH);
++  if (!ret2.ok()) {
++    LOG(ERROR) << __func__ << ": Failed mConfigurationMap.init";
++  }
++  auto ret3 = mDataSaverEnabledMap.init(DATA_SAVER_ENABLED_MAP_PATH);
++  if (!ret3.ok()) {
++    LOG(ERROR) << __func__ << ":  Failed mConfigurationMap.init";
++  }
++
+   return {};
+ }
+ 
+@@ -49,11 +59,13 @@ base::Result<bool> DnsBpfHelper::isUidNetworkingBlocked(uid_t uid, bool metered)
+   if (!mConfigurationMap.isValid() || !mUidOwnerMap.isValid()) {
+     LOG(ERROR) << __func__
+                << ": BPF maps are not ready. Forgot to call ADnsHelper_init?";
+-    return base::Error(EUNATCH);
++    return false;
+   }
+ 
+   auto enabledRules = mConfigurationMap.readValue(UID_RULES_CONFIGURATION_KEY);
+-  RETURN_IF_RESULT_NOT_OK(enabledRules);
++  if (!enabledRules.ok()) {
++    return false;
++  }
+ 
+   auto value = mUidOwnerMap.readValue(uid);
+   uint32_t uidRules = value.ok() ? value.value().rule : 0;
+-- 
+2.25.1
+

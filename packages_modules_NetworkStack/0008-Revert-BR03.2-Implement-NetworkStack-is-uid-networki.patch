@@ -1,0 +1,141 @@
+From 4ae7df4b64167169d04066a64c06b0c93d1acb47 Mon Sep 17 00:00:00 2001
+From: Yaroslav Zviezda <acroreiser@gmail.com>
+Date: Tue, 2 Apr 2024 23:57:53 +0300
+Subject: [PATCH 8/8] Revert "[BR03.2] Implement NetworkStack
+ is-uid-networking-blocked shell command"
+
+This reverts commit a75c5a64375630929178ce933d552cc6a1257db7.
+---
+ Android.bp                                    |  3 +-
+ .../android/server/NetworkStackService.java   | 68 -------------------
+ 2 files changed, 1 insertion(+), 70 deletions(-)
+
+diff --git a/Android.bp b/Android.bp
+index 4461c267..fb4f4020 100644
+--- a/Android.bp
++++ b/Android.bp
+@@ -89,7 +89,7 @@ java_defaults {
+     sdk_version: module_34_version,
+     libs: [
+         "framework-configinfrastructure",
+-        "framework-connectivity.stubs.module_lib",
++        "framework-connectivity",
+         "framework-connectivity-t",
+         "framework-statsd",
+         "framework-wifi",
+@@ -311,7 +311,6 @@ java_defaults {
+         "androidx.annotation_annotation",
+         "modules-utils-build_system",
+         "modules-utils-preconditions",
+-        "modules-utils-shell-command-handler",
+         "modules-utils-statemachine",
+         "netd_aidl_interface-lateststable-java",
+         "networkstack-client",
+diff --git a/src/com/android/server/NetworkStackService.java b/src/com/android/server/NetworkStackService.java
+index 347200b6..368a6d4e 100644
+--- a/src/com/android/server/NetworkStackService.java
++++ b/src/com/android/server/NetworkStackService.java
+@@ -21,13 +21,11 @@ import static android.net.dhcp.IDhcpServer.STATUS_SUCCESS;
+ import static android.net.dhcp.IDhcpServer.STATUS_UNKNOWN_ERROR;
+ 
+ import static com.android.net.module.util.DeviceConfigUtils.getResBooleanConfig;
+-import static com.android.net.module.util.FeatureVersions.FEATURE_IS_UID_NETWORKING_BLOCKED;
+ import static com.android.server.util.PermissionUtil.checkDumpPermission;
+ 
+ import android.app.Service;
+ import android.content.Context;
+ import android.content.Intent;
+-import android.net.ConnectivityManager;
+ import android.net.IIpMemoryStore;
+ import android.net.IIpMemoryStoreCallbacks;
+ import android.net.INetd;
+@@ -51,7 +49,6 @@ import android.os.Build;
+ import android.os.HandlerThread;
+ import android.os.IBinder;
+ import android.os.Looper;
+-import android.os.ParcelFileDescriptor;
+ import android.os.RemoteException;
+ import android.text.TextUtils;
+ import android.util.ArraySet;
+@@ -62,8 +59,6 @@ import androidx.annotation.VisibleForTesting;
+ 
+ import com.android.internal.annotations.GuardedBy;
+ import com.android.internal.util.IndentingPrintWriter;
+-import com.android.modules.utils.BasicShellCommandHandler;
+-import com.android.net.module.util.DeviceConfigUtils;
+ import com.android.net.module.util.SharedLog;
+ import com.android.networkstack.NetworkStackNotifier;
+ import com.android.networkstack.R;
+@@ -487,69 +482,6 @@ public class NetworkStackService extends Service {
+                     R.bool.config_no_sim_card_uses_neighbor_mcc, false));
+         }
+ 
+-        @Override
+-        public int handleShellCommand(@NonNull ParcelFileDescriptor in,
+-                @NonNull ParcelFileDescriptor out, @NonNull ParcelFileDescriptor err,
+-                @NonNull String[] args) {
+-            return new ShellCmd().exec(this, in.getFileDescriptor(), out.getFileDescriptor(),
+-                    err.getFileDescriptor(), args);
+-        }
+-
+-        private class ShellCmd extends BasicShellCommandHandler {
+-            @Override
+-            public int onCommand(String cmd) {
+-                if (cmd == null) {
+-                    return handleDefaultCommands(cmd);
+-                }
+-                final PrintWriter pw = getOutPrintWriter();
+-                try {
+-                    switch (cmd) {
+-                        case "is-uid-networking-blocked":
+-                            if (!DeviceConfigUtils.isFeatureSupported(mContext,
+-                                    FEATURE_IS_UID_NETWORKING_BLOCKED)) {
+-                                pw.println("API is unsupported");
+-                                return -1;
+-                            }
+-
+-                            // Usage : cmd network_stack is-uid-networking-blocked <uid> <metered>
+-                            // If no argument, get and display the usage help.
+-                            if (getRemainingArgsCount() != 2) {
+-                                onHelp();
+-                                return -1;
+-                            }
+-                            final int uid;
+-                            final boolean metered;
+-                            // If any fail, throws and output to the stdout.
+-                            // Let the caller handle it.
+-                            uid = Integer.parseInt(getNextArg());
+-                            metered = Boolean.parseBoolean(getNextArg());
+-                            final ConnectivityManager cm =
+-                                    mContext.getSystemService(ConnectivityManager.class);
+-                            pw.println(cm.isUidNetworkingBlocked(
+-                                    uid, metered /* isNetworkMetered */));
+-                            return 0;
+-                        default:
+-                            return handleDefaultCommands(cmd);
+-                    }
+-                } catch (Exception e) {
+-                    pw.println(e);
+-                }
+-                return -1;
+-            }
+-
+-            @Override
+-            public void onHelp() {
+-                PrintWriter pw = getOutPrintWriter();
+-                pw.println("NetworkStack service commands:");
+-                pw.println("  help");
+-                pw.println("    Print this help text.");
+-                pw.println("  is-uid-networking-blocked <uid> <metered>");
+-                pw.println("    Get whether the networking is blocked for given uid and metered.");
+-                pw.println("    <uid>: The target uid.");
+-                pw.println("    <metered>: [true|false], Whether the target network is metered.");
+-            }
+-        }
+-
+         /**
+          * Dump version information of the module and detected system version.
+          */
+-- 
+2.25.1
+

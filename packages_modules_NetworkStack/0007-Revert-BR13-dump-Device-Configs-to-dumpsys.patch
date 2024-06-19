@@ -1,0 +1,47 @@
+From 6eb2ddc3b274f7f7a05e6a4eba68be4b10c1bbf4 Mon Sep 17 00:00:00 2001
+From: Yaroslav Zviezda <acroreiser@gmail.com>
+Date: Tue, 2 Apr 2024 23:57:39 +0300
+Subject: [PATCH 7/8] Revert "[BR13] dump Device Configs to dumpsys"
+
+This reverts commit 3a666f3bc7df47de78b05906a206fb4b2ac9d078.
+---
+ src/com/android/server/NetworkStackService.java | 16 ----------------
+ 1 file changed, 16 deletions(-)
+
+diff --git a/src/com/android/server/NetworkStackService.java b/src/com/android/server/NetworkStackService.java
+index 40aee283..347200b6 100644
+--- a/src/com/android/server/NetworkStackService.java
++++ b/src/com/android/server/NetworkStackService.java
+@@ -22,8 +22,6 @@ import static android.net.dhcp.IDhcpServer.STATUS_UNKNOWN_ERROR;
+ 
+ import static com.android.net.module.util.DeviceConfigUtils.getResBooleanConfig;
+ import static com.android.net.module.util.FeatureVersions.FEATURE_IS_UID_NETWORKING_BLOCKED;
+-import static com.android.networkstack.util.NetworkStackUtils.IGNORE_TCP_INFO_FOR_BLOCKED_UIDS;
+-import static com.android.networkstack.util.NetworkStackUtils.SKIP_TCP_POLL_IN_LIGHT_DOZE;
+ import static com.android.server.util.PermissionUtil.checkDumpPermission;
+ 
+ import android.app.Service;
+@@ -442,20 +440,6 @@ public class NetworkStackService extends Service {
+                 return;
+             }
+ 
+-            pw.println("Device Configs:");
+-            pw.increaseIndent();
+-            pw.println("SKIP_TCP_POLL_IN_LIGHT_DOZE="
+-                    + DeviceConfigUtils.isNetworkStackFeatureNotChickenedOut(
+-                            mContext, SKIP_TCP_POLL_IN_LIGHT_DOZE));
+-            pw.println("FEATURE_IS_UID_NETWORKING_BLOCKED=" + DeviceConfigUtils.isFeatureSupported(
+-                            mContext, FEATURE_IS_UID_NETWORKING_BLOCKED));
+-            pw.println("IGNORE_TCP_INFO_FOR_BLOCKED_UIDS="
+-                    + DeviceConfigUtils.isNetworkStackFeatureNotChickenedOut(mContext,
+-                            IGNORE_TCP_INFO_FOR_BLOCKED_UIDS));
+-            pw.decreaseIndent();
+-            pw.println();
+-
+-
+             pw.println("NetworkStack logs:");
+             mLog.dump(fd, pw, args);
+ 
+-- 
+2.25.1
+

@@ -1,0 +1,107 @@
+From 66e55651acebafd8ef31381038cf04f82d7b8782 Mon Sep 17 00:00:00 2001
+From: Yaroslav Zviezda <acroreiser@gmail.com>
+Date: Mon, 20 Feb 2023 20:38:39 +0300
+Subject: [PATCH 1/2] reboot must be fast on legacy too
+
+Change-Id: I591d36fe86e68f391a8e11773bd91368c946b477
+---
+ init/reboot.cpp | 61 +++++++++++++------------------------------------
+ 1 file changed, 16 insertions(+), 45 deletions(-)
+
+diff --git a/init/reboot.cpp b/init/reboot.cpp
+index a9c1e3623..dc49c1399 100644
+--- a/init/reboot.cpp
++++ b/init/reboot.cpp
+@@ -423,38 +423,22 @@ static UmountStat TryUmountAndFsck(unsigned int cmd, bool run_fsck,
+     if (run_fsck && !FindPartitionsToUmount(&block_devices, &emulated_devices, false)) {
+         return UMOUNT_STAT_ERROR;
+     }
+-    auto sm = snapshot::SnapshotManager::New();
+-    bool ota_update_in_progress = false;
+-    if (sm->IsUserspaceSnapshotUpdateInProgress()) {
+-        LOG(INFO) << "OTA update in progress";
+-        ota_update_in_progress = true;
+-    }
+-    UmountStat stat = UmountPartitions(timeout - t.duration());
+-    if (stat != UMOUNT_STAT_SUCCESS) {
+-        LOG(INFO) << "umount timeout, last resort, kill all and try";
+-        if (DUMP_ON_UMOUNT_FAILURE) DumpUmountDebuggingInfo();
+-        // Since umount timedout, we will try to kill all processes
+-        // and do one more attempt to umount the partitions.
+-        //
+-        // However, if OTA update is in progress, we don't want
+-        // to kill the snapuserd daemon as the daemon will
+-        // be serving I/O requests. Killing the daemon will
+-        // end up with I/O failures. If the update is in progress,
+-        // we will just return the umount failure status immediately.
+-        // This is ok, given the fact that killing the processes
+-        // and doing an umount is just a last effort. We are
+-        // still not doing fsck when all processes are killed.
+-        //
+-        if (ota_update_in_progress) {
+-            return stat;
+-        }
+-        KillAllProcesses();
+-        // even if it succeeds, still it is timeout and do not run fsck with all processes killed
+-        UmountStat st = UmountPartitions(0ms);
+-        if ((st != UMOUNT_STAT_SUCCESS) && DUMP_ON_UMOUNT_FAILURE) DumpUmountDebuggingInfo();
+-    }
+ 
+-    if (stat == UMOUNT_STAT_SUCCESS && run_fsck) {
++    LOG(INFO) << "Terminate all processes unconditionally...";
++    WriteStringToFile("e", PROC_SYSRQ);
++
++    LOG(INFO) << "Is anyone still alive? Kill them!";
++    KillAllProcesses();
++
++    LOG(INFO) << "Now remount all filesystems to RO";
++    WriteStringToFile("u", PROC_SYSRQ);
++
++    LOG(INFO) << "Unmount all partitions";
++    // even if it succeeds, still it is timeout and do not run fsck with all processes killed
++    UmountStat st = UmountPartitions(0ms);
++    if ((st != UMOUNT_STAT_SUCCESS) && DUMP_ON_UMOUNT_FAILURE) DumpUmountDebuggingInfo();
++
++    if (st == UMOUNT_STAT_SUCCESS && run_fsck) {
+         LOG(INFO) << "Pause reboot monitor thread before fsck";
+         sem_post(reboot_semaphore);
+ 
+@@ -467,7 +451,7 @@ static UmountStat TryUmountAndFsck(unsigned int cmd, bool run_fsck,
+         LOG(INFO) << "Resume reboot monitor thread after fsck";
+         sem_post(reboot_semaphore);
+     }
+-    return stat;
++    return st;
+ }
+ 
+ // zram is able to use backing device on top of a loopback device.
+@@ -729,17 +713,6 @@ static void DoReboot(unsigned int cmd, const std::string& reason, const std::str
+         }
+     }
+ 
+-    // optional shutdown step
+-    // 1. terminate all services except shutdown critical ones. wait for delay to finish
+-    if (shutdown_timeout > 0ms) {
+-        StopServicesAndLogViolations(stop_first, shutdown_timeout / 2, true /* SIGTERM */);
+-    }
+-    // Send SIGKILL to ones that didn't terminate cleanly.
+-    StopServicesAndLogViolations(stop_first, 0ms, false /* SIGKILL */);
+-    SubcontextTerminate();
+-    // Reap subcontext pids.
+-    ReapAnyOutstandingChildren();
+-
+     // 3. send volume abort_fuse and volume shutdown to vold
+     Service* vold_service = ServiceList::GetInstance().FindService("vold");
+     if (vold_service != nullptr && vold_service->IsRunning()) {
+@@ -751,8 +724,6 @@ static void DoReboot(unsigned int cmd, const std::string& reason, const std::str
+     } else {
+         LOG(INFO) << "vold not running, skipping vold shutdown";
+     }
+-    // logcat stopped here
+-    StopServices(kDebuggingServices, 0ms, false /* SIGKILL */);
+     // 4. sync, try umount, and optionally run fsck for user shutdown
+     {
+         Timer sync_timer;
+-- 
+2.25.1
+

@@ -1,0 +1,33 @@
+From 756f3b5daced92e8cd16f07b0491ce22815e9a31 Mon Sep 17 00:00:00 2001
+From: Yaroslav Zviezda <acroreiser@gmail.com>
+Date: Sat, 6 Nov 2021 01:26:00 +0300
+Subject: [PATCH 3/6] Revert "CachedAppOptimizer: use new cgroup api for
+ freezer path"
+
+This reverts commit 9767e2a416425a1ed390a2cac361f5a5ee112d56.
+---
+ .../core/jni/com_android_server_am_CachedAppOptimizer.cpp | 8 +-------
+ 1 file changed, 1 insertion(+), 7 deletions(-)
+
+diff --git a/services/core/jni/com_android_server_am_CachedAppOptimizer.cpp b/services/core/jni/com_android_server_am_CachedAppOptimizer.cpp
+index 7b084132ed1c..b1e18f2b350b 100644
+--- a/services/core/jni/com_android_server_am_CachedAppOptimizer.cpp
++++ b/services/core/jni/com_android_server_am_CachedAppOptimizer.cpp
+@@ -561,13 +561,7 @@ static jint com_android_server_am_CachedAppOptimizer_getBinderFreezeInfo(JNIEnv
+ 
+ static jstring com_android_server_am_CachedAppOptimizer_getFreezerCheckPath(JNIEnv* env,
+                                                                             jobject clazz) {
+-    std::string path;
+-
+-    if (!getAttributePathForTask("FreezerState", getpid(), &path)) {
+-        path = "";
+-    }
+-
+-    return env->NewStringUTF(path.c_str());
++    return env->NewStringUTF(CGROUP_FREEZE_PATH);
+ }
+ 
+ static jboolean com_android_server_am_CachedAppOptimizer_isFreezerProfileValid(JNIEnv* env) {
+-- 
+2.25.1
+

@@ -1,0 +1,27 @@
+From 5887d6ef2377f8c24731583b90dfd9a79a245346 Mon Sep 17 00:00:00 2001
+From: Yaroslav Zviezda <acroreiser@gmail.com>
+Date: Sun, 31 Mar 2024 21:12:33 +0300
+Subject: [PATCH 1/8] [UL] Disable parsing netlink events from kernel
+
+Change-Id: I69ad9b4781b8e15d6992a49f37614fbf88fb5be2
+---
+ src/android/net/ip/IpClientLinkObserver.java | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/src/android/net/ip/IpClientLinkObserver.java b/src/android/net/ip/IpClientLinkObserver.java
+index 2068caa7..61aca4bc 100644
+--- a/src/android/net/ip/IpClientLinkObserver.java
++++ b/src/android/net/ip/IpClientLinkObserver.java
+@@ -189,8 +189,7 @@ public class IpClientLinkObserver implements NetworkObserver {
+         mDnsServerRepository = new DnsServerRepository(config.minRdnssLifetime);
+         mAlarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+         mDependencies = deps;
+-        mNetlinkEventParsingEnabled = deps.isFeatureNotChickenedOut(context,
+-                IPCLIENT_PARSE_NETLINK_EVENTS_FORCE_DISABLE);
++        mNetlinkEventParsingEnabled = false;
+         mNetlinkMonitor = new MyNetlinkMonitor(h, log, mTag);
+         mHandler.post(() -> {
+             if (!mNetlinkMonitor.start()) {
+-- 
+2.25.1
+
