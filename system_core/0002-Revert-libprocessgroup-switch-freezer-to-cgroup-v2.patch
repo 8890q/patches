@@ -1,7 +1,7 @@
 From 3434dccc4046611c067f9b7ac90c55a63fa1fc2b Mon Sep 17 00:00:00 2001
 From: Yaroslav Zviezda <acroreiser@gmail.com>
 Date: Tue, 28 Dec 2021 22:19:28 +0300
-Subject: [PATCH 2/2] Revert "libprocessgroup: switch freezer to cgroup v2"
+Subject: [PATCH 2/3] Revert "libprocessgroup: switch freezer to cgroup v2"
 
 Updated for U.
 
