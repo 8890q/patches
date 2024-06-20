@@ -3,7 +3,6 @@
 # Array of directories and corresponding patches
 declare -A patches=(
     ["system/netd"]="system_netd"
-    ["packages/modules/adb"]="packages_modules_adb"
     ["system/bpf"]="system_bpf"
     ["frameworks/base"]="frameworks_base"
     ["build/make"]="build_make"
