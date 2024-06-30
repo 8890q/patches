@@ -1,0 +1,47 @@
+From b7ae31def8e223a75c85f002dc76a06ab2700073 Mon Sep 17 00:00:00 2001
+From: Danny Wood <danwood76@gmail.com>
+Date: Sun, 19 Jan 2020 10:54:26 +0000
+Subject: [PATCH] Revert "Bluetooth HFP: Use WBS by default (1/5)"
+
+* Changed default of BTIF_HF_WBS_PREFERRED to true so as to keep current behaviour
+* WBS is not supported on Exynos7580 based devices (and possibly others)
+
+This reverts commit 6146eb0104b134a986379845d77b61d01b4aacfb.
+
+Change-Id: I25f18ecc03962b65da5978fb5db13032f86a0d90
+---
+ btif/src/btif_hf.cc | 11 ++++++++++-
+ 1 file changed, 10 insertions(+), 1 deletion(-)
+
+diff --git a/btif/src/btif_hf.cc b/btif/src/btif_hf.cc
+index dd8bb26ab..c9690ec80 100644
+--- a/btif/src/btif_hf.cc
++++ b/btif/src/btif_hf.cc
+@@ -117,6 +117,15 @@ struct btif_hf_cb_t {
+ 
+ static btif_hf_cb_t btif_hf_cb[BTA_AG_MAX_NUM_CLIENTS];
+ 
++/* By default we use codec negotiation to determine whether to use WBS as
++ * the default, allow devices to disable WBS if it is unsupported
++ */
++#ifndef BTIF_HF_WBS_PREFERRED
++#define BTIF_HF_WBS_PREFERRED true
++#endif
++
++static bool btif_conf_hf_force_wbs = BTIF_HF_WBS_PREFERRED;
++
+ static const char* dump_hf_call_state(bthf_call_state_t call_state) {
+   switch (call_state) {
+     CASE_RETURN_STR(BTHF_CALL_STATE_IDLE)
+@@ -539,7 +548,7 @@ static void btif_hf_upstreams_evt(uint16_t event, char* p_param) {
+       we should set the BTA AG Codec to mSBC. This would trigger a +BCS to mSBC
+       at the time
+       of SCO connection establishment */
+-      if (p_data->val.num & BTA_AG_CODEC_MSBC) {
++      if ((btif_conf_hf_force_wbs == TRUE) && (p_data->val.num & BTA_AG_CODEC_MSBC)) {
+         BTIF_TRACE_EVENT("%s: btif_hf override-Preferred Codec to MSBC",
+                          __func__);
+         BTA_AgSetCodec(btif_hf_cb[idx].handle, BTA_AG_CODEC_MSBC);
+-- 
+2.25.1
+

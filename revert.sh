@@ -14,6 +14,9 @@ git reset --hard HEAD~1
 cd ../
 cd security
 echo "skipping system/security"
+cd ../
+cd bt
+echo "skipping system/bt"
 cd ../../
 cd frameworks/base
 echo "skipping frameworks/base"
