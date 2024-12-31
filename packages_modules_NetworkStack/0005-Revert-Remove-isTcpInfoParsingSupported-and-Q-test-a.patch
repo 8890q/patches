@@ -1,12 +1,13 @@
-From e7d1a3fae27ae87f1f22a9c5472c3b96b3d52680 Mon Sep 17 00:00:00 2001
+From 329fa4fa0c77cff8f4c86799cb50fffb60ba9b4f Mon Sep 17 00:00:00 2001
 From: Yaroslav Zviezda <acroreiser@gmail.com>
 Date: Tue, 2 Apr 2024 23:49:13 +0300
-Subject: [PATCH 5/8] Revert "Remove isTcpInfoParsingSupported and Q test
+Subject: [PATCH] Revert "Remove isTcpInfoParsingSupported and Q test
  annotations"
 
 This reverts commit d2f699c4608939e2f5a7589f6385b56d27243dfe.
 
 Change-Id: Iab1753134d0c2566f77436b18fa31dbadf0bc7f5
+Signed-off-by: Jean-Christophe Rona <jc@rona.fr>
 ---
  .../netlink/TcpSocketTracker.java             | 23 ++++++++
  .../netlink/TcpSocketTrackerTest.java         | 59 +++++++++++++++++--
@@ -234,13 +235,13 @@ index ab9816cf..c3ed328c 100644
          setupNormalTestTcpInfo();
          assertTrue(tst.pollSocketsInfo());
 diff --git a/tests/unit/src/com/android/server/connectivity/NetworkMonitorTest.java b/tests/unit/src/com/android/server/connectivity/NetworkMonitorTest.java
-index 79617ddb..9dcca8cd 100644
+index 51cdc85b..523754b8 100644
 --- a/tests/unit/src/com/android/server/connectivity/NetworkMonitorTest.java
 +++ b/tests/unit/src/com/android/server/connectivity/NetworkMonitorTest.java
-@@ -614,6 +614,10 @@ public class NetworkMonitorTest {
-                 0, mCreatedNetworkMonitors.size());
-         assertEquals("BroadcastReceiver still registered after disconnect",
-                 0, mRegisteredReceivers.size());
+@@ -781,6 +781,10 @@ public class NetworkMonitorTest {
+         quitNetworkMonitors();
+         // Clear mocks to prevent from stubs holding instances and cause memory leaks.
+         Mockito.framework().clearInlineMocks();
 +        if (mTstDependencies.isTcpInfoParsingSupported()) {
 +            verify(mTstDependencies, times(networkMonitors.length))
 +                    .removeDeviceConfigChangedListener(any());
@@ -248,7 +249,7 @@ index 79617ddb..9dcca8cd 100644
      }
  
      private void initHttpConnection(HttpURLConnection connection) {
-@@ -716,6 +720,7 @@ public class NetworkMonitorTest {
+@@ -882,6 +886,7 @@ public class NetworkMonitorTest {
          setNetworkCapabilities(nm, nc);
          HandlerUtils.waitForIdle(nm.getHandler(), HANDLER_TIMEOUT_MS);
          mCreatedNetworkMonitors.add(nm);
@@ -256,7 +257,7 @@ index 79617ddb..9dcca8cd 100644
  
          return nm;
      }
-@@ -1867,6 +1872,7 @@ public class NetworkMonitorTest {
+@@ -2035,6 +2040,7 @@ public class NetworkMonitorTest {
      public void testIsDataStall_SkipEvaluateOnValidationNotRequiredNetwork() {
          // Make DNS and TCP stall condition satisfied.
          setDataStallEvaluationType(DATA_STALL_EVALUATION_TYPE_DNS | DATA_STALL_EVALUATION_TYPE_TCP);
@@ -264,7 +265,7 @@ index 79617ddb..9dcca8cd 100644
          doReturn(0).when(mTst).getLatestReceivedCount();
          doReturn(true).when(mTst).isDataStallSuspected();
          final WrappedNetworkMonitor nm = makeMonitor(CELL_NO_INTERNET_CAPABILITIES);
-@@ -1901,6 +1907,7 @@ public class NetworkMonitorTest {
+@@ -2069,6 +2075,7 @@ public class NetworkMonitorTest {
  
      @Test
      public void testIsDataStall_EvaluationTcp() throws Exception {
@@ -272,7 +273,7 @@ index 79617ddb..9dcca8cd 100644
          // Evaluate TCP only. Expect ignoring DNS signal.
          setDataStallEvaluationType(DATA_STALL_EVALUATION_TYPE_TCP);
          WrappedNetworkMonitor wrappedMonitor = makeMonitor(CELL_METERED_CAPABILITIES);
-@@ -2346,6 +2353,7 @@ public class NetworkMonitorTest {
+@@ -2730,6 +2737,7 @@ public class NetworkMonitorTest {
      @Test
      public void testDataStall_setOpportunisticMode() {
          setDataStallEvaluationType(DATA_STALL_EVALUATION_TYPE_TCP);
@@ -280,7 +281,7 @@ index 79617ddb..9dcca8cd 100644
          WrappedNetworkMonitor wnm = makeCellNotMeteredNetworkMonitor();
          InOrder inOrder = inOrder(mTst);
          // Initialized with default value.
-@@ -2450,6 +2458,7 @@ public class NetworkMonitorTest {
+@@ -2834,6 +2842,7 @@ public class NetworkMonitorTest {
      }
  
      private void setupTcpDataStall() {

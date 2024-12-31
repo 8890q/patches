@@ -1,10 +1,12 @@
-From 52df99e330286ac1aa774968d0a2124858900db8 Mon Sep 17 00:00:00 2001
+From 9ebfa166700db8137214d487de96f6121ff84123 Mon Sep 17 00:00:00 2001
 From: Yaroslav Zviezda <acroreiser@gmail.com>
 Date: Tue, 2 Apr 2024 23:47:30 +0300
-Subject: [PATCH 3/8] Revert "[BR10] Skip tcp info for uids which blocked by
- data saver"
+Subject: [PATCH] Revert "[BR10] Skip tcp info for uids which blocked by data
+ saver"
 
 This reverts commit 294b54adfc193b4c2381b6bfbdd8a66f52d9cb0b.
+
+Signed-off-by: Jean-Christophe Rona <jc@rona.fr>
 ---
  .../netlink/TcpSocketTracker.java             | 17 ++------
  .../server/connectivity/NetworkMonitor.java   |  5 ---
@@ -13,7 +15,7 @@ This reverts commit 294b54adfc193b4c2381b6bfbdd8a66f52d9cb0b.
  4 files changed, 3 insertions(+), 72 deletions(-)
 
 diff --git a/src/com/android/networkstack/netlink/TcpSocketTracker.java b/src/com/android/networkstack/netlink/TcpSocketTracker.java
-index cd400f43..87621821 100644
+index d01847d7..0a8e2aed 100644
 --- a/src/com/android/networkstack/netlink/TcpSocketTracker.java
 +++ b/src/com/android/networkstack/netlink/TcpSocketTracker.java
 @@ -47,7 +47,6 @@ import android.net.INetd;
@@ -62,10 +64,10 @@ index cd400f43..87621821 100644
       * Dependencies class for testing.
       */
 diff --git a/src/com/android/server/connectivity/NetworkMonitor.java b/src/com/android/server/connectivity/NetworkMonitor.java
-index 9303f956..19068035 100755
+index c62fb908..d5d9c9be 100755
 --- a/src/com/android/server/connectivity/NetworkMonitor.java
 +++ b/src/com/android/server/connectivity/NetworkMonitor.java
-@@ -942,7 +942,6 @@ public class NetworkMonitor extends StateMachine {
+@@ -989,7 +989,6 @@ public class NetworkMonitor extends StateMachine {
                  // Initialization.
                  tst.setOpportunisticMode(false);
                  tst.setLinkProperties(mLinkProperties);
@@ -73,7 +75,7 @@ index 9303f956..19068035 100755
              }
              Log.d(TAG, "Starting on network " + mNetwork
                      + " with capport HTTPS URL " + Arrays.toString(mCaptivePortalHttpsUrls)
-@@ -1156,10 +1155,6 @@ public class NetworkMonitor extends StateMachine {
+@@ -1210,10 +1209,6 @@ public class NetworkMonitor extends StateMachine {
              // VPN.
              sendMessage(CMD_FORCE_REEVALUATION, NO_UID, 0 /* forceAccept */);
          }
@@ -85,7 +87,7 @@ index 9303f956..19068035 100755
          mNetworkCapabilities = newCap;
          suppressNotificationIfNetworkRestricted();
 diff --git a/tests/unit/src/com/android/networkstack/netlink/TcpSocketTrackerTest.java b/tests/unit/src/com/android/networkstack/netlink/TcpSocketTrackerTest.java
-index 4e5302e5..05ab50a7 100644
+index d407fb00..197b7d91 100644
 --- a/tests/unit/src/com/android/networkstack/netlink/TcpSocketTrackerTest.java
 +++ b/tests/unit/src/com/android/networkstack/netlink/TcpSocketTrackerTest.java
 @@ -16,9 +16,6 @@
@@ -124,7 +126,7 @@ index 4e5302e5..05ab50a7 100644
      @Mock private TcpSocketTracker.Dependencies mDependencies;
      @Mock private INetd mNetd;
      private final Network mNetwork = new Network(TEST_NETID1);
-@@ -373,7 +358,6 @@ public class TcpSocketTrackerTest {
+@@ -375,7 +360,6 @@ public class TcpSocketTrackerTest {
      public void testPollSocketsInfo_ignoreBlockedUid_featureEnabled() throws Exception {
          doReturn(true).when(mDependencies).shouldIgnoreTcpInfoForBlockedUids();
          final TcpSocketTracker tst = new TcpSocketTracker(mDependencies, mNetwork);
@@ -132,12 +134,12 @@ index 4e5302e5..05ab50a7 100644
          doReturn(true).when(mCm).isUidNetworkingBlocked(TEST_UID2, false /* metered */);
          // With the feature enabled, append another message with blocked uid, verify the
          // traffic of networking-blocked uid is filtered out.
-@@ -399,30 +383,6 @@ public class TcpSocketTrackerTest {
+@@ -401,30 +385,6 @@ public class TcpSocketTrackerTest {
          assertTrue(tst.isDataStallSuspected());
      }
  
--    // The feature is not enabled on pre-T device, because it needs bpf support.
--    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+-    // b/326143935 isUidNetworkingBlocked is not supported on pre-U device.
+-    @IgnoreUpTo(Build.VERSION_CODES.TIRAMISU)
 -    @Test
 -    public void testPollSocketsInfo_ignoreBlockedUid_featureEnabled_dataSaver() throws Exception {
 -        doReturn(true).when(mDependencies).shouldIgnoreTcpInfoForBlockedUids();
@@ -164,10 +166,10 @@ index 4e5302e5..05ab50a7 100644
      public void testTcpInfoParsingWithMultipleMsgs() throws Exception {
          final TcpSocketTracker tst = new TcpSocketTracker(mDependencies, mNetwork);
 diff --git a/tests/unit/src/com/android/server/connectivity/NetworkMonitorTest.java b/tests/unit/src/com/android/server/connectivity/NetworkMonitorTest.java
-index 77e3a129..79617ddb 100644
+index d6e9c8e8..51cdc85b 100644
 --- a/tests/unit/src/com/android/server/connectivity/NetworkMonitorTest.java
 +++ b/tests/unit/src/com/android/server/connectivity/NetworkMonitorTest.java
-@@ -2343,19 +2343,6 @@ public class NetworkMonitorTest {
+@@ -2727,19 +2727,6 @@ public class NetworkMonitorTest {
          assertEquals(INITIAL_REEVALUATE_DELAY_MS, wnm.getReevaluationDelayMs());
      }
  

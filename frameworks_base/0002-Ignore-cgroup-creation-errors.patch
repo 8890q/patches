@@ -1,20 +1,22 @@
-From 4daaece562ad6fc555f9c2a4bef0a92f9306419c Mon Sep 17 00:00:00 2001
+From 511b6c1dc8087625df9052d3eec8d687b2ce5327 Mon Sep 17 00:00:00 2001
 From: Pierre-Hugues Husson <phh@phh.me>
 Date: Wed, 18 Oct 2023 16:53:40 -0400
-Subject: [PATCH 2/6] Ignore cgroup creation errors
+Subject: [PATCH] Ignore cgroup creation errors
 
 For old kernels who don't have those modern cgroups
+
+Signed-off-by: Jean-Christophe Rona <jc@rona.fr>
 ---
  core/jni/com_android_internal_os_Zygote.cpp               | 3 +++
  services/core/java/com/android/server/am/ProcessList.java | 5 -----
  2 files changed, 3 insertions(+), 5 deletions(-)
 
 diff --git a/core/jni/com_android_internal_os_Zygote.cpp b/core/jni/com_android_internal_os_Zygote.cpp
-index 6973907f7926..93d47e41d66e 100644
+index 25db17577b1e..6cfdccd160da 100644
 --- a/core/jni/com_android_internal_os_Zygote.cpp
 +++ b/core/jni/com_android_internal_os_Zygote.cpp
-@@ -1943,6 +1943,8 @@ static void SpecializeCommon(JNIEnv* env, uid_t uid, gid_t gid, jintArray gids,
-     if (!is_system_server && getuid() == 0) {
+@@ -1968,6 +1968,8 @@ static void SpecializeCommon(JNIEnv* env, uid_t uid, gid_t gid, jintArray gids,
+     if (getuid() == 0) {
          const int rc = createProcessGroup(uid, getpid());
          if (rc != 0) {
 +                ALOGE("createProcessGroup(%d, %d) failed: %s", uid, /* pid= */ 0, strerror(-rc));
@@ -22,7 +24,7 @@ index 6973907f7926..93d47e41d66e 100644
              if (rc == -ESRCH) {
                  // If process is dead, treat this as a non-fatal error
                  ALOGE("createProcessGroup(%d, %d) failed: %s", uid, /* pid= */ 0, strerror(-rc));
-@@ -1952,6 +1954,7 @@ static void SpecializeCommon(JNIEnv* env, uid_t uid, gid_t gid, jintArray gids,
+@@ -1977,6 +1979,7 @@ static void SpecializeCommon(JNIEnv* env, uid_t uid, gid_t gid, jintArray gids,
                                       : CREATE_ERROR("createProcessGroup(%d, %d) failed: %s", uid,
                                                      /* pid= */ 0, strerror(-rc)));
              }
@@ -31,10 +33,10 @@ index 6973907f7926..93d47e41d66e 100644
      }
  
 diff --git a/services/core/java/com/android/server/am/ProcessList.java b/services/core/java/com/android/server/am/ProcessList.java
-index 3156e9da0ae9..e5949f95b6d1 100644
+index 89c89944e92e..641b2cc824e0 100644
 --- a/services/core/java/com/android/server/am/ProcessList.java
 +++ b/services/core/java/com/android/server/am/ProcessList.java
-@@ -2516,14 +2516,9 @@ public final class ProcessList {
+@@ -2513,14 +2513,9 @@ public final class ProcessList {
                          // If we're not told to skip the process group creation, go create it.
                          final int res = Process.createProcessGroup(uid, startResult.pid);
                          if (res < 0) {

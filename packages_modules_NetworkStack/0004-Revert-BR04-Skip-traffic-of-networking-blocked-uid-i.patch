@@ -1,18 +1,20 @@
-From edebe3c5110a2d310329e427f2358ff00e784c18 Mon Sep 17 00:00:00 2001
+From d65a11f7b571558b31b19ce918f7ec2029211d5f Mon Sep 17 00:00:00 2001
 From: Yaroslav Zviezda <acroreiser@gmail.com>
 Date: Tue, 2 Apr 2024 23:47:42 +0300
-Subject: [PATCH 4/8] Revert "[BR04] Skip traffic of networking-blocked uid in
- data stall detection"
+Subject: [PATCH] Revert "[BR04] Skip traffic of networking-blocked uid in data
+ stall detection"
 
 This reverts commit db9c872f04ac44fff310262ad4961512ea8cbc6a.
+
+Signed-off-by: Jean-Christophe Rona <jc@rona.fr>
 ---
- .../netlink/TcpSocketTracker.java             |  35 ------
+ .../netlink/TcpSocketTracker.java             |  37 ------
  .../networkstack/util/NetworkStackUtils.java  |   7 --
- .../netlink/TcpSocketTrackerTest.java         | 110 +++---------------
- 3 files changed, 16 insertions(+), 136 deletions(-)
+ .../netlink/TcpSocketTrackerTest.java         | 112 +++---------------
+ 3 files changed, 16 insertions(+), 140 deletions(-)
 
 diff --git a/src/com/android/networkstack/netlink/TcpSocketTracker.java b/src/com/android/networkstack/netlink/TcpSocketTracker.java
-index 87621821..4b66c0ae 100644
+index 0a8e2aed..4b66c0ae 100644
 --- a/src/com/android/networkstack/netlink/TcpSocketTracker.java
 +++ b/src/com/android/networkstack/netlink/TcpSocketTracker.java
 @@ -27,14 +27,12 @@ import static android.system.OsConstants.AF_INET6;
@@ -105,7 +107,7 @@ index 87621821..4b66c0ae 100644
  
              // Calculate mLatestReceiveCount, mSentSinceLastRecv and mLatestPacketFailPercentage.
              mSentSinceLastRecv = (stat.receivedCount == 0)
-@@ -749,17 +726,5 @@ public class TcpSocketTracker {
+@@ -749,19 +726,5 @@ public class TcpSocketTracker {
              return SdkLevel.isAtLeastT() && DeviceConfigUtils.isNetworkStackFeatureNotChickenedOut(
                      mContext, SKIP_TCP_POLL_IN_LIGHT_DOZE);
          }
@@ -116,7 +118,9 @@ index 87621821..4b66c0ae 100644
 -         * to deal with flag values changing at runtime.
 -         */
 -        public boolean shouldIgnoreTcpInfoForBlockedUids() {
--            return SdkLevel.isAtLeastT() && DeviceConfigUtils.isFeatureSupported(
+-            // Note b/326143935 - can trigger crash due to kernel bug / missing
+-            // feature on some T devices.
+-            return SdkLevel.isAtLeastU() && DeviceConfigUtils.isFeatureSupported(
 -                    mContext, FEATURE_IS_UID_NETWORKING_BLOCKED)
 -                    && DeviceConfigUtils.isNetworkStackFeatureNotChickenedOut(mContext,
 -                    IGNORE_TCP_INFO_FOR_BLOCKED_UIDS);
@@ -124,10 +128,10 @@ index 87621821..4b66c0ae 100644
      }
  }
 diff --git a/src/com/android/networkstack/util/NetworkStackUtils.java b/src/com/android/networkstack/util/NetworkStackUtils.java
-index 85da4003..3a1c865c 100755
+index 0cb31fea..6d8e0a81 100755
 --- a/src/com/android/networkstack/util/NetworkStackUtils.java
 +++ b/src/com/android/networkstack/util/NetworkStackUtils.java
-@@ -288,13 +288,6 @@ public class NetworkStackUtils {
+@@ -302,13 +302,6 @@ public class NetworkStackUtils {
       */
      public static final String REEVALUATE_WHEN_RESUME = "reevaluate_when_resume";
  
@@ -142,7 +146,7 @@ index 85da4003..3a1c865c 100755
          System.loadLibrary("networkstackutilsjni");
      }
 diff --git a/tests/unit/src/com/android/networkstack/netlink/TcpSocketTrackerTest.java b/tests/unit/src/com/android/networkstack/netlink/TcpSocketTrackerTest.java
-index 05ab50a7..ab9816cf 100644
+index 197b7d91..ab9816cf 100644
 --- a/tests/unit/src/com/android/networkstack/netlink/TcpSocketTrackerTest.java
 +++ b/tests/unit/src/com/android/networkstack/netlink/TcpSocketTrackerTest.java
 @@ -33,7 +33,6 @@ import static org.mockito.ArgumentMatchers.anyInt;
@@ -222,19 +226,21 @@ index 05ab50a7..ab9816cf 100644
                  + NLMSG_DONE_HEX))
                  .when(mDependencies).recvMessage(any());
          assertTrue(tst.pollSocketsInfo());
-@@ -313,76 +306,6 @@ public class TcpSocketTrackerTest {
+@@ -313,78 +306,6 @@ public class TcpSocketTrackerTest {
          assertFalse(tst.isDataStallSuspected());
      }
  
--    @IgnoreAfter(Build.VERSION_CODES.S_V2)
+-    // b/326143935 isUidNetworkingBlocked is not supported on pre-U device.
+-    @IgnoreAfter(Build.VERSION_CODES.TIRAMISU)
 -    @Test
--    public void testPollSocketsInfo_ignoreBlockedUid_featureDisabled_beforeT() throws Exception {
+-    public void testPollSocketsInfo_ignoreBlockedUid_featureDisabled_beforeU() throws Exception {
 -        doTestPollSocketsInfo_ignoreBlockedUid_featureDisabled();
 -    }
 -
--    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+-    // b/326143935 isUidNetworkingBlocked is not supported on pre-U device.
+-    @IgnoreUpTo(Build.VERSION_CODES.TIRAMISU)
 -    @Test
--    public void testPollSocketsInfo_ignoreBlockedUid_featureDisabled_TOrAbove() throws Exception {
+-    public void testPollSocketsInfo_ignoreBlockedUid_featureDisabled_UOrAbove() throws Exception {
 -        doTestPollSocketsInfo_ignoreBlockedUid_featureDisabled();
 -        verify(mCm, never()).isUidNetworkingBlocked(anyInt(), anyBoolean());
 -    }
@@ -265,8 +271,8 @@ index 05ab50a7..ab9816cf 100644
 -        assertTrue(tst.isDataStallSuspected());
 -    }
 -
--    // The feature is not enabled on pre-T device, because it needs bpf support.
--    @IgnoreUpTo(Build.VERSION_CODES.S_V2)
+-    // b/326143935 isUidNetworkingBlocked is not supported on pre-U device.
+-    @IgnoreUpTo(Build.VERSION_CODES.TIRAMISU)
 -    @Test
 -    public void testPollSocketsInfo_ignoreBlockedUid_featureEnabled() throws Exception {
 -        doReturn(true).when(mDependencies).shouldIgnoreTcpInfoForBlockedUids();
@@ -299,7 +305,7 @@ index 05ab50a7..ab9816cf 100644
      @Test
      public void testTcpInfoParsingWithMultipleMsgs() throws Exception {
          final TcpSocketTracker tst = new TcpSocketTracker(mDependencies, mNetwork);
-@@ -547,11 +470,10 @@ public class TcpSocketTrackerTest {
+@@ -549,11 +470,10 @@ public class TcpSocketTrackerTest {
      }
  
      private static String composeSockDiagTcpHex(int retrans, int sent) {
@@ -313,7 +319,7 @@ index 05ab50a7..ab9816cf 100644
          return // struct nlmsghdr.
                  "14010000"          // length = 276
                  + "1400"            // type = SOCK_DIAG_BY_FAMILY
-@@ -565,17 +487,17 @@ public class TcpSocketTrackerTest {
+@@ -567,17 +487,17 @@ public class TcpSocketTrackerTest {
                  + "00"              // retrans
                  // inet_diag_sockid: ports and addresses are always in big endian,
                  // see StructInetDiagSockId.

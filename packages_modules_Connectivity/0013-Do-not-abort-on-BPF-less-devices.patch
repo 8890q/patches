@@ -1,0 +1,40 @@
+From 05da44daf4dd54d1a2089396d02d574ce45fa9e9 Mon Sep 17 00:00:00 2001
+From: Jean-Christophe Rona <jc@rona.fr>
+Date: Mon, 27 Jan 2025 17:19:19 +0100
+Subject: [PATCH] Do not abort on BPF-less devices
+
+Change-Id: I3bb595533de73e13c30ca427d1867514c24afee7
+---
+ netd/NetdUpdatable.cpp                             | 2 +-
+ staticlibs/native/bpf_headers/include/bpf/BpfMap.h | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/netd/NetdUpdatable.cpp b/netd/NetdUpdatable.cpp
+index 3b15916398..59ad18abc2 100644
+--- a/netd/NetdUpdatable.cpp
++++ b/netd/NetdUpdatable.cpp
+@@ -32,7 +32,7 @@ int libnetd_updatable_init(const char* cg2_path) {
+     android::netdutils::Status ret = sBpfHandler.init(cg2_path);
+     if (!android::netdutils::isOk(ret)) {
+         LOG(ERROR) << __func__ << ": Failed: (" << ret.code() << ") " << ret.msg();
+-        abort();
++        //abort();
+     }
+     return 0;
+ }
+diff --git a/staticlibs/native/bpf_headers/include/bpf/BpfMap.h b/staticlibs/native/bpf_headers/include/bpf/BpfMap.h
+index 696038c6f6..1879703aba 100644
+--- a/staticlibs/native/bpf_headers/include/bpf/BpfMap.h
++++ b/staticlibs/native/bpf_headers/include/bpf/BpfMap.h
+@@ -238,7 +238,7 @@ class BpfMap : public BpfMapRO<Key, Value> {
+ 
+     explicit BpfMap<Key, Value>(const char* pathname) {
+         mMapFd.reset(mapRetrieveRW(pathname));
+-        abortOnMismatch(/* writable */ true);
++        //abortOnMismatch(/* writable */ true);
+     }
+ 
+     // Function that tries to get map from a pinned path.
+-- 
+2.25.1
+
