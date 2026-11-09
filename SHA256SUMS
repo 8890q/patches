@@ -1,6 +1,7 @@
 1cdb008fb79218c63c7e571a1016a3063f53152179b0d7b810e6b301734d6a69  bionic/0001-linker-partially-allow-text-relocations.patch
 cce633b233b9649c7d6648741d45d081b8398fcdcd1a7630ca8cc408c4342544  build/make/0001-build-Add-support-for-device-tree-in-boot.img.patch
 03946962c7663696e963b55611e1c0c6162bb5c66aaba3b4c3f5683708c5cf04  build/make/0002-build-Squash-of-allowing-a-device-to-generically-define-its-own-headers.patch
+79fefa628dd24dd8b097da28747533133ce52d919f267bfcf5b24416d278588e  build/release/0001-Disable-trade-in-mode-globally.patch
 0688975b6bf00b9094df5b25bba08affb7592b9db07cc197630bb22744d3d503  build/soong/0001-soong-allow-overriding-header-files.patch
 c5f9c1383fdae6bacb66c02b9bb47d77eca015903799077942ac6a6cab8788db  device/lineage/sepolicy/0001-vendor_hal_soter-comment-out.patch
 d5311dc6c90f5fd5a1028e8f994e3d1824a0f738f4ecf75fdfbdfc6c002796dd  frameworks/av/0001-Revert-Remove-source-code-of-all-the-OMX-software-co.patch
@@ -39,8 +40,6 @@ eaa78e86afe3c2140bc22e27ed7ce9b371c6807a64e300244c1a86183c3e0896  frameworks/nat
 ef66da86758855ba1b097254b0e16c2ef0c820c4f34d9b4bdc55abbe2b778a20  hardware/qcom-caf/common/0002-QCOM-Bring-back-legacy-platform-definitions.patch
 0fd5f70d995adce9f9974356d5ea297ba55dcbfe5b7b5acc6a44d6d4ba6276e4  hardware/ril/0001-libril-Restore-support-for-RIL-v6-v8-and-v9-stacks.patch
 d3be1da8131895dd656d30641d916174773b4d13de39ea264edce011b73d072e  packages/modules/Connectivity/0001-Do-not-require-BTF-on-pre-5.15.patch
-967effcce0f5f2a995593cbdf5d939f59653f159b2cd010a479fdfc2a3e39352  patches.json
-229614bb009045a8e90aeac0e7173142995201d61214787bb2a9963fcc6d109b  series.tsv
 1f8d9da0ab3f50cd0fa0a2710def99613e36581fd2bcc1bbcd967325ebbb5ed3  system/core/0001-Fix-support-for-devices-without-cgroupv2-support.patch
 c0f955a05d74a638a12670e037d3717309b4b2efe6f569ccc9b6b74d5a8837ae  system/core/0002-Revert-libprocessgroup-CgroupSetup-should-fail-if-a-.patch
 454bf74a7e43199f52cc0af5b84fcae1f569719868aa03d78af3bb60074fb6a8  system/core/0003-Camera-Add-feature-extensions.patch
@@ -49,3 +48,4 @@ c0f955a05d74a638a12670e037d3717309b4b2efe6f569ccc9b6b74d5a8837ae  system/core/00
 569e6164c4c2886b9bf7e1c146386a433f15a520b34c5b1fb36ec2dd89394224  system/sepolicy/0001-sepolicy-allow-su-domain-in-user-builds.patch
 549bd5766a1ec2854acf504d2319d009f0153930efaa9af307370868fd26be46  system/tools/hidl/0001-Revert-Remove-android.frameworks.schedulerservice.patch
 746ce4068b8de7fd6d50c80b6f9f116169d092a1883fa888a7d36f7e208c26a0  system/tools/mkbootimg/0001-mkbootimg-add-support-for-dt.patch
+390c5be6076a7dc51ee66a03d2d85291d9345e2e24602b831e4c3db5c07dad8b  vendor/lineage/0001-lineage-Restore-unrestricted-ADB-on-debug-builds.patch

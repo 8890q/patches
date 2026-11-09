@@ -1,0 +1,46 @@
+From 410a76d640b7de4071fe37a54ff6f1f629b53945 Mon Sep 17 00:00:00 2001
+From: ivanmeler <i_ivan@windowslive.com>
+Date: Thu, 17 Sep 2026 20:26:46 +0000
+Subject: [PATCH] lineage: Restore unrestricted ADB on debug builds
+
+Change-Id: I5aa80b013fbc22dd342bfd4b385d863cee2492ff
+---
+ config/common.mk | 17 ++++++-----------
+ 1 file changed, 6 insertions(+), 11 deletions(-)
+
+diff --git a/config/common.mk b/config/common.mk
+index 903fcd0..aa2cc6d 100644
+--- a/config/common.mk
++++ b/config/common.mk
+@@ -28,22 +28,17 @@ PRODUCT_PRODUCT_PROPERTIES += \
+ endif
+ endif
+ 
+-ifeq ($(TARGET_BUILD_VARIANT),eng)
+-# Disable ADB authentication
+-PRODUCT_SYSTEM_EXT_PROPERTIES += ro.adb.secure=0
++ifeq ($(TARGET_BUILD_VARIANT),user)
++# Keep production user builds authenticated and non-debuggable.
++PRODUCT_SYSTEM_EXT_PROPERTIES += ro.adb.secure=1
+ else
+-ifdef WITH_ADB_INSECURE
+-# Forcebly disable ADB authentication
++# Keep eng and userdebug builds accessible without touchscreen authorization.
++# ro.adb.secure=0 also adds adb to persist.sys.usb.config during prop processing.
+ PRODUCT_SYSTEM_EXT_PROPERTIES += ro.adb.secure=0
+-else
+-# Enable ADB authentication
+-PRODUCT_SYSTEM_EXT_PROPERTIES += ro.adb.secure=1
+-
+-# Set ro.debuggable=0 for userdebug
+-PRODUCT_NOT_DEBUGGABLE_IN_USERDEBUG := true
+ endif
+ 
+ # Disable extra StrictMode features on all non-engineering builds
++ifneq ($(TARGET_BUILD_VARIANT),eng)
+ PRODUCT_PRODUCT_PROPERTIES += persist.sys.strictmode.disable=true
+ endif
+ 
+-- 
+2.34.1
+

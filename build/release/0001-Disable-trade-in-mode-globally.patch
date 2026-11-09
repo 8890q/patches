@@ -1,0 +1,52 @@
+From b86d6191c95b2bee989db8026f5c81871e56422f Mon Sep 17 00:00:00 2001
+From: ivanmeler <i_ivan@windowslive.com>
+Date: Thu, 17 Sep 2026 20:26:46 +0000
+Subject: [PATCH] Disable trade-in mode globally
+
+Change-Id: I04ee3c5b19039da3f9bca1dfee0c8799c3d18470
+---
+ .../enable_trade_in_mode_flag_values.textproto              | 2 +-
+ .../enable_trade_in_mode_flag_values.textproto              | 6 ++++++
+ .../enable_trade_in_mode_flag_values.textproto              | 2 +-
+ 3 files changed, 8 insertions(+), 2 deletions(-)
+ create mode 100644 aconfig/bp4a/com.android.tradeinmode.flags/enable_trade_in_mode_flag_values.textproto
+
+diff --git a/aconfig/bp2a/com.android.tradeinmode.flags/enable_trade_in_mode_flag_values.textproto b/aconfig/bp2a/com.android.tradeinmode.flags/enable_trade_in_mode_flag_values.textproto
+index d9a4088..3a5911b 100644
+--- a/aconfig/bp2a/com.android.tradeinmode.flags/enable_trade_in_mode_flag_values.textproto
++++ b/aconfig/bp2a/com.android.tradeinmode.flags/enable_trade_in_mode_flag_values.textproto
+@@ -1,6 +1,6 @@
+ flag_value {
+   package: "com.android.tradeinmode.flags"
+   name: "enable_trade_in_mode"
+-  state: ENABLED
++  state: DISABLED
+   permission: READ_ONLY
+ }
+diff --git a/aconfig/bp4a/com.android.tradeinmode.flags/enable_trade_in_mode_flag_values.textproto b/aconfig/bp4a/com.android.tradeinmode.flags/enable_trade_in_mode_flag_values.textproto
+new file mode 100644
+index 0000000..3a5911b
+--- /dev/null
++++ b/aconfig/bp4a/com.android.tradeinmode.flags/enable_trade_in_mode_flag_values.textproto
+@@ -0,0 +1,6 @@
++flag_value {
++  package: "com.android.tradeinmode.flags"
++  name: "enable_trade_in_mode"
++  state: DISABLED
++  permission: READ_ONLY
++}
+diff --git a/aconfig/trunk_staging/com.android.tradeinmode.flags/enable_trade_in_mode_flag_values.textproto b/aconfig/trunk_staging/com.android.tradeinmode.flags/enable_trade_in_mode_flag_values.textproto
+index d9a4088..3a5911b 100644
+--- a/aconfig/trunk_staging/com.android.tradeinmode.flags/enable_trade_in_mode_flag_values.textproto
++++ b/aconfig/trunk_staging/com.android.tradeinmode.flags/enable_trade_in_mode_flag_values.textproto
+@@ -1,6 +1,6 @@
+ flag_value {
+   package: "com.android.tradeinmode.flags"
+   name: "enable_trade_in_mode"
+-  state: ENABLED
++  state: DISABLED
+   permission: READ_ONLY
+ }
+-- 
+2.34.1
+

@@ -48,6 +48,25 @@
       "validation": "PASS: exact tree replay"
     },
     {
+      "project": "build/release",
+      "base": "d76088e515490325b6edd276ef167449fd71805a",
+      "head": "b86d6191c95b2bee989db8026f5c81871e56422f",
+      "upstream_url": "https://github.com/LineageOS/android_build_release",
+      "upstream_branch": "lineage-23.2",
+      "patches": [
+        {
+          "file": "build/release/0001-Disable-trade-in-mode-globally.patch",
+          "commit": "b86d6191c95b2bee989db8026f5c81871e56422f",
+          "subject": "Disable trade-in mode globally",
+          "patch_id": "938993f08d0a1abc3c0c2e9c19ae94ddc897d06c",
+          "sha256": "79fefa628dd24dd8b097da28747533133ce52d919f267bfcf5b24416d278588e"
+        }
+      ],
+      "base_tree": "d8bfa4b273f91c9d9c1289b421b9086017953b89",
+      "target_tree": "9188ce21d0d8f292ba5297de80b372e6f865d287",
+      "validation": "PASS: exact tree replay"
+    },
+    {
       "project": "build/soong",
       "base": "9aa045a2aef10b8089e32e847fed26d9aa3d61be",
       "head": "bf23766749ed959d53bdc263438aef38599f7e73",
@@ -583,6 +602,25 @@
       ],
       "base_tree": "f2e7356e539626ed5a3565d19f41687da9b1e387",
       "target_tree": "606e0473d137415a5a990a2f6e7fbda6ebc3b9bd",
+      "validation": "PASS: exact tree replay"
+    },
+    {
+      "project": "vendor/lineage",
+      "base": "259ba6626a9e3888e6b60732fb3f829e7de8f26e",
+      "head": "410a76d640b7de4071fe37a54ff6f1f629b53945",
+      "upstream_url": "https://github.com/LineageOS/android_vendor_lineage",
+      "upstream_branch": "lineage-23.2",
+      "patches": [
+        {
+          "file": "vendor/lineage/0001-lineage-Restore-unrestricted-ADB-on-debug-builds.patch",
+          "commit": "410a76d640b7de4071fe37a54ff6f1f629b53945",
+          "subject": "lineage: Restore unrestricted ADB on debug builds",
+          "patch_id": "5c3c06347c0a9756fc114a825f1676f0d2a2adf0",
+          "sha256": "390c5be6076a7dc51ee66a03d2d85291d9345e2e24602b831e4c3db5c07dad8b"
+        }
+      ],
+      "base_tree": "8a08b8e144036d39cddb0dc1a436e0acf3b5202e",
+      "target_tree": "f8de5695357ee6fd6479f77b3e8c64a22f105084",
       "validation": "PASS: exact tree replay"
     }
   ]
