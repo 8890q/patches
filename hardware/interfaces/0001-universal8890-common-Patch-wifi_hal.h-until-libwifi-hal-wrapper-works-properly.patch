@@ -1,0 +1,45 @@
+From 59326e76d2aeb9ddf85369a44b337af4c538fc57 Mon Sep 17 00:00:00 2001
+From: Dominggoes Isakh <drjisakh@gmail.com>
+Date: Fri, 5 Dec 2025 17:52:07 +0100
+Subject: [PATCH] universal8890-common: Patch wifi_hal.h until
+ libwifi-hal-wrapper works properly
+
+Change-Id: I5389d71876ac52eaa966ad2ed0ae5c2ecd0b0a55
+Signed-off-by: ivanmeler <i_ivan@windowslive.com>
+---
+ .../include/hardware_legacy/wifi_hal.h               | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/wifi/legacy_headers/include/hardware_legacy/wifi_hal.h b/wifi/legacy_headers/include/hardware_legacy/wifi_hal.h
+index c78fb7d37362bec0818f11c33beb77bd39d557d6..6bb521abbdf162c2bfd891d5ae4b0a9d06c7fa29 100644
+--- a/wifi/legacy_headers/include/hardware_legacy/wifi_hal.h
++++ b/wifi/legacy_headers/include/hardware_legacy/wifi_hal.h
+@@ -791,15 +791,9 @@ typedef struct {
+     wifi_error (* wifi_get_valid_channels)(wifi_interface_handle,int, int, wifi_channel *, int *);
+     wifi_error (* wifi_rtt_range_request)(wifi_request_id, wifi_interface_handle, unsigned,
+             wifi_rtt_config[], wifi_rtt_event_handler);
+-    wifi_error (* wifi_rtt_range_request_v3)(wifi_request_id, wifi_interface_handle, unsigned,
+-            wifi_rtt_config_v3[], wifi_rtt_event_handler_v3);
+-    wifi_error (*wifi_rtt_range_request_v4)(wifi_request_id, wifi_interface_handle, unsigned,
+-                                            wifi_rtt_config_v4[], wifi_rtt_event_handler_v4);
+     wifi_error (* wifi_rtt_range_cancel)(wifi_request_id,  wifi_interface_handle, unsigned,
+             mac_addr[]);
+     wifi_error (* wifi_get_rtt_capabilities)(wifi_interface_handle, wifi_rtt_capabilities *);
+-    wifi_error (* wifi_get_rtt_capabilities_v3)(wifi_interface_handle, wifi_rtt_capabilities_v3 *);
+-    wifi_error (*wifi_get_rtt_capabilities_v4)(wifi_interface_handle, wifi_rtt_capabilities_v4*);
+     wifi_error (* wifi_rtt_get_responder_info)(wifi_interface_handle iface,
+             wifi_rtt_responder *responder_info);
+     wifi_error (* wifi_enable_responder)(wifi_request_id id, wifi_interface_handle iface,
+@@ -1423,6 +1417,12 @@ typedef struct {
+      * when adding new functions make sure to add stubs in
+      * wifi_legacy_hal_stubs.cpp::initHalFuncTableWithStubs
+      */
++    wifi_error (* wifi_rtt_range_request_v3)(wifi_request_id, wifi_interface_handle, unsigned,
++            wifi_rtt_config_v3[], wifi_rtt_event_handler_v3);
++    wifi_error (*wifi_rtt_range_request_v4)(wifi_request_id, wifi_interface_handle, unsigned,
++                                            wifi_rtt_config_v4[], wifi_rtt_event_handler_v4);
++    wifi_error (* wifi_get_rtt_capabilities_v3)(wifi_interface_handle, wifi_rtt_capabilities_v3 *);
++    wifi_error (*wifi_get_rtt_capabilities_v4)(wifi_interface_handle, wifi_rtt_capabilities_v4*);
+ } wifi_hal_fn;
+ 
+ wifi_error init_wifi_vendor_hal_func_table(wifi_hal_fn *fn);

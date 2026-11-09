@@ -1,0 +1,23 @@
+From 6027f2b6d89f7bc87c79f7391e2e6652247ac768 Mon Sep 17 00:00:00 2001
+From: Dominggoes Isakh <drjisakh@gmail.com>
+Date: Sat, 17 Jan 2026 22:26:04 +0100
+Subject: [PATCH] radio: Fix linker errors for legacy /vendor/bin/hw/rild
+
+Change-Id: I5ce4240cf43146f9cabb6647cb1f268bb264274f
+Signed-off-by: ivanmeler <i_ivan@windowslive.com>
+---
+ radio/aidl/compat/libradiocompat/Android.bp | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/radio/aidl/compat/libradiocompat/Android.bp b/radio/aidl/compat/libradiocompat/Android.bp
+index 04aed77c939d6c9e16d7917d4904e0fbfabb335a..6809faf61cfa5c96b1931ec17772ba7d547fc606 100644
+--- a/radio/aidl/compat/libradiocompat/Android.bp
++++ b/radio/aidl/compat/libradiocompat/Android.bp
+@@ -41,7 +41,6 @@ cc_defaults {
+ cc_library {
+     name: "android.hardware.radio-library.compat",
+     defaults: ["android.hardware.radio-library.aidl_deps"],
+-    relative_install_path: "hw",
+     vendor: true,
+     cflags: [
+         "-Wall",

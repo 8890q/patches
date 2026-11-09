@@ -1,0 +1,73 @@
+From bf23766749ed959d53bdc263438aef38599f7e73 Mon Sep 17 00:00:00 2001
+From: Jan Altensen <info@stricted.net>
+Date: Thu, 10 Sep 2020 15:21:40 +0200
+Subject: [PATCH] soong: allow overriding header files
+
+Includes:
+
+  Author: Jan Altensen <info@stricted.net>
+  Date:   Sat Aug 7 19:41:59 2021 +0200
+
+    soong: move header override to compiler.go
+
+     * library.go only covers libraries
+
+    Change-Id: I3374999d6b364dd1bbc2060996964ee7b04493e7
+
+Change-Id: Ia9d2210605c5927b529fbe9485b0e5abd079f487
+Signed-off-by: ivanmeler <i_ivan@windowslive.com>
+---
+ android/config.go   |  4 ++++
+ android/variable.go |  2 ++
+ cc/compiler.go      | 10 ++++++++++
+ 3 files changed, 16 insertions(+)
+
+diff --git a/android/config.go b/android/config.go
+index e820ec002e0de575c19d25c23a7b1a4e83141fe6..ed3e39e3b6f47023530d20d78e65fde8cc29a8fb 100644
+--- a/android/config.go
++++ b/android/config.go
+@@ -1939,6 +1939,10 @@ func (c *deviceConfig) DeviceKernelHeaderDirs() []string {
+ 	return c.config.productVariables.DeviceKernelHeaders
+ }
+ 
++func (c *deviceConfig) TargetSpecificHeaderPath() string {
++	return String(c.config.productVariables.TargetSpecificHeaderPath)
++}
++
+ // JavaCoverageEnabledForPath returns whether Java code coverage is enabled for
+ // path. Coverage is enabled by default when the product variable
+ // JavaCoveragePaths is empty. If JavaCoveragePaths is not empty, coverage is
+diff --git a/android/variable.go b/android/variable.go
+index 9ce91ad94080bde5023702cfa91c30c450bd90a5..eb6d595e9935939d0b083e987ddf55d5a14e684f 100644
+--- a/android/variable.go
++++ b/android/variable.go
+@@ -382,6 +382,8 @@ type ProductVariables struct {
+ 
+ 	DeviceKernelHeaders []string `json:",omitempty"`
+ 
++	TargetSpecificHeaderPath *string `json:",omitempty"`
++
+ 	ExtraVndkVersions []string `json:",omitempty"`
+ 
+ 	NamespacesToExport []string `json:",omitempty"`
+diff --git a/cc/compiler.go b/cc/compiler.go
+index 24c8a85f608f6b095e0f5e6db4f6c2c778a880d5..2300e2f4007d70c2c7f245e3285f9cb6958b1098 100644
+--- a/cc/compiler.go
++++ b/cc/compiler.go
+@@ -393,6 +393,16 @@ func (compiler *baseCompiler) compilerFlags(ctx ModuleContext, flags Flags, deps
+ 	tc := ctx.toolchain()
+ 	modulePath := ctx.ModuleDir()
+ 
++	additionalIncludeDirs := ctx.DeviceConfig().TargetSpecificHeaderPath()
++	if len(additionalIncludeDirs) > 0 {
++		// devices can have multiple paths in TARGET_SPECIFIC_HEADER_PATH
++		// add -I in front of all of them
++		if (strings.Contains(additionalIncludeDirs, " ")) {
++			additionalIncludeDirs = strings.ReplaceAll(additionalIncludeDirs, " ", " -I")
++		}
++		flags.Local.CommonFlags = append(flags.Local.CommonFlags, "-I" + additionalIncludeDirs)
++	}
++
+ 	reuseObjs := false
+ 	if len(ctx.GetDirectDepsProxyWithTag(reuseObjTag)) > 0 {
+ 		reuseObjs = true

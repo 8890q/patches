@@ -1,0 +1,589 @@
+{
+  "version": 1,
+  "lineage_branch": "lineage-23.2",
+  "projects": [
+    {
+      "project": "bionic",
+      "base": "ff9fe01e7e1e81febaf32b15fa561aec480a112c",
+      "head": "2d3ae760445898e978e39fcc7eea06c1b50c24ec",
+      "upstream_url": "https://github.com/LineageOS/android_bionic",
+      "upstream_branch": "lineage-23.2",
+      "patches": [
+        {
+          "file": "bionic/0001-linker-partially-allow-text-relocations.patch",
+          "commit": "2d3ae760445898e978e39fcc7eea06c1b50c24ec",
+          "subject": "linker: partially allow text relocations",
+          "patch_id": "f8c888abad045e968b4142726175ae7b3760c139",
+          "sha256": "1cdb008fb79218c63c7e571a1016a3063f53152179b0d7b810e6b301734d6a69"
+        }
+      ],
+      "base_tree": "4eba8c98ce74e22653fac8fc592c49ad6d024b99",
+      "target_tree": "caacb34808cbfdf3135407cad9fea0b644f5a1d3",
+      "validation": "PASS: exact tree replay"
+    },
+    {
+      "project": "build/make",
+      "base": "e5aaa62172df0f321e68133fa30f42316376bfe8",
+      "head": "c0aa838fe654dabc6e8e4990b67715b4b1f6ad8d",
+      "upstream_url": "https://github.com/LineageOS/android_build",
+      "upstream_branch": "lineage-23.2",
+      "patches": [
+        {
+          "file": "build/make/0001-build-Add-support-for-device-tree-in-boot.img.patch",
+          "commit": "105f010497355b857e582c5c162646ee687f2635",
+          "subject": "build: Add support for device tree in boot.img",
+          "patch_id": "2de9cbca83aa8c32aadce0b342f04581d5a37258",
+          "sha256": "cce633b233b9649c7d6648741d45d081b8398fcdcd1a7630ca8cc408c4342544"
+        },
+        {
+          "file": "build/make/0002-build-Squash-of-allowing-a-device-to-generically-define-its-own-headers.patch",
+          "commit": "c0aa838fe654dabc6e8e4990b67715b4b1f6ad8d",
+          "subject": "build: Squash of allowing a device to generically define its own headers",
+          "patch_id": "b4ae3c69af6dab837b541d8d099c68166d0294ee",
+          "sha256": "03946962c7663696e963b55611e1c0c6162bb5c66aaba3b4c3f5683708c5cf04"
+        }
+      ],
+      "base_tree": "fd1eb6bec08c65f98da9f5967f3362484601e1b6",
+      "target_tree": "8b23a88a982e77432a79a931a3c6dc610bee361c",
+      "validation": "PASS: exact tree replay"
+    },
+    {
+      "project": "build/soong",
+      "base": "9aa045a2aef10b8089e32e847fed26d9aa3d61be",
+      "head": "bf23766749ed959d53bdc263438aef38599f7e73",
+      "upstream_url": "https://github.com/LineageOS/android_build_soong",
+      "upstream_branch": "lineage-23.2",
+      "patches": [
+        {
+          "file": "build/soong/0001-soong-allow-overriding-header-files.patch",
+          "commit": "bf23766749ed959d53bdc263438aef38599f7e73",
+          "subject": "soong: allow overriding header files",
+          "patch_id": "6da0c3df3c55b8f5bb86bde000e866fb409cf662",
+          "sha256": "0688975b6bf00b9094df5b25bba08affb7592b9db07cc197630bb22744d3d503"
+        }
+      ],
+      "base_tree": "1b49d38cbcb1ec09d793b087d529f5a58cc9abff",
+      "target_tree": "1ea5011428a77c73903983b45b32aecbb9078ce9",
+      "validation": "PASS: exact tree replay"
+    },
+    {
+      "project": "device/lineage/sepolicy",
+      "base": "96a7247e48d7e2e7127c2f090665e856de63247c",
+      "head": "6ab50a56e83734b5a5e3b494f1aa49bcf8bd6ba1",
+      "upstream_url": "https://github.com/LineageOS/android_device_lineage_sepolicy",
+      "upstream_branch": "lineage-23.2",
+      "patches": [
+        {
+          "file": "device/lineage/sepolicy/0001-vendor_hal_soter-comment-out.patch",
+          "commit": "6ab50a56e83734b5a5e3b494f1aa49bcf8bd6ba1",
+          "subject": "vendor_hal_soter: comment out",
+          "patch_id": "3af32db3ed5217b1d674d2118f16abebfbcae10a",
+          "sha256": "c5f9c1383fdae6bacb66c02b9bb47d77eca015903799077942ac6a6cab8788db"
+        }
+      ],
+      "base_tree": "e804ad7b14cc968f3f2849cc1644ef1a9f16abc9",
+      "target_tree": "c76d3587298bb88172864879cb9cae2895ca06d6",
+      "validation": "PASS: exact tree replay"
+    },
+    {
+      "project": "frameworks/av",
+      "base": "b6b36c1fdb3c6ffced822a054fbf035b544f0de2",
+      "head": "35a1da917b3cab54b7c8e870a4c19b2485d51b55",
+      "upstream_url": "https://github.com/LineageOS/android_frameworks_av",
+      "upstream_branch": "lineage-23.2",
+      "patches": [
+        {
+          "file": "frameworks/av/0001-Revert-Remove-source-code-of-all-the-OMX-software-co.patch",
+          "commit": "1adca6d19f0b3c1e7979ae1243ec2f1317e1a9a0",
+          "subject": "Revert \"Remove source code of all the OMX software codec plugins\"",
+          "patch_id": "2b8250b04dcea66a57567e0d79599e4d3d1078c9",
+          "sha256": "d5311dc6c90f5fd5a1028e8f994e3d1824a0f738f4ecf75fdfbdfc6c002796dd"
+        },
+        {
+          "file": "frameworks/av/0002-Revert-Disable-building-software-OMX-codecs.patch",
+          "commit": "e87cb14ab97951be4065fa32d98d2ed1a19db2d8",
+          "subject": "Revert \"Disable building software OMX codecs\"",
+          "patch_id": "55c107a8e46a3bbbd0f80336819d719d72f95dc9",
+          "sha256": "337d2f96e8f239fc38bb598fe6be8dadcdf025374cf6155c83bd843475cf1140"
+        },
+        {
+          "file": "frameworks/av/0003-omx-suppress-unused-but-set-variable.patch",
+          "commit": "35a1da917b3cab54b7c8e870a4c19b2485d51b55",
+          "subject": "omx: suppress unused-but-set-variable",
+          "patch_id": "5974e017daf785e6c7fe1a18233ca2674cc8539e",
+          "sha256": "3fe34c0ebc9399dcc39395ac83a3321262176dcf641ecdcb4518254365b9f781"
+        }
+      ],
+      "base_tree": "69a88dd8d140d21430e49ad9b425662e5dcfe123",
+      "target_tree": "ae2d3da947125c0bf2d0cd076ecc9a67e2422b22",
+      "validation": "PASS: exact tree replay"
+    },
+    {
+      "project": "frameworks/base",
+      "base": "daf2b33fac918a464f6f7193214b27d164d39bea",
+      "head": "307d459e32130e5dd3881e63ea0c0e99565e845d",
+      "upstream_url": "https://github.com/LineageOS/android_frameworks_base",
+      "upstream_branch": "lineage-23.2",
+      "patches": [
+        {
+          "file": "frameworks/base/0001-Disable-fs-verity-as-3.18-doesn-t-support-it.patch",
+          "commit": "39be780054dbe7064fdd26f8d8f82228d2a77348",
+          "subject": "Disable fs-verity as 3.18 doesn't support it",
+          "patch_id": "bb38bfcd5ef740bef4a6d87d9ccf28d9c7ff441b",
+          "sha256": "0061636a349d3c340bd3563c6ac3eea3f49c4a27744d36b753f56ea403b10fe3"
+        },
+        {
+          "file": "frameworks/base/0002-Ignore-cgroup-creation-errors.patch",
+          "commit": "95ea763a58a51dc612dff1e27e98d473581dcd3c",
+          "subject": "Ignore cgroup creation errors",
+          "patch_id": "6c670fe02e8a4f7615435d5364b19b36e39c59dc",
+          "sha256": "e7770d1844419cffbf86e4b843791572d820be731a9875bd83b3b229cc6ca04a"
+        },
+        {
+          "file": "frameworks/base/0003-Don-t-use-PATTERNED-style-ripple-effect-by-default.patch",
+          "commit": "c5cadf1131585ce27f7151c28cbb04e7e3eb30d7",
+          "subject": "Don't use PATTERNED style ripple effect by default",
+          "patch_id": "5a8685c0a96ba76d7e6516d57a562a60678810dc",
+          "sha256": "b7b8edcfa410261e8f894e5e1332cc0ea277154a9a7b29e6fa1c81efbd935a88"
+        },
+        {
+          "file": "frameworks/base/0004-Don-t-use-stretch-effect-by-default.patch",
+          "commit": "d5b452c812e48ee946a98b93f3304d7727a42220",
+          "subject": "Don't use stretch effect by default",
+          "patch_id": "4afa2422e8b6f5951824f1e4772e9a236568d345",
+          "sha256": "fdedf8ca6da199003b03248662b6451acdad96f077fceea4db63ebc5ebdb5f89"
+        },
+        {
+          "file": "frameworks/base/0005-batterysaver-add-property-to-disable-night-mode-on-b.patch",
+          "commit": "508784bf394d1e3049dde37df310ad42dc5e2f2b",
+          "subject": "batterysaver: add property to disable night mode on battery saver",
+          "patch_id": "9a2ea4353e4bd19e8450c29b6bc1e265713ec1c0",
+          "sha256": "0619a9e3a3feca34ded93cdb40c8d03aa202f3446ad12a9eafae78cca48d0f18"
+        },
+        {
+          "file": "frameworks/base/0006-hwui-return-to-ashmem.patch",
+          "commit": "1d0817d32ec204c4f10c5375d0564c00d1dc31a6",
+          "subject": "hwui: return to ashmem",
+          "patch_id": "192c1c9e5c4795b622f84ce91bfbb55873c8ad43",
+          "sha256": "cbb261ae2fa2ac198cad997a118a3892b331ecdbc91acfb2afad6eb893597530"
+        },
+        {
+          "file": "frameworks/base/0007-am-do-not-protect-cached-processes-from-proactive-ki.patch",
+          "commit": "19de36f114f20adf87f9f5afd9fd41ad2790af14",
+          "subject": "am: do not protect cached processes from proactive killing on low ram targets",
+          "patch_id": "fb4ee1d81eb0c7b9bfd357041c328898fcb15db3",
+          "sha256": "4f092f7a7819f054384f3813f257e149ceaaf200ab963def8fefdff7d19cacb5"
+        },
+        {
+          "file": "frameworks/base/0008-Not-all-kernel-support-splicing-pipes-or-is-it-socke.patch",
+          "commit": "24c40d438c8a8e13ee7983ac0cc6f2341077589e",
+          "subject": "Not all kernel support splicing pipes (or is it sockets?), so gracefully fallback to dumb userspace copy when splice() fails",
+          "patch_id": "53454cd03f2e307d71e843743ba1941b0c2595da",
+          "sha256": "20990fa0b8003266d5ba1ebb0c747d472507843cfe9e7c9270391f2d07878fdf"
+        },
+        {
+          "file": "frameworks/base/0009-allow-microG-on-user-build.patch",
+          "commit": "d15984d13201d83cbed94a33a57f1894d7bb775c",
+          "subject": "allow microG on user build",
+          "patch_id": "2d851eaeb2a4315178e7e80b2563dadc6971b777",
+          "sha256": "81639d15d146ffb327ed1721595cef361cfdada1d76e7b200048a62a37890df0"
+        },
+        {
+          "file": "frameworks/base/0010-SystemUI-Forward-port-HD-wifi-calling-statusbar-icon.patch",
+          "commit": "02b7122b489e8a2886f7e050c18aacbeb8e44d29",
+          "subject": "SystemUI: Forward port 'HD & wifi calling statusbar icons'",
+          "patch_id": "4c516d997a6f447b8c2ea4e652d769decfcc4fa9",
+          "sha256": "f451a7abb1d4d98637c18df694aa677fc1e82954782165a66e7c7e2d67258ee5"
+        },
+        {
+          "file": "frameworks/base/0011-SystemUI-restore-roaming-icon-make-HD-a-separate-ico.patch",
+          "commit": "40742f2d984ed725908fe45c7cbc196fcaecc6d9",
+          "subject": "SystemUI: restore roaming icon, make HD a separate icon",
+          "patch_id": "45053129c8b8945e80e735d5a9dccdd6a38fb1c8",
+          "sha256": "a107c5e731c6447fcabbb915f33f304d89b24a72db2ef1e5cf6666e367aae6f7"
+        },
+        {
+          "file": "frameworks/base/0012-SystemUI-convert-HD-icon-to-VoLTE.patch",
+          "commit": "1e07ec4f974ecb55de5cc101cf163555e4f876b2",
+          "subject": "SystemUI: convert HD icon to VoLTE",
+          "patch_id": "54b730e907d528796307f8ca55584982d0ed8131",
+          "sha256": "9846b1ca88a6bdd4e35541b3c54758b09986409a7457333136ce83ff3e0ea8e0"
+        },
+        {
+          "file": "frameworks/base/0013-Revert-Remove-android.frameworks.schedulerservice.patch",
+          "commit": "d2124f041f54191ea91a1b7eceec2e2fb63ea702",
+          "subject": "Revert \"Remove android.frameworks.schedulerservice\"",
+          "patch_id": "5b62786a3d7cfb38107318fda5ba78699faa80fa",
+          "sha256": "053d2de23a00d7c20f283020797be92b3199dfaa73dddef345a19118d402725d"
+        },
+        {
+          "file": "frameworks/base/0014-aconfig-Fall-back-when-new-storage-is-incomplete.patch",
+          "commit": "307d459e32130e5dd3881e63ea0c0e99565e845d",
+          "subject": "aconfig: Fall back when new storage is incomplete",
+          "patch_id": "809e2251587ed443d581e6bd8d1e72ba5c25f33b",
+          "sha256": "563b5e6314068cd40c54a7fe5b620af1de4e29e3c65047e9b2eee6ff3e9ada77"
+        }
+      ],
+      "base_tree": "6e7c41d664395f61f53895efef74dd621664e23e",
+      "target_tree": "e55e505680488354fa9cd0644cf4aa77cbdb965e",
+      "validation": "PASS: exact tree replay"
+    },
+    {
+      "project": "frameworks/hardware/interfaces",
+      "base": "0829856cccff8290b1b12ab0b20621d8e866f73c",
+      "head": "f0e6ba5be001a29a6c957a597a09062a7db525ff",
+      "upstream_url": "https://android.googlesource.com/platform/frameworks/hardware/interfaces",
+      "upstream_branch": "refs/tags/android-16.0.0_r4",
+      "patches": [
+        {
+          "file": "frameworks/hardware/interfaces/0001-Revert-Remove-android.frameworks.schedulerservice.patch",
+          "commit": "f0e6ba5be001a29a6c957a597a09062a7db525ff",
+          "subject": "Revert \"Remove android.frameworks.schedulerservice\"",
+          "patch_id": "8d545b7c5229a420486306bcccea3aad84fa0aa2",
+          "sha256": "1752dccb652d0871ddb6ddb265ad8a5630eaafea0c5e2bbdb8f63fffb0374540"
+        }
+      ],
+      "base_tree": "86e0f6f1dedad70135f64cac067bf90eb63cd43e",
+      "target_tree": "90ddd8cd0d084383b51783fe7b8dd924f91a1ed3",
+      "validation": "PASS: exact tree replay"
+    },
+    {
+      "project": "frameworks/native",
+      "base": "9568531f9be7ae65f260699811f32ec4e461de6e",
+      "head": "a3d91d7a7053353cf350e2b66c8cdab1f5caab30",
+      "upstream_url": "https://github.com/LineageOS/android_frameworks_native",
+      "upstream_branch": "lineage-23.2",
+      "patches": [
+        {
+          "file": "frameworks/native/0001-Revert-Delete-genTextures-and-deleteTextures-from-Re.patch",
+          "commit": "c09ae7a444acdcd8b60e5078fc74b0e493e4eee1",
+          "subject": "Revert \"Delete genTextures and deleteTextures from RenderEngine\"",
+          "patch_id": "5e18f42ee02f2b8bb787a1318c0b8f997fa14b4d",
+          "sha256": "49365748bcbd83be13e5c3330900c5769241039fb3c4a7e6baa9299c38dc01a6"
+        },
+        {
+          "file": "frameworks/native/0002-Revert-Remove-useFramebufferCache-parameter-in-drawL.patch",
+          "commit": "e0b25dbf1142fab6b124bfa483419df2ce234ba3",
+          "subject": "Revert \"Remove useFramebufferCache parameter in drawLayers()\" and fix new code",
+          "patch_id": "b6ae1140ba164c91ac4a4f462be47e7f62d38f6d",
+          "sha256": "567c68b6106c0ce0747104b3ab9ae324eb80097a38ebedf919df6731703ec02d"
+        },
+        {
+          "file": "frameworks/native/0003-Forward-port-GLES-Render-Engine-to-16-QPR2.patch",
+          "commit": "4e3c3033db62bd2654fd0a4680d0cee52a990204",
+          "subject": "Forward-port GLES Render Engine to 16 QPR2",
+          "patch_id": "8354d67a6ca407200ccde664a4a4a0405cba2a59",
+          "sha256": "b5193abf8c4dcfcbe1dc043788e9712d599e705874e248308a1c8c29aefc677c"
+        },
+        {
+          "file": "frameworks/native/0004-renderengine-gles-unconditionally-skip-PostRenderCle.patch",
+          "commit": "9008ca018bf08e5b24256ee952732380cb827027",
+          "subject": "renderengine: gles: unconditionally skip PostRenderCleanup",
+          "patch_id": "ac1344a4ca0001c69566c024224e79b29f421a76",
+          "sha256": "92123ae4ee33a7d2417d317f84ca9de9a7317fdcf90aae12fd2de526ef342a4b"
+        },
+        {
+          "file": "frameworks/native/0005-renderengine-gles-Fix-QPR2-build-errors.patch",
+          "commit": "75de0d3e4e762ff939cb07f8191b8a08d289a78c",
+          "subject": "renderengine: gles: Fix QPR2 build errors",
+          "patch_id": "1a7321601d5477e8bb1964f2ef624c22d2a76ce1",
+          "sha256": "2a1c7b40e6dd0650ff138b7e95be1e44453762089bec9499e8c3a364f328acce"
+        },
+        {
+          "file": "frameworks/native/0006-surfaceflinger-remove-display_intf_headers-dependenc.patch",
+          "commit": "fb45e88ff517e69caa6df481bf687dad00661355",
+          "subject": "surfaceflinger: remove display_intf_headers dependency",
+          "patch_id": "6ecf29e092b9a9a1abda48814526fbe3b3806ae0",
+          "sha256": "782596e54de93109c5051ab7ae168f0bffa5c85f79b5b2baf5d915fe4dfdb7ee"
+        },
+        {
+          "file": "frameworks/native/0007-libbinder-make-threadpool-shrinking-non-fatal.patch",
+          "commit": "905c6dfbcedf824cddc40066f5d80baeb356c313",
+          "subject": "libbinder: make threadpool shrinking non-fatal",
+          "patch_id": "93836732b5607eb426d7c27d73446f50feed9449",
+          "sha256": "4d70ad78088202799fe10e4715660a9f1d104871df5aa126c67cdf0c350a3b0b"
+        },
+        {
+          "file": "frameworks/native/0008-renderengine-compilation-fixes-for-16-QPR1.patch",
+          "commit": "895b85ea68c58048aa8b0b28a726829f6ca3b21f",
+          "subject": "renderengine: compilation fixes for 16 QPR1",
+          "patch_id": "0c47e00202857cc070128a7e879c1c53029484be",
+          "sha256": "eaa78e86afe3c2140bc22e27ed7ce9b371c6807a64e300244c1a86183c3e0896"
+        },
+        {
+          "file": "frameworks/native/0009-SF-Bring-back-support-for-disabling-backpressure-pro.patch",
+          "commit": "672a4fcc42b3c447ab9f3361cecb6cc185bbe3ed",
+          "subject": "SF: Bring back support for disabling backpressure propagation",
+          "patch_id": "a9f3b1a4fdda6fbb9246634bc56f68601fef5c3b",
+          "sha256": "1d14c7be3a52a538d694100813cca700f7fba89fc9ad26fc59ac84c19f887897"
+        },
+        {
+          "file": "frameworks/native/0010-Revert-Remove-android.frameworks.schedulerservice.patch",
+          "commit": "a3d91d7a7053353cf350e2b66c8cdab1f5caab30",
+          "subject": "Revert \"Remove android.frameworks.schedulerservice\"",
+          "patch_id": "d4fbfbe6aeb5917e22b50cb52df40a393e67a816",
+          "sha256": "3aa2fbc5875ca65b65c0183f494d9ed08c5411854c80577cd839c2c48ef5dc60"
+        }
+      ],
+      "base_tree": "f9c91cb7f1051ccd7ecad6ddd61a8a39c6ca1ac1",
+      "target_tree": "5cee743c2aee5611c5e20e0fb4ea1c02a95ac5bf",
+      "validation": "PASS: exact tree replay"
+    },
+    {
+      "project": "hardware/broadcom/wlan",
+      "base": "9d0b2df7c51f88ba5ed8a21925423e6b076e1a2e",
+      "head": "39f81bca454fd01a9406580b5e356e780c519499",
+      "upstream_url": "https://github.com/LineageOS/android_hardware_broadcom_wlan",
+      "upstream_branch": "lineage-23.2",
+      "patches": [
+        {
+          "file": "hardware/broadcom/wlan/0001-HACK-wifi_hal-avoid-CFI-crash-when-wifi-is-turning-o.patch",
+          "commit": "39f81bca454fd01a9406580b5e356e780c519499",
+          "subject": "HACK: wifi_hal: avoid CFI crash when wifi is turning off",
+          "patch_id": "071591e5586d79d1b4010c4f39a0271145ae3bb7",
+          "sha256": "7e6cef2a010ae208c3ec146899f2e28d62c40a22ee04261339070d63d529bff8"
+        }
+      ],
+      "base_tree": "6d1367c8e026a6423e31f98c65b2f74acd48a5f1",
+      "target_tree": "f0696f94d219837872fa477badab91cdebf722d0",
+      "validation": "PASS: exact tree replay"
+    },
+    {
+      "project": "hardware/interfaces",
+      "base": "13d687a84c834af855bfb314b853b8372a7aa6d9",
+      "head": "6027f2b6d89f7bc87c79f7391e2e6652247ac768",
+      "upstream_url": "https://github.com/LineageOS/android_hardware_interfaces",
+      "upstream_branch": "lineage-23.2",
+      "patches": [
+        {
+          "file": "hardware/interfaces/0001-universal8890-common-Patch-wifi_hal.h-until-libwifi-hal-wrapper-works-properly.patch",
+          "commit": "59326e76d2aeb9ddf85369a44b337af4c538fc57",
+          "subject": "universal8890-common: Patch wifi_hal.h until libwifi-hal-wrapper works properly",
+          "patch_id": "e31310c827d4db51dc3aee551171dc50587f0ba2",
+          "sha256": "72becc045abce547a33bb3b258b0c7dcede75df53f50bb7e6d8c7b9711448a0d"
+        },
+        {
+          "file": "hardware/interfaces/0002-radio-Fix-linker-errors-for-legacy-vendor-bin-hw-rild.patch",
+          "commit": "6027f2b6d89f7bc87c79f7391e2e6652247ac768",
+          "subject": "radio: Fix linker errors for legacy /vendor/bin/hw/rild",
+          "patch_id": "aac8c8a79de44af14ff43c32c1dcafe9d11a1978",
+          "sha256": "132ca377271421469ce0053152390ff5e7b93ed0859a766c806d2abcb47d5129"
+        }
+      ],
+      "base_tree": "a786316888dd3790a0faab6e489a119cc9cf27e8",
+      "target_tree": "d42934c33d6951200646db98b629f267ba0850fa",
+      "validation": "PASS: exact tree replay"
+    },
+    {
+      "project": "hardware/libhardware",
+      "base": "0c3e9e0fe76d30d32282c7e8fcdbddc393dc297b",
+      "head": "5bd7a21c85dba30945bf345b6f6ad0df6c8c2e91",
+      "upstream_url": "https://github.com/LineageOS/android_hardware_libhardware",
+      "upstream_branch": "lineage-23.2",
+      "patches": [
+        {
+          "file": "hardware/libhardware/0001-hardware-libhw-Add-display_defs.h-to-declare-custom-.patch",
+          "commit": "5bd7a21c85dba30945bf345b6f6ad0df6c8c2e91",
+          "subject": "hardware/libhw: Add display_defs.h to declare custom enums/flags",
+          "patch_id": "40c1e10a7f8bcfcaf669d1e34ddadc31ee9288b6",
+          "sha256": "9da592de4836853409f4a9c9c69a4b32a107d5c79ffd640d2722fc2ec4673f08"
+        }
+      ],
+      "base_tree": "6c701f3aab2a7b51addc3e7de4a3abbed3e1296d",
+      "target_tree": "2bc7daaa9d2aedb18d6bd6142e9942f99b5ec07a",
+      "validation": "PASS: exact tree replay"
+    },
+    {
+      "project": "hardware/qcom-caf/common",
+      "base": "5cd53603d36aaddd9ba9d882dad5411f1b30fbed",
+      "head": "83ca5a3d445ae29c10f1044e0bb5f55e8a8c13dd",
+      "upstream_url": "https://github.com/LineageOS/android_hardware_qcom-caf_common",
+      "upstream_branch": "lineage-23.2",
+      "patches": [
+        {
+          "file": "hardware/qcom-caf/common/0001-Revert-QCOM-RIP-pre-UM-families.patch",
+          "commit": "89990bb45987f38a012a55baaf527b8757e51ef0",
+          "subject": "Revert \"QCOM: RIP pre-UM families\"",
+          "patch_id": "ddf03e4fc5994aaa05963358c8cb8ed0a6123cc5",
+          "sha256": "4148438a46475e05a21d0510a6f05b05ef02a376b0f582de3e877654fc88b213"
+        },
+        {
+          "file": "hardware/qcom-caf/common/0002-QCOM-Bring-back-legacy-platform-definitions.patch",
+          "commit": "83ca5a3d445ae29c10f1044e0bb5f55e8a8c13dd",
+          "subject": "QCOM: Bring back legacy platform definitions",
+          "patch_id": "4117a01983ca8612e99711f0118ff897982ace78",
+          "sha256": "ef66da86758855ba1b097254b0e16c2ef0c820c4f34d9b4bdc55abbe2b778a20"
+        }
+      ],
+      "base_tree": "36615a9f654e4f2003f15f8ea95bc6171bc25b39",
+      "target_tree": "992d0638992ab3ba0ab970888b39390de0594112",
+      "validation": "PASS: exact tree replay"
+    },
+    {
+      "project": "hardware/ril",
+      "base": "cec58d16c72a4fb5a075c1671e2a494920797e24",
+      "head": "15b94844bcdf493b6f12126623edfcf75e3c7a4d",
+      "upstream_url": "https://android.googlesource.com/platform/hardware/ril",
+      "upstream_branch": "refs/tags/android-16.0.0_r4",
+      "patches": [
+        {
+          "file": "hardware/ril/0001-libril-Restore-support-for-RIL-v6-v8-and-v9-stacks.patch",
+          "commit": "15b94844bcdf493b6f12126623edfcf75e3c7a4d",
+          "subject": "libril: Restore support for RIL v6, v8 and v9 stacks",
+          "patch_id": "3b5f462391844a0bfa620dd3854a19ea47086d63",
+          "sha256": "0fd5f70d995adce9f9974356d5ea297ba55dcbfe5b7b5acc6a44d6d4ba6276e4"
+        }
+      ],
+      "base_tree": "c744ad046c980ba53350abaab25ad7ef99a5af7a",
+      "target_tree": "4bb16176cd1a6c13a209342c3fe25150c64dc87d",
+      "validation": "PASS: exact tree replay"
+    },
+    {
+      "project": "packages/modules/Connectivity",
+      "base": "c9f3e7795256bd4a3f99d02e604e24fd1552c2b3",
+      "head": "24fc6cbe559e5fd1428c3a3429e18c6e6984cf55",
+      "upstream_url": "https://github.com/LineageOS/android_packages_modules_Connectivity",
+      "upstream_branch": "lineage-23.2",
+      "patches": [
+        {
+          "file": "packages/modules/Connectivity/0001-Do-not-require-BTF-on-pre-5.15.patch",
+          "commit": "24fc6cbe559e5fd1428c3a3429e18c6e6984cf55",
+          "subject": "Do not require BTF on pre-5.15",
+          "patch_id": "6f3c84541a3599a0aa2d890cb0b0f46922d576c2",
+          "sha256": "d3be1da8131895dd656d30641d916174773b4d13de39ea264edce011b73d072e"
+        }
+      ],
+      "base_tree": "0c00f1ce1f734c7cb4120106178beb011ffde337",
+      "target_tree": "a7e84de2ec242238b731cf4afabbf0f11d6dccba",
+      "validation": "PASS: exact tree replay"
+    },
+    {
+      "project": "system/core",
+      "base": "eb2de7321317226bbc1951382b3171fa59bb4d1d",
+      "head": "857f9ac876c31d97136b5ae2572c9a4f0039ef37",
+      "upstream_url": "https://github.com/LineageOS/android_system_core",
+      "upstream_branch": "lineage-23.2",
+      "patches": [
+        {
+          "file": "system/core/0001-Fix-support-for-devices-without-cgroupv2-support.patch",
+          "commit": "2b55da82b396dc5861bb6fde2d68b84e7d772dcc",
+          "subject": "Fix support for devices without cgroupv2 support",
+          "patch_id": "aeb1589d2a3be51909cf01940d9a3ebc65d414be",
+          "sha256": "1f8d9da0ab3f50cd0fa0a2710def99613e36581fd2bcc1bbcd967325ebbb5ed3"
+        },
+        {
+          "file": "system/core/0002-Revert-libprocessgroup-CgroupSetup-should-fail-if-a-.patch",
+          "commit": "621fc8329f9248cff687f4f142be9be9e853e66a",
+          "subject": "Revert \"libprocessgroup: CgroupSetup should fail if a required controller fails to mount\"",
+          "patch_id": "ab163a60d30b4c19d3d3043e64e7fbb2cac42857",
+          "sha256": "c0f955a05d74a638a12670e037d3717309b4b2efe6f569ccc9b6b74d5a8837ae"
+        },
+        {
+          "file": "system/core/0003-Camera-Add-feature-extensions.patch",
+          "commit": "857f9ac876c31d97136b5ae2572c9a4f0039ef37",
+          "subject": "Camera: Add feature extensions",
+          "patch_id": "14320c82cd4654cd99c2c35fe8f77b03c0a686df",
+          "sha256": "454bf74a7e43199f52cc0af5b84fcae1f569719868aa03d78af3bb60074fb6a8"
+        }
+      ],
+      "base_tree": "576361ec05d2ccd1920aad87c8fb9237d4720b64",
+      "target_tree": "8e38b0148b3cbb145029146440871df5e122fe96",
+      "validation": "PASS: exact tree replay"
+    },
+    {
+      "project": "system/libhidl",
+      "base": "d063c3a2bf981d8dab2ca60ea471f940d71167a6",
+      "head": "fe9aab3aed70ef8ffbdf6d8c2ca1a1bed22bc982",
+      "upstream_url": "https://android.googlesource.com/platform/system/libhidl",
+      "upstream_branch": "refs/tags/android-16.0.0_r4",
+      "patches": [
+        {
+          "file": "system/libhidl/0001-Revert-delete-gBn-sConstructorMap.patch",
+          "commit": "fe9aab3aed70ef8ffbdf6d8c2ca1a1bed22bc982",
+          "subject": "Revert \"delete gBn/sConstructorMap\"",
+          "patch_id": "7e2150d1d3d35c313b57e9da38b8f131fa5cfd81",
+          "sha256": "84f481b1b65973f710b8b04f57429fdac47590990e505d2ce768075997d60aee"
+        }
+      ],
+      "base_tree": "b6dfe4fc42484ba085cb9e94b8cfeaf7ab7e17a6",
+      "target_tree": "f5c8c955177758f33d2ea216ae5f715c8a8f2689",
+      "validation": "PASS: exact tree replay"
+    },
+    {
+      "project": "system/libhwbinder",
+      "base": "0e0fd15c90a55a45d2cc49b032c25b581d085912",
+      "head": "f89c65fe1fa72126bb59748929fe91acfeaf9603",
+      "upstream_url": "https://android.googlesource.com/platform/system/libhwbinder",
+      "upstream_branch": "refs/tags/android-16.0.0_r4",
+      "patches": [
+        {
+          "file": "system/libhwbinder/0001-Don-t-crash-Binder-threadpool-cannot-be-shrunk-after.patch",
+          "commit": "f89c65fe1fa72126bb59748929fe91acfeaf9603",
+          "subject": "Don't crash \"Binder threadpool cannot be shrunk after starting\"",
+          "patch_id": "319de593579fc0a1d8b2ac0a35f77529920859d8",
+          "sha256": "7c9f4164b207be3a6c721fa3891df9dc47546435d04c94179798b0a72a5ca439"
+        }
+      ],
+      "base_tree": "bacaf175f04c37ce5c4a6171b1291230887f17cf",
+      "target_tree": "71340d9eb510e54c8572525ce4c9eeb11c3b819b",
+      "validation": "PASS: exact tree replay"
+    },
+    {
+      "project": "system/sepolicy",
+      "base": "885cc500f6078a766d1f6def5ce4c06c55841773",
+      "head": "14b383507419fcaa66d9b7531b0aeb3475e38950",
+      "upstream_url": "https://github.com/LineageOS/android_system_sepolicy",
+      "upstream_branch": "lineage-23.2",
+      "patches": [
+        {
+          "file": "system/sepolicy/0001-sepolicy-allow-su-domain-in-user-builds.patch",
+          "commit": "14b383507419fcaa66d9b7531b0aeb3475e38950",
+          "subject": "sepolicy: allow su domain in user builds",
+          "patch_id": "2647cbf8d9eda70131ba61e7c950a01421557db6",
+          "sha256": "569e6164c4c2886b9bf7e1c146386a433f15a520b34c5b1fb36ec2dd89394224"
+        }
+      ],
+      "base_tree": "773a1163b2c33d2e618eaf1ab18d217fb6752902",
+      "target_tree": "2592dbf6535b10459e5fc345a2564c32659d0516",
+      "validation": "PASS: exact tree replay"
+    },
+    {
+      "project": "system/tools/hidl",
+      "base": "9ea202c0fba585c2884a6bb2b1ba2dab46e98a8f",
+      "head": "1a823b20a108a911859b7edcd4bae02de7e9a0ac",
+      "upstream_url": "https://android.googlesource.com/platform/system/tools/hidl",
+      "upstream_branch": "refs/tags/android-16.0.0_r4",
+      "patches": [
+        {
+          "file": "system/tools/hidl/0001-Revert-Remove-android.frameworks.schedulerservice.patch",
+          "commit": "1a823b20a108a911859b7edcd4bae02de7e9a0ac",
+          "subject": "Revert \"Remove android.frameworks.schedulerservice\"",
+          "patch_id": "d2a07015728944c10042ab78351d352e895d314a",
+          "sha256": "549bd5766a1ec2854acf504d2319d009f0153930efaa9af307370868fd26be46"
+        }
+      ],
+      "base_tree": "8768c6f3dea007a396d8f4bf638079758d56ee0a",
+      "target_tree": "60d899b29b4b2aa684af048e0550318bee3b3a96",
+      "validation": "PASS: exact tree replay"
+    },
+    {
+      "project": "system/tools/mkbootimg",
+      "base": "954bc3ead5e679005fddf3484d247f2557b3c2c9",
+      "head": "70ca0eca631d0f761d66475eca9f016c640067c1",
+      "upstream_url": "https://android.googlesource.com/platform/system/tools/mkbootimg",
+      "upstream_branch": "refs/tags/android-16.0.0_r4",
+      "patches": [
+        {
+          "file": "system/tools/mkbootimg/0001-mkbootimg-add-support-for-dt.patch",
+          "commit": "70ca0eca631d0f761d66475eca9f016c640067c1",
+          "subject": "mkbootimg: add support for --dt",
+          "patch_id": "703763478abf07a3f408909467342f7f84146fb7",
+          "sha256": "746ce4068b8de7fd6d50c80b6f9f116169d092a1883fa888a7d36f7e208c26a0"
+        }
+      ],
+      "base_tree": "f2e7356e539626ed5a3565d19f41687da9b1e387",
+      "target_tree": "606e0473d137415a5a990a2f6e7fbda6ebc3b9bd",
+      "validation": "PASS: exact tree replay"
+    }
+  ]
+}

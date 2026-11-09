@@ -1,0 +1,182 @@
+From a3d91d7a7053353cf350e2b66c8cdab1f5caab30 Mon Sep 17 00:00:00 2001
+From: Dominggoes Isakh <drjisakh@gmail.com>
+Date: Tue, 10 Mar 2026 22:31:22 +0100
+Subject: [PATCH] Revert "Remove android.frameworks.schedulerservice"
+
+This reverts commit 25a53ad19a0e6c2298109d77d7d3c37cce4a4a40.
+---
+ services/schedulerservice/Android.bp          | 32 +++++++++
+ .../SchedulingPolicyService.cpp               | 67 +++++++++++++++++++
+ .../SchedulingPolicyService.h                 | 50 ++++++++++++++
+ 3 files changed, 149 insertions(+)
+ create mode 100644 services/schedulerservice/Android.bp
+ create mode 100644 services/schedulerservice/SchedulingPolicyService.cpp
+ create mode 100644 services/schedulerservice/include/schedulerservice/SchedulingPolicyService.h
+
+diff --git a/services/schedulerservice/Android.bp b/services/schedulerservice/Android.bp
+new file mode 100644
+index 0000000000000000000000000000000000000000..4ef72d0c838d059ca2d85b9dae93f6c04e82beb4
+--- /dev/null
++++ b/services/schedulerservice/Android.bp
+@@ -0,0 +1,32 @@
++package {
++    // See: http://go/android-license-faq
++    // A large-scale-change added 'default_applicable_licenses' to import
++    // all of the 'license_kinds' from "frameworks_native_license"
++    // to get the below license kinds:
++    //   SPDX-license-identifier-Apache-2.0
++    default_applicable_licenses: ["frameworks_native_license"],
++}
++
++cc_library_shared {
++    name: "libschedulerservicehidl",
++    srcs: [
++        "SchedulingPolicyService.cpp",
++    ],
++    cflags: ["-Wall", "-Werror"],
++    shared_libs: [
++        "libhidlbase",
++        "libmediautils",
++        "liblog",
++        "libutils",
++        "android.frameworks.schedulerservice@1.0",
++    ],
++    header_libs: [
++        "libcutils_headers",
++    ],
++    export_include_dirs: [
++        "include/"
++    ],
++    local_include_dirs: [
++        "include/schedulerservice/",
++    ],
++}
+diff --git a/services/schedulerservice/SchedulingPolicyService.cpp b/services/schedulerservice/SchedulingPolicyService.cpp
+new file mode 100644
+index 0000000000000000000000000000000000000000..a1106cf49b4021aafe5b8da60c160a95fba80708
+--- /dev/null
++++ b/services/schedulerservice/SchedulingPolicyService.cpp
+@@ -0,0 +1,67 @@
++/*
++ * Copyright (C) 2017 The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++#define LOG_TAG "schedulerservicehidl"
++
++#include "SchedulingPolicyService.h"
++
++#include <private/android_filesystem_config.h> // for AID_CAMERASERVER
++
++#include <log/log.h>
++#include <hwbinder/IPCThreadState.h>
++#include <mediautils/SchedulingPolicyService.h>
++
++namespace android {
++namespace frameworks {
++namespace schedulerservice {
++namespace V1_0 {
++namespace implementation {
++
++bool SchedulingPolicyService::isAllowed() {
++    using ::android::hardware::IPCThreadState;
++
++    return IPCThreadState::self()->getCallingUid() == AID_CAMERASERVER;
++}
++
++Return<bool> SchedulingPolicyService::requestPriority(int32_t pid, int32_t tid, int32_t priority) {
++    if (priority < static_cast<int32_t>(Priority::MIN) ||
++            priority > static_cast<int32_t>(Priority::MAX)) {
++        return false;
++    }
++
++    if (!isAllowed()) {
++        return false;
++    }
++
++    // TODO(b/37226359): decouple from and remove AIDL service
++    // this should always be allowed since we are in system_server.
++    int value = ::android::requestPriority(pid, tid, priority, false /* isForApp */);
++    return value == 0 /* success */;
++}
++
++Return<int32_t> SchedulingPolicyService::getMaxAllowedPriority() {
++    if (!isAllowed()) {
++        return 0;
++    }
++
++    // TODO(b/37226359): decouple from and remove AIDL service
++    return 3;
++}
++
++}  // namespace implementation
++}  // namespace V1_0
++}  // namespace schedulerservice
++}  // namespace frameworks
++}  // namespace android
+diff --git a/services/schedulerservice/include/schedulerservice/SchedulingPolicyService.h b/services/schedulerservice/include/schedulerservice/SchedulingPolicyService.h
+new file mode 100644
+index 0000000000000000000000000000000000000000..7d1c478ba7bbf38282a20b541f84e49a5ae8e384
+--- /dev/null
++++ b/services/schedulerservice/include/schedulerservice/SchedulingPolicyService.h
+@@ -0,0 +1,50 @@
++/*
++ * Copyright (C) 2017 The Android Open Source Project
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *      http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ */
++#pragma once
++
++#include <android/frameworks/schedulerservice/1.0/ISchedulingPolicyService.h>
++#include <hidl/MQDescriptor.h>
++#include <hidl/Status.h>
++
++namespace android {
++namespace frameworks {
++namespace schedulerservice {
++namespace V1_0 {
++namespace implementation {
++
++using ::android::frameworks::schedulerservice::V1_0::ISchedulingPolicyService;
++using ::android::hidl::base::V1_0::DebugInfo;
++using ::android::hidl::base::V1_0::IBase;
++using ::android::hardware::hidl_array;
++using ::android::hardware::hidl_memory;
++using ::android::hardware::hidl_string;
++using ::android::hardware::hidl_vec;
++using ::android::hardware::Return;
++using ::android::hardware::Void;
++using ::android::sp;
++
++struct SchedulingPolicyService : public ISchedulingPolicyService {
++    Return<bool> requestPriority(int32_t pid, int32_t tid, int32_t priority) override;
++    Return<int32_t> getMaxAllowedPriority() override;
++private:
++    bool isAllowed();
++};
++
++}  // namespace implementation
++}  // namespace V1_0
++}  // namespace schedulerservice
++}  // namespace frameworks
++}  // namespace android

@@ -1,0 +1,22 @@
+From 1a823b20a108a911859b7edcd4bae02de7e9a0ac Mon Sep 17 00:00:00 2001
+From: Dominggoes Isakh <drjisakh@gmail.com>
+Date: Thu, 12 Mar 2026 07:24:43 +0100
+Subject: [PATCH] Revert "Remove android.frameworks.schedulerservice"
+
+This reverts commit c57e58afe5a8287c8224760e59f2a90c1c435d0d.
+---
+ build/hidl_interface.go | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/build/hidl_interface.go b/build/hidl_interface.go
+index e324e4337976623535ab94ca930eba5b2f10db22..866f18368f1dad9751b2ba31c95b7b5d78e5f114 100644
+--- a/build/hidl_interface.go
++++ b/build/hidl_interface.go
+@@ -888,6 +888,7 @@ var allAospHidlInterfaces = map[string]bool{
+ 	"android.frameworks.cameraservice.service@2.1": true,
+ 	"android.frameworks.cameraservice.service@2.2": true,
+ 	"android.frameworks.displayservice@1.0":        true,
++	"android.frameworks.schedulerservice@1.0":      true,
+ 	"android.frameworks.sensorservice@1.0":         true,
+ 	"android.frameworks.stats@1.0":                 true,
+ 	"android.frameworks.vr.composer@1.0":           true,

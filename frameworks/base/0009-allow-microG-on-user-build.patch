@@ -1,4 +1,4 @@
-From deef0ecd7a1d03237f48d8cf759a60295db07ba7 Mon Sep 17 00:00:00 2001
+From d15984d13201d83cbed94a33a57f1894d7bb775c Mon Sep 17 00:00:00 2001
 From: Yaroslav Zviezda <acroreiser@gmail.com>
 Date: Sat, 27 Jun 2026 13:13:19 -0400
 Subject: [PATCH] allow microG on user build
@@ -9,11 +9,11 @@ Change-Id: Id6e62f6c9cce909ad5e8fadb44ba9e2cd2207c22
  1 file changed, 3 insertions(+), 3 deletions(-)
 
 diff --git a/services/core/java/com/android/server/pm/ComputerEngine.java b/services/core/java/com/android/server/pm/ComputerEngine.java
-index 1cc02de121f8..873a260cd036 100644
+index 3300f34817920d927b2b251fc54c2b629fa3f028..40e567bc1d7c87e99cb44660becf4eecd181d4d6 100644
 --- a/services/core/java/com/android/server/pm/ComputerEngine.java
 +++ b/services/core/java/com/android/server/pm/ComputerEngine.java
 @@ -1486,9 +1486,9 @@ public class ComputerEngine implements Computer {
-     private static native boolean isDebuggable();
+     public static native boolean isDebuggable();
  
      public static boolean isMicrogSigned(AndroidPackage p) {
 -        if (!isDebuggable()) {
@@ -25,6 +25,3 @@ index 1cc02de121f8..873a260cd036 100644
  
          // Allowlist the following apps:
          // * com.android.vending - microG Companion
--- 
-2.47.3
-

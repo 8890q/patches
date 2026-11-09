@@ -1,0 +1,76 @@
+From c0aa838fe654dabc6e8e4990b67715b4b1f6ad8d Mon Sep 17 00:00:00 2001
+From: Ricardo Cerqueira <cyanogenmod@cerqueira.org>
+Date: Tue, 12 Apr 2011 10:57:22 +0100
+Subject: [PATCH] build: Squash of allowing a device to generically define its
+ own headers
+
+Author: Ricardo Cerqueira <cyanogenmod@cerqueira.org>
+Date:   2011-04-12 10:57:22 +0100
+    Allow a device to generically define its own headers
+
+    We have a few cases of devices including specific versions of projects
+    just because of modified headers (msm_mdp.h comes to mind), and I just
+    had enough of ifdeffing header files for specific cases (the P990 needs
+    a lot of these).
+    Now... if a target defines a TARGET_SPECIFIC_HEADER_PATH, any headers in
+    there will take precedence over the standard ones; for example, on the
+    p990, I have
+
+    TARGET_SPECIFIC_HEADER_PATH := device/lge/p990/include
+
+    which makes, for example, the
+    device/lge/p990/include/hardware_legacy/AudioHardwareInterface.h be
+    used instead of
+    hardware/libhardware_legacy/include/hardware_legacy/AudioHardwareInterface.h
+    whenever a source file uses <hardware_legacy/AudioHardwareInterface.h>
+
+    Change-Id: I41b62668b60e3f62a6ebd3738d8d2675103a81e6a
+
+    build: fix target header overlay
+
+    LOCAL_C_INCLUDES as defined by the makefile should be put AFTER
+    the overlay includes so the overlay always takes precedence.
+
+    Change-Id: I489b2aab6dbacd9122d834f85e07b63ed1271f07
+
+Author: Jan Altensen <info@stricted.net>
+Date:   2020-09-10 15:18:49 +0200
+    soong: add TARGET_SPECIFIC_HEADER_PATH
+
+    Change-Id: I582ae8e6e010016b33fd9b020b723e5fc2dc442b
+
+Change-Id: I3c885fe504ce4f646001697119cffd674db9ec49
+Signed-off-by: ivanmeler <i_ivan@windowslive.com>
+---
+ core/binary.mk       | 5 +++++
+ core/soong_config.mk | 1 +
+ 2 files changed, 6 insertions(+)
+
+diff --git a/core/binary.mk b/core/binary.mk
+index 825d58f55db347be08fb74e63cd03a420eb08a59..a6abdb8de6c3d136b07ff8447932fe344fa9d35d 100644
+--- a/core/binary.mk
++++ b/core/binary.mk
+@@ -1401,6 +1401,11 @@ my_tracked_gen_files :=
+ $(foreach f,$(my_tracked_src_files),$(eval my_src_file_obj_$(s):=))
+ my_tracked_src_files :=
+ 
++## Allow a device's own headers to take precedence over global ones
++ifneq ($(TARGET_SPECIFIC_HEADER_PATH),)
++my_c_includes := $(TOPDIR)$(TARGET_SPECIFIC_HEADER_PATH) $(my_c_includes)
++endif
++
+ my_c_includes += $(TOPDIR)$(LOCAL_PATH) $(intermediates) $(generated_sources_dir)
+ 
+ my_c_includes := $(foreach inc,$(my_c_includes),$(call clean-path,$(inc)))
+diff --git a/core/soong_config.mk b/core/soong_config.mk
+index d5771f1552529227b14355c14e6277e64ecee65f..f65550fa540f9438ed52239e39b4b5b7b70d4ddf 100644
+--- a/core/soong_config.mk
++++ b/core/soong_config.mk
+@@ -148,6 +148,7 @@ $(call add_json_list, NativeCoverageExcludePaths,        $(NATIVE_COVERAGE_EXCLU
+ $(call add_json_bool, ArtUseReadBarrier,                 $(call invert_bool,$(filter false,$(PRODUCT_ART_USE_READ_BARRIER))))
+ $(call add_json_str,  BtConfigIncludeDir,                $(BOARD_BLUETOOTH_BDROID_BUILDCFG_INCLUDE_DIR))
+ $(call add_json_list, DeviceKernelHeaders,               $(TARGET_DEVICE_KERNEL_HEADERS) $(TARGET_BOARD_KERNEL_HEADERS) $(TARGET_PRODUCT_KERNEL_HEADERS))
++$(call add_json_str,  TargetSpecificHeaderPath,          $(TARGET_SPECIFIC_HEADER_PATH))
+ $(call add_json_str,  VendorApiLevel,                    $(BOARD_API_LEVEL))
+ $(call add_json_str,  VendorApiLevelPropOverride,        $(BOARD_API_LEVEL_PROP_OVERRIDE))
+ $(call add_json_list, ExtraVndkVersions,                 $(PRODUCT_EXTRA_VNDK_VERSIONS))

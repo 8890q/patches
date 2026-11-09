@@ -1,0 +1,68 @@
+From d2124f041f54191ea91a1b7eceec2e2fb63ea702 Mon Sep 17 00:00:00 2001
+From: Dominggoes Isakh <drjisakh@gmail.com>
+Date: Fri, 13 Mar 2026 19:20:27 +0100
+Subject: [PATCH] Revert "Remove android.frameworks.schedulerservice"
+
+This reverts commit 7c38da99d8c08622221cfd0bb1622cf04fea597d.
+---
+ services/core/jni/Android.bp                  |  2 ++
+ .../jni/com_android_server_SystemServer.cpp   | 19 ++++++++++++++++++-
+ 2 files changed, 20 insertions(+), 1 deletion(-)
+
+diff --git a/services/core/jni/Android.bp b/services/core/jni/Android.bp
+index 109abd5330be9f587cdb2ce7dbb843550eb3a305..5fd1043d3656df8b7173ebaca06aab6714e78437 100644
+--- a/services/core/jni/Android.bp
++++ b/services/core/jni/Android.bp
+@@ -153,6 +153,7 @@ cc_defaults {
+         "libstatssocket",
+         "libstatslog_inputflinger",
+         "libstatslog_surfaceflinger",
++        "libschedulerservicehidl",
+         "libsensorservice",
+         "libsensorservicehidl",
+         "libsensorserviceaidl",
+@@ -201,6 +202,7 @@ cc_defaults {
+         "android.hardware.tv.input-V3-ndk",
+         "android.hardware.vibrator-V3-ndk",
+         "android.hidl.token@1.0-utils",
++        "android.frameworks.schedulerservice@1.0",
+         "android.frameworks.sensorservice@1.0",
+         "android.frameworks.sensorservice-V1-ndk",
+         "android.frameworks.stats@1.0",
+diff --git a/services/core/jni/com_android_server_SystemServer.cpp b/services/core/jni/com_android_server_SystemServer.cpp
+index f03477131bb835363fecb1ffedf648b8a648b906..be18f6419e1572c060f7bd63592bc106b30617ce 100644
+--- a/services/core/jni/com_android_server_SystemServer.cpp
++++ b/services/core/jni/com_android_server_SystemServer.cpp
+@@ -28,6 +28,7 @@
+ #include <memtrackproxy/MemtrackProxy.h>
+ #include <nativehelper/JNIHelp.h>
+ #include <pthread.h>
++#include <schedulerservice/SchedulingPolicyService.h>
+ #include <sensorserviceaidl/SensorManagerAidl.h>
+ #include <sensorservicehidl/SensorManager.h>
+ #include <stats/StatsAidl.h>
+@@ -133,7 +134,23 @@ static void android_server_SystemServer_startMemtrackProxyService(JNIEnv* env,
+ }
+ 
+ static void android_server_SystemServer_startHidlServices(JNIEnv* /* env */, jobject /* clazz */) {
+-    ::android::hardware::configureRpcThreadpool(5, false /* callerWillJoin */);
++    using ::android::frameworks::schedulerservice::V1_0::ISchedulingPolicyService;
++    using ::android::frameworks::schedulerservice::V1_0::implementation::SchedulingPolicyService;
++    using ::android::hardware::configureRpcThreadpool;
++    using ::android::hidl::manager::V1_0::IServiceManager;
++
++    configureRpcThreadpool(5, false /* callerWillJoin */);
++
++    sp<ISchedulingPolicyService> schedulingService = new SchedulingPolicyService();
++    if (IServiceManager::Transport::HWBINDER ==
++        hardware::defaultServiceManager1_2()->getTransport(ISchedulingPolicyService::descriptor,
++                                                           "default")) {
++        status_t err = schedulingService->registerAsService("default");
++        LOG_ALWAYS_FATAL_IF(err != OK, "Cannot register %s: %d",
++                            ISchedulingPolicyService::descriptor, err);
++    } else {
++        ALOGW("%s is deprecated. Skipping registration.", ISchedulingPolicyService::descriptor);
++    }
+ }
+ 
+ static void android_server_SystemServer_initZygoteChildHeapProfiling(JNIEnv* /* env */,
