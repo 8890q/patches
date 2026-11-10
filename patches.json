@@ -548,6 +548,25 @@
       "validation": "PASS: exact tree replay"
     },
     {
+      "project": "system/memory/libmeminfo",
+      "base": "49326ec942a00db8994f2dc69796ea28c99643e1",
+      "head": "2ec640e8d1adf127e0ae81cca7349b9a9a407074",
+      "upstream_url": "https://android.googlesource.com/platform/system/memory/libmeminfo",
+      "upstream_branch": "android-16.0.0_r4",
+      "patches": [
+        {
+          "file": "system/memory/libmeminfo/0001-libmeminfo-Handle-unavailable-GPU-memory-BPF-maps-witho.patch",
+          "commit": "2ec640e8d1adf127e0ae81cca7349b9a9a407074",
+          "subject": "libmeminfo: Handle unavailable GPU memory BPF maps without aborting",
+          "patch_id": "18cd1d81d0d0cb1880adc4f95d55cd0a123aeac0",
+          "sha256": "076d3c9bd5cfd292f131c13595075c13860bfe646380050a91bf317292c0dd8e"
+        }
+      ],
+      "base_tree": "004f5647aae17d12dfc58f5e5635135ae68c363a",
+      "target_tree": "85fb26a0a1ead100f564c00c0ca4c535e4f64ba5",
+      "validation": "PASS: exact tree replay"
+    },
+    {
       "project": "system/sepolicy",
       "base": "885cc500f6078a766d1f6def5ce4c06c55841773",
       "head": "14b383507419fcaa66d9b7531b0aeb3475e38950",

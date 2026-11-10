@@ -45,6 +45,7 @@ c0f955a05d74a638a12670e037d3717309b4b2efe6f569ccc9b6b74d5a8837ae  system/core/00
 454bf74a7e43199f52cc0af5b84fcae1f569719868aa03d78af3bb60074fb6a8  system/core/0003-Camera-Add-feature-extensions.patch
 84f481b1b65973f710b8b04f57429fdac47590990e505d2ce768075997d60aee  system/libhidl/0001-Revert-delete-gBn-sConstructorMap.patch
 7c9f4164b207be3a6c721fa3891df9dc47546435d04c94179798b0a72a5ca439  system/libhwbinder/0001-Don-t-crash-Binder-threadpool-cannot-be-shrunk-after.patch
+076d3c9bd5cfd292f131c13595075c13860bfe646380050a91bf317292c0dd8e  system/memory/libmeminfo/0001-libmeminfo-Handle-unavailable-GPU-memory-BPF-maps-witho.patch
 569e6164c4c2886b9bf7e1c146386a433f15a520b34c5b1fb36ec2dd89394224  system/sepolicy/0001-sepolicy-allow-su-domain-in-user-builds.patch
 549bd5766a1ec2854acf504d2319d009f0153930efaa9af307370868fd26be46  system/tools/hidl/0001-Revert-Remove-android.frameworks.schedulerservice.patch
 746ce4068b8de7fd6d50c80b6f9f116169d092a1883fa888a7d36f7e208c26a0  system/tools/mkbootimg/0001-mkbootimg-add-support-for-dt.patch

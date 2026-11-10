@@ -1,0 +1,50 @@
+From 2ec640e8d1adf127e0ae81cca7349b9a9a407074 Mon Sep 17 00:00:00 2001
+From: ivanmeler <i_ivan@windowslive.com>
+Date: Tue, 10 Nov 2026 12:48:29 +0000
+Subject: [PATCH] libmeminfo: Handle unavailable GPU memory BPF maps without
+ aborting
+
+The legacy Mali driver does not populate the optional GPU memory BPF map.
+Constructing BpfMapRO with its path aborts on the invalid file descriptor
+before the existing isValid() error check can run. A scheduled process
+memory stats pull consequently kills system_server; low-memory reporting
+then repeatedly hits the same abort during framework startup.
+
+Open the map through init() and handle its error in both GPU readers.
+Keep the existing failure result for unavailable accounting and preserve
+key/value size validation when a map is present.
+
+Validated ARM64 and ARM shared-library builds and both GPU reader paths
+on herolte with the map absent.
+
+Change-Id: I807d7e4f7cca4c7b0e71de2299b927ba09a20d62
+---
+ sysmeminfo.cpp | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/sysmeminfo.cpp b/sysmeminfo.cpp
+index 767335f..5741c2f 100644
+--- a/sysmeminfo.cpp
++++ b/sysmeminfo.cpp
+@@ -385,8 +385,8 @@ bool ReadPerProcessGpuMem([[maybe_unused]] std::unordered_map<uint32_t, uint64_t
+     static constexpr const char kBpfGpuMemTotalMap[] = "/sys/fs/bpf/map_gpuMem_gpu_mem_total_map";
+ 
+     // Use the read-only wrapper BpfMapRO to properly retrieve the read-only map.
+-    auto map = bpf::BpfMapRO<uint64_t, uint64_t>(kBpfGpuMemTotalMap);
+-    if (!map.isValid()) {
++    bpf::BpfMapRO<uint64_t, uint64_t> map;
++    if (!map.init(kBpfGpuMemTotalMap).ok()) {
+         LOG(ERROR) << "Can't open file: " << kBpfGpuMemTotalMap;
+         return false;
+     }
+@@ -439,8 +439,8 @@ bool ReadProcessGpuUsageKb([[maybe_unused]] uint32_t pid, [[maybe_unused]] uint3
+     uint64_t kBpfKeyGpuUsage = ((uint64_t)gpu_id << 32) | pid;
+ 
+     // Use the read-only wrapper BpfMapRO to properly retrieve the read-only map.
+-    auto map = bpf::BpfMapRO<uint64_t, uint64_t>(kBpfGpuMemTotalMap);
+-    if (!map.isValid()) {
++    bpf::BpfMapRO<uint64_t, uint64_t> map;
++    if (!map.init(kBpfGpuMemTotalMap).ok()) {
+         LOG(ERROR) << "Can't open file: " << kBpfGpuMemTotalMap;
+         return false;
+     }
