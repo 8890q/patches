@@ -1,4 +1,4 @@
-From b5b738fb7acfce518b079f5af42301370efc09ae Mon Sep 17 00:00:00 2001
+From 9bc1df81e13dc1fc3419f0cd09ed148057fb59c2 Mon Sep 17 00:00:00 2001
 From: Yaroslav Zviezda <acroreiser@gmail.com>
 Date: Wed, 29 Dec 2021 11:41:03 +0300
 Subject: [PATCH] sepolicy: allow su domain in user builds
@@ -6,14 +6,16 @@ Subject: [PATCH] sepolicy: allow su domain in user builds
 Do not use for anything except boot time one shot scripts.
 
 Change-Id: I3ac61e9e3e9741d512ece95c86a8e7ee1617a926
+
+Update the Android 17 policy snapshot (202604); API 30.0 has been removed upstream.
 ---
  build/soong/policy.go                |  4 ++--
  prebuilts/api/202404/private/init.te | 10 +++++-----
  prebuilts/api/202404/private/su.te   |  2 --
  prebuilts/api/202504/private/init.te |  3 +--
- prebuilts/api/202504/private/su.te   |  3 +--
- prebuilts/api/30.0/private/init.te   | 10 +++++-----
- prebuilts/api/30.0/private/su.te     |  2 --
+ prebuilts/api/202504/private/su.te   |  2 --
+ prebuilts/api/202604/private/init.te |  3 ++-
+ prebuilts/api/202604/private/su.te   |  2 --
  prebuilts/api/31.0/private/init.te   | 10 +++++-----
  prebuilts/api/31.0/private/su.te     |  3 ---
  prebuilts/api/32.0/private/init.te   | 10 +++++-----
@@ -24,13 +26,13 @@ Change-Id: I3ac61e9e3e9741d512ece95c86a8e7ee1617a926
  prebuilts/api/34.0/private/su.te     |  2 --
  private/init.te                      | 10 +++++-----
  private/su.te                        |  2 --
- 17 files changed, 39 insertions(+), 58 deletions(-)
+ 17 files changed, 35 insertions(+), 54 deletions(-)
 
 diff --git a/build/soong/policy.go b/build/soong/policy.go
-index 8359acd92..e3a5659ec 100644
+index 97ac079794516793765aba51bc3e97befdf97546..c1c6c260843a991d47bda85bed94a06c45dbed1e 100644
 --- a/build/soong/policy.go
 +++ b/build/soong/policy.go
-@@ -558,7 +558,7 @@ func (c *policyBinary) GenerateAndroidBuildActions(ctx android.ModuleContext) {
+@@ -591,7 +591,7 @@ func (c *policyBinary) GenerateAndroidBuildActions(ctx android.ModuleContext) {
  		rule.Temporary(permissiveDomains)
  
  		msg := `==========\n` +
@@ -39,7 +41,7 @@ index 8359acd92..e3a5659ec 100644
  			`List of invalid domains:`
  
  		rule.Command().Text("if test").
-@@ -568,7 +568,7 @@ func (c *policyBinary) GenerateAndroidBuildActions(ctx android.ModuleContext) {
+@@ -601,7 +601,7 @@ func (c *policyBinary) GenerateAndroidBuildActions(ctx android.ModuleContext) {
  			Text(`"` + msg + `"`).
  			Text("&& cat ").
  			Input(permissiveDomains).
@@ -49,7 +51,7 @@ index 8359acd92..e3a5659ec 100644
  
  	out := pathForModuleOut(ctx, c.stem())
 diff --git a/prebuilts/api/202404/private/init.te b/prebuilts/api/202404/private/init.te
-index 9d3a2c380..f34d166ab 100644
+index 9d3a2c380f2e6526b17f0b03566a3c5a0bb535b1..f34d166abc247952e6fef8e052c14a4e56bd18df 100644
 --- a/prebuilts/api/202404/private/init.te
 +++ b/prebuilts/api/202404/private/init.te
 @@ -28,13 +28,13 @@ domain_trans(init, { rootfs toolbox_exec }, modprobe)
@@ -72,7 +74,7 @@ index 9d3a2c380..f34d166ab 100644
  # This is useful in case of remounting ext4 userdata into checkpointing mode,
  # since it potentially requires tearing down dm-devices (e.g. dm-bow, dm-crypto)
 diff --git a/prebuilts/api/202404/private/su.te b/prebuilts/api/202404/private/su.te
-index 2e0d10ae8..5b5cd3d71 100644
+index 2e0d10ae8dbb80112106a847a07a4f9510a1465d..5b5cd3d7190e5f220f944ad5c87c903e7d5d419d 100644
 --- a/prebuilts/api/202404/private/su.te
 +++ b/prebuilts/api/202404/private/su.te
 @@ -1,4 +1,3 @@
@@ -86,7 +88,7 @@ index 2e0d10ae8..5b5cd3d71 100644
    set_prop(su, permissive_mte_prop);
 -')
 diff --git a/prebuilts/api/202504/private/init.te b/prebuilts/api/202504/private/init.te
-index 6f0ee8001..ee900f8f6 100644
+index 6f0ee80011e9da2f4dbbb5ce1c42c777b4cdd21d..ee900f8f63a47d0dfb08091b3d6e93291a3b1c35 100644
 --- a/prebuilts/api/202504/private/init.te
 +++ b/prebuilts/api/202504/private/init.te
 @@ -28,12 +28,11 @@ domain_trans(init, { rootfs toolbox_exec }, modprobe)
@@ -104,7 +106,7 @@ index 6f0ee8001..ee900f8f6 100644
  # Allow init to figure out name of dm-device from it's /dev/block/dm-XX path.
  # This is useful in case of remounting ext4 userdata into checkpointing mode,
 diff --git a/prebuilts/api/202504/private/su.te b/prebuilts/api/202504/private/su.te
-index 247fd0b72..a02100c4b 100644
+index 247fd0b72cfcec9b74b9e9b5dc4e79978b4c567d..79f55c3318a2119a44f64ab64a45b2fef08c3259 100644
 --- a/prebuilts/api/202504/private/su.te
 +++ b/prebuilts/api/202504/private/su.te
 @@ -1,4 +1,3 @@
@@ -112,51 +114,45 @@ index 247fd0b72..a02100c4b 100644
    typeattribute su coredomain;
  
    domain_auto_trans(shell, su_exec, su)
-@@ -133,4 +132,4 @@ userdebug_or_eng(`
+@@ -133,4 +132,3 @@ userdebug_or_eng(`
    typeattribute su hal_wifi_client;
    typeattribute su hal_wifi_hostapd_client;
    typeattribute su hal_wifi_supplicant_client;
 -')
-+
-diff --git a/prebuilts/api/30.0/private/init.te b/prebuilts/api/30.0/private/init.te
-index b0e7f809a..e40b15928 100644
---- a/prebuilts/api/30.0/private/init.te
-+++ b/prebuilts/api/30.0/private/init.te
-@@ -24,13 +24,13 @@ domain_trans(init, { rootfs toolbox_exec }, modprobe)
- userdebug_or_eng(`
+diff --git a/prebuilts/api/202604/private/init.te b/prebuilts/api/202604/private/init.te
+index 28d6250cbf3efab9dd05712db9ba19ae10d81847..429817cd72468190c23fa476532467d779f814e0 100644
+--- a/prebuilts/api/202604/private/init.te
++++ b/prebuilts/api/202604/private/init.te
+@@ -29,11 +29,12 @@ userdebug_or_eng(`
    # case where logpersistd is actually logcat -f in logd context (nee: logcatd)
    domain_auto_trans(init, logcat_exec, logpersist)
--
--  # allow init to execute services marked with seclabel u:r:su:s0 in userdebug/eng
--  allow init su:process transition;
--  dontaudit init su:process noatsecure;
--  allow init su:process { siginh rlimitinh };
- ')
  
-+# allow init to execute services marked with seclabel u:r:su:s0 in userdebug/eng
-+allow init su:process transition;
-+dontaudit init su:process noatsecure;
-+allow init su:process { siginh rlimitinh };
++')
 +
+   # allow init to execute services marked with seclabel u:r:su:s0 in userdebug/eng
+   allow init su:process transition;
+   dontaudit init su:process noatsecure;
+   allow init su:process { siginh rlimitinh };
+-')
+ 
  # Allow init to figure out name of dm-device from it's /dev/block/dm-XX path.
  # This is useful in case of remounting ext4 userdata into checkpointing mode,
- # since it potentially requires tearing down dm-devices (e.g. dm-bow, dm-crypto)
-diff --git a/prebuilts/api/30.0/private/su.te b/prebuilts/api/30.0/private/su.te
-index 16e47bbbf..8ed6ee8c4 100644
---- a/prebuilts/api/30.0/private/su.te
-+++ b/prebuilts/api/30.0/private/su.te
+diff --git a/prebuilts/api/202604/private/su.te b/prebuilts/api/202604/private/su.te
+index 0ac6da12ed0d80ff7b9eeddc12d55cd0cfb299a3..d025ad415df1a08ff468c1abed19009a994ca3e1 100644
+--- a/prebuilts/api/202604/private/su.te
++++ b/prebuilts/api/202604/private/su.te
 @@ -1,4 +1,3 @@
 -userdebug_or_eng(`
    typeattribute su coredomain;
  
    domain_auto_trans(shell, su_exec, su)
-@@ -20,4 +19,3 @@ userdebug_or_eng(`
-   permissive su;
- 
-   app_domain(su)
+@@ -136,4 +135,3 @@ userdebug_or_eng(`
+   typeattribute su hal_wifi_client;
+   typeattribute su hal_wifi_hostapd_client;
+   typeattribute su hal_wifi_supplicant_client;
 -')
 diff --git a/prebuilts/api/31.0/private/init.te b/prebuilts/api/31.0/private/init.te
-index f569e0c2d..7eac8d726 100644
+index f569e0c2d156663701e225caa7fcd40067e45d6f..7eac8d7260df92738535bbb2bf3835b66985b842 100644
 --- a/prebuilts/api/31.0/private/init.te
 +++ b/prebuilts/api/31.0/private/init.te
 @@ -25,13 +25,13 @@ domain_trans(init, { rootfs toolbox_exec }, modprobe)
@@ -179,7 +175,7 @@ index f569e0c2d..7eac8d726 100644
  # This is useful in case of remounting ext4 userdata into checkpointing mode,
  # since it potentially requires tearing down dm-devices (e.g. dm-bow, dm-crypto)
 diff --git a/prebuilts/api/31.0/private/su.te b/prebuilts/api/31.0/private/su.te
-index 587f449fb..73e894454 100644
+index 587f449fbe08f74e35a74914a37d740d2eabcc9a..73e8944540e605264e02a5d1ce60803e3ecf8fc9 100644
 --- a/prebuilts/api/31.0/private/su.te
 +++ b/prebuilts/api/31.0/private/su.te
 @@ -1,4 +1,3 @@
@@ -194,7 +190,7 @@ index 587f449fb..73e894454 100644
 -
 -')
 diff --git a/prebuilts/api/32.0/private/init.te b/prebuilts/api/32.0/private/init.te
-index 200780dfb..23610448a 100644
+index 200780dfb1b32ec30b9c4789307c28b9e081e22f..23610448a8f0e4e6bf9c24ccab1ff9a18a6efc03 100644
 --- a/prebuilts/api/32.0/private/init.te
 +++ b/prebuilts/api/32.0/private/init.te
 @@ -25,13 +25,13 @@ domain_trans(init, { rootfs toolbox_exec }, modprobe)
@@ -217,7 +213,7 @@ index 200780dfb..23610448a 100644
  # This is useful in case of remounting ext4 userdata into checkpointing mode,
  # since it potentially requires tearing down dm-devices (e.g. dm-bow, dm-crypto)
 diff --git a/prebuilts/api/32.0/private/su.te b/prebuilts/api/32.0/private/su.te
-index 587f449fb..73e894454 100644
+index 587f449fbe08f74e35a74914a37d740d2eabcc9a..73e8944540e605264e02a5d1ce60803e3ecf8fc9 100644
 --- a/prebuilts/api/32.0/private/su.te
 +++ b/prebuilts/api/32.0/private/su.te
 @@ -1,4 +1,3 @@
@@ -232,7 +228,7 @@ index 587f449fb..73e894454 100644
 -
 -')
 diff --git a/prebuilts/api/33.0/private/init.te b/prebuilts/api/33.0/private/init.te
-index 17e25f895..c73847378 100644
+index 17e25f895498a36458cb26cc9f29e3ed1fc19c7d..c73847378f4c8855007a42b5bc66e02463151ced 100644
 --- a/prebuilts/api/33.0/private/init.te
 +++ b/prebuilts/api/33.0/private/init.te
 @@ -26,13 +26,13 @@ domain_trans(init, { rootfs toolbox_exec }, modprobe)
@@ -255,7 +251,7 @@ index 17e25f895..c73847378 100644
  # This is useful in case of remounting ext4 userdata into checkpointing mode,
  # since it potentially requires tearing down dm-devices (e.g. dm-bow, dm-crypto)
 diff --git a/prebuilts/api/33.0/private/su.te b/prebuilts/api/33.0/private/su.te
-index 587f449fb..73e894454 100644
+index 587f449fbe08f74e35a74914a37d740d2eabcc9a..73e8944540e605264e02a5d1ce60803e3ecf8fc9 100644
 --- a/prebuilts/api/33.0/private/su.te
 +++ b/prebuilts/api/33.0/private/su.te
 @@ -1,4 +1,3 @@
@@ -270,7 +266,7 @@ index 587f449fb..73e894454 100644
 -
 -')
 diff --git a/prebuilts/api/34.0/private/init.te b/prebuilts/api/34.0/private/init.te
-index 9d3a2c380..f34d166ab 100644
+index 9d3a2c380f2e6526b17f0b03566a3c5a0bb535b1..f34d166abc247952e6fef8e052c14a4e56bd18df 100644
 --- a/prebuilts/api/34.0/private/init.te
 +++ b/prebuilts/api/34.0/private/init.te
 @@ -28,13 +28,13 @@ domain_trans(init, { rootfs toolbox_exec }, modprobe)
@@ -293,7 +289,7 @@ index 9d3a2c380..f34d166ab 100644
  # This is useful in case of remounting ext4 userdata into checkpointing mode,
  # since it potentially requires tearing down dm-devices (e.g. dm-bow, dm-crypto)
 diff --git a/prebuilts/api/34.0/private/su.te b/prebuilts/api/34.0/private/su.te
-index cc00e103b..7c99a0ba5 100644
+index cc00e103bc3a2677520208b596057b18fc5dac13..7c99a0ba5be0e0da7d39fe0de3025ecc49d5e197 100644
 --- a/prebuilts/api/34.0/private/su.te
 +++ b/prebuilts/api/34.0/private/su.te
 @@ -1,4 +1,3 @@
@@ -307,7 +303,7 @@ index cc00e103b..7c99a0ba5 100644
    set_prop(su, permissive_mte_prop);
 -')
 diff --git a/private/init.te b/private/init.te
-index 31c4103bf..eb96c6610 100644
+index f1baa5b4b196a29bc085fd54ae5daeaf357c1208..adfdd4312415a7cc74bf14c07f5292f3ebfcf356 100644
 --- a/private/init.te
 +++ b/private/init.te
 @@ -28,13 +28,13 @@ domain_trans(init, { rootfs toolbox_exec }, modprobe)
@@ -330,19 +326,16 @@ index 31c4103bf..eb96c6610 100644
  # This is useful in case of remounting ext4 userdata into checkpointing mode,
  # since it potentially requires tearing down dm-devices (e.g. dm-bow, dm-crypto)
 diff --git a/private/su.te b/private/su.te
-index fae9b987e..dc5529a65 100644
+index 69c68fc36c717c208ac5a9f8c36c8f25c3f03699..03477f6be35db11e60a46b59b596af108674cc8b 100644
 --- a/private/su.te
 +++ b/private/su.te
 @@ -1,4 +1,3 @@
 -userdebug_or_eng(`
    typeattribute su coredomain;
  
-   domain_auto_trans(shell, su_exec, su)
-@@ -134,4 +133,3 @@ userdebug_or_eng(`
+   # Exempt userdebug-only coredomains from Treble labeling tests (b/493040969)
+@@ -143,4 +142,3 @@ userdebug_or_eng(`
    typeattribute su hal_wifi_client;
    typeattribute su hal_wifi_hostapd_client;
    typeattribute su hal_wifi_supplicant_client;
 -')
--- 
-2.47.3
-

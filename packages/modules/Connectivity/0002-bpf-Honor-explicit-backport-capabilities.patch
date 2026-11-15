@@ -1,0 +1,41 @@
+From 6c0058e22b9614c4789c5ff7caf5dd799d5ca555 Mon Sep 17 00:00:00 2001
+From: ivanmeler <i_ivan@windowslive.com>
+Date: Sun, 15 Nov 2026 21:36:25 +0000
+Subject: [PATCH] bpf: Honor explicit backport capabilities over platform
+ minimums
+
+Keep ro.bpf.kver_override=5.4.300 effective in platform builds as well as APEX builds. This retains pre-5.10 map iteration and avoids unsupported socket-release hooks and drop-reason socket options.
+
+Change-Id: I22f39be7a3d334db5b7d93ae6ae04db7516ab657
+---
+ bpf/headers/include/bpf/KernelUtils.h | 10 +++++++++-
+ 1 file changed, 9 insertions(+), 1 deletion(-)
+
+diff --git a/bpf/headers/include/bpf/KernelUtils.h b/bpf/headers/include/bpf/KernelUtils.h
+index 1ee34f056f64d720414754ade27eacf7be71e6d4..ba72b499984803bdc401758eccc52ce356ebab4d 100644
+--- a/bpf/headers/include/bpf/KernelUtils.h
++++ b/bpf/headers/include/bpf/KernelUtils.h
+@@ -42,6 +42,14 @@ static inline unsigned uncachedKernelVersion() {
+     return KVER(kver_major, kver_minor, kver_sub);
+ }
+ 
++// An explicit backport capability level must also override the platform's
++// compile-time minimum. Otherwise Android 17 can select 5.10-only syscalls
++// even when ro.bpf.kver_override correctly advertises 5.4.
++static const bool kernelVersionOverridden = []() {
++    char value[PROP_VALUE_MAX];
++    return __system_property_get("ro.bpf.kver_override", value) > 0;
++}();
++
+ static const unsigned kernelVer = uncachedKernelVersion();
+ 
+ static inline unsigned __unused kernelVersion() {
+@@ -87,7 +95,7 @@ static constexpr unsigned minSupportedKernelVer =
+ 
+ static inline bool isAtLeastKernelVersion(unsigned major, unsigned minor, unsigned sub = 0) {
+     unsigned k = KVER(major, minor, sub);
+-    if (k <= minSupportedKernelVer) return true;
++    if (!kernelVersionOverridden && k <= minSupportedKernelVer) return true;
+     return kernelVer >= k;
+ }
+ 

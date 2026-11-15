@@ -1,4 +1,4 @@
-From d1806fa92a1ce13f6fa6d7ddcd77b924cf2fb489 Mon Sep 17 00:00:00 2001
+From a4e7c6ad23afaa1f080a834cbaf8309a907be277 Mon Sep 17 00:00:00 2001
 From: Dominggoes Isakh <drjisakh@gmail.com>
 Date: Sat, 29 Oct 2022 13:08:46 +0200
 Subject: [PATCH] Don't crash "Binder threadpool cannot be shrunk after
@@ -10,7 +10,7 @@ Change-Id: Ied6460b02e06da3902c99d0ada93f4751fd6ecad
  1 file changed, 3 insertions(+), 2 deletions(-)
 
 diff --git a/ProcessState.cpp b/ProcessState.cpp
-index 4b2f4fc..ee91148 100644
+index 4b2f4fcc3ef4baca118eb18f6457587f82e238d6..ee91148c3f48a7012c2c9e3b4f9a6ce3d4f60440 100644
 --- a/ProcessState.cpp
 +++ b/ProcessState.cpp
 @@ -315,8 +315,9 @@ void ProcessState::spawnPooledThread(bool isMain)
@@ -25,6 +25,3 @@ index 4b2f4fc..ee91148 100644
  
      // if the caller joins the pool, then there will be one thread which is impossible.
      LOG_ALWAYS_FATAL_IF(maxThreads == 0 && callerJoinsPool,
--- 
-2.53.0
-

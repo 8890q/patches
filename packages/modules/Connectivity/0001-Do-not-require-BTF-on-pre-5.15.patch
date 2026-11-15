@@ -1,4 +1,4 @@
-From a5fdcc355a8f73426781bee9e8d4c3aaaceb36c1 Mon Sep 17 00:00:00 2001
+From bf7c23ac4c4f893188516fb129f67f65b259efb7 Mon Sep 17 00:00:00 2001
 From: Yaroslav Zviezda <acroreiser@gmail.com>
 Date: Sat, 16 May 2026 15:12:13 -0400
 Subject: [PATCH] Do not require BTF on pre-5.15
@@ -6,24 +6,28 @@ Subject: [PATCH] Do not require BTF on pre-5.15
 We are not ready yet.
 
 Change-Id: Idba6d2673854f4aea47d6498464905aba03385fc
+
+Refresh the existing legacy BTF compatibility patch for Android 17.
 ---
- bpf/loader/NetBpfLoad.cpp | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ bpf/loader/NetBpfLoad.cpp | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
 
 diff --git a/bpf/loader/NetBpfLoad.cpp b/bpf/loader/NetBpfLoad.cpp
-index d4d3aa3..79840e6 100644
+index 7ba3247dcc6f31ab9b612d410202067c821ab58a..a933fb620be71a0b6dbc3f6acc29a9255b386ae6 100644
 --- a/bpf/loader/NetBpfLoad.cpp
 +++ b/bpf/loader/NetBpfLoad.cpp
-@@ -824,7 +824,7 @@ static int createMaps(ElfObject& elfObj, vector<struct bpf_map_def>& md, vector<
-     vector<char> btfData;
+@@ -773,8 +773,8 @@ static int createMaps(const ElfObject& elfObj, const span<const struct bpf_map_d
+     span<const char> btfData;
      struct btf *btf = NULL;
      auto btfGuard = base::make_scope_guard([&btf] { if (btf) btf__free(btf); });
 -    if (isAtLeastKernelVersion(4, 19)) {
+-        // On Linux Kernels older than 4.18 BPF_BTF_LOAD command doesn't exist.
 +    if (isAtLeastKernelVersion(5, 15)) {
-         // On Linux Kernels older than 4.18 BPF_BTF_LOAD command doesn't exist.
++        // Legacy kernels may lack the BTF features emitted by current toolchains.
          ret = elfObj.readSectionByName(".BTF", btfData);
          if (ret) {
-@@ -1308,7 +1308,7 @@ static int loadProgByLibbpf(const char* const elfPath) {
+             ALOGE("Failed to read .BTF section, ret:%d", ret);
+@@ -1275,7 +1275,7 @@ static int loadProgByLibbpf(const char* const elfPath) {
      ret = bpf_object__load(obj);
      if (ret) return ret;
      // On Linux Kernels older than 4.18 BPF_BTF_LOAD command doesn't exist.
@@ -32,6 +36,3 @@ index d4d3aa3..79840e6 100644
  
      ret = pinMaps(obj, md);
      if (ret) return ret;
--- 
-2.53.0
-

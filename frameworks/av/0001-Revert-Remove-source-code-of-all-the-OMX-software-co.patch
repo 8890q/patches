@@ -1,7 +1,7 @@
-From 92cd240afdfc93be920708d1220ac99f83a28681 Mon Sep 17 00:00:00 2001
+From 42493286e51dd8507128bccad2ad5b2056dce4c3 Mon Sep 17 00:00:00 2001
 From: Yaroslav Zviezda <acroreiser@gmail.com>
 Date: Sat, 30 May 2026 17:11:29 -0400
-Subject: [PATCH 1/2] Revert "Remove source code of all the OMX software codec
+Subject: [PATCH] Revert "Remove source code of all the OMX software codec
  plugins"
 
 This reverts commit 26c99b76ba2884f3ee41cb574b72ddf703888767.
@@ -239,7 +239,7 @@ This reverts commit 26c99b76ba2884f3ee41cb574b72ddf703888767.
 
 diff --git a/media/libstagefright/codecs/aacdec/Android.bp b/media/libstagefright/codecs/aacdec/Android.bp
 new file mode 100644
-index 0000000..5ab49a7
+index 0000000000000000000000000000000000000000..5ab49a7ffa320eb9d3e293c0b9c8022be667c508
 --- /dev/null
 +++ b/media/libstagefright/codecs/aacdec/Android.bp
 @@ -0,0 +1,44 @@
@@ -289,7 +289,7 @@ index 0000000..5ab49a7
 +}
 diff --git a/media/libstagefright/codecs/aacdec/DrcPresModeWrap.cpp b/media/libstagefright/codecs/aacdec/DrcPresModeWrap.cpp
 new file mode 100644
-index 0000000..157cab6
+index 0000000000000000000000000000000000000000..157cab63fb1ccb7457836a25fae5c48243ad8f65
 --- /dev/null
 +++ b/media/libstagefright/codecs/aacdec/DrcPresModeWrap.cpp
 @@ -0,0 +1,371 @@
@@ -666,7 +666,7 @@ index 0000000..157cab6
 +}
 diff --git a/media/libstagefright/codecs/aacdec/DrcPresModeWrap.h b/media/libstagefright/codecs/aacdec/DrcPresModeWrap.h
 new file mode 100644
-index 0000000..f0b6cf2
+index 0000000000000000000000000000000000000000..f0b6cf2d34cbce208ffc110f1b4fe527b814ed93
 --- /dev/null
 +++ b/media/libstagefright/codecs/aacdec/DrcPresModeWrap.h
 @@ -0,0 +1,62 @@
@@ -734,10 +734,10 @@ index 0000000..f0b6cf2
 +};
 diff --git a/media/libstagefright/codecs/aacdec/MODULE_LICENSE_APACHE2 b/media/libstagefright/codecs/aacdec/MODULE_LICENSE_APACHE2
 new file mode 100644
-index 0000000..e69de29
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 diff --git a/media/libstagefright/codecs/aacdec/NOTICE b/media/libstagefright/codecs/aacdec/NOTICE
 new file mode 100644
-index 0000000..c5b1efa
+index 0000000000000000000000000000000000000000..c5b1efa7aac764ae6d8da63476a2d5cec02a6a5d
 --- /dev/null
 +++ b/media/libstagefright/codecs/aacdec/NOTICE
 @@ -0,0 +1,190 @@
@@ -933,7 +933,7 @@ index 0000000..c5b1efa
 +
 diff --git a/media/libstagefright/codecs/aacdec/SoftAAC2.cpp b/media/libstagefright/codecs/aacdec/SoftAAC2.cpp
 new file mode 100644
-index 0000000..92ec94f
+index 0000000000000000000000000000000000000000..92ec94fb96a02d0798f0aa76de1bf404ab480946
 --- /dev/null
 +++ b/media/libstagefright/codecs/aacdec/SoftAAC2.cpp
 @@ -0,0 +1,1255 @@
@@ -2194,7 +2194,7 @@ index 0000000..92ec94f
 +}
 diff --git a/media/libstagefright/codecs/aacdec/SoftAAC2.h b/media/libstagefright/codecs/aacdec/SoftAAC2.h
 new file mode 100644
-index 0000000..9f98aa1
+index 0000000000000000000000000000000000000000..9f98aa196aef19d1d1620e449670d1a09ec22b4c
 --- /dev/null
 +++ b/media/libstagefright/codecs/aacdec/SoftAAC2.h
 @@ -0,0 +1,109 @@
@@ -2309,7 +2309,7 @@ index 0000000..9f98aa1
 +#endif  // SOFT_AAC_2_H_
 diff --git a/media/libstagefright/codecs/aacdec/exports.lds b/media/libstagefright/codecs/aacdec/exports.lds
 new file mode 100644
-index 0000000..e24f3fa
+index 0000000000000000000000000000000000000000..e24f3faa68c4d9331125eed3720769a8627f2cb4
 --- /dev/null
 +++ b/media/libstagefright/codecs/aacdec/exports.lds
 @@ -0,0 +1,5 @@
@@ -2320,7 +2320,7 @@ index 0000000..e24f3fa
 +};
 diff --git a/media/libstagefright/codecs/aacenc/Android.bp b/media/libstagefright/codecs/aacenc/Android.bp
 new file mode 100644
-index 0000000..793125f
+index 0000000000000000000000000000000000000000..793125fb7f28d1ef668f28f1fb95c0b1d3777ee2
 --- /dev/null
 +++ b/media/libstagefright/codecs/aacenc/Android.bp
 @@ -0,0 +1,37 @@
@@ -2363,10 +2363,10 @@ index 0000000..793125f
 +}
 diff --git a/media/libstagefright/codecs/aacenc/MODULE_LICENSE_APACHE2 b/media/libstagefright/codecs/aacenc/MODULE_LICENSE_APACHE2
 new file mode 100644
-index 0000000..e69de29
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 diff --git a/media/libstagefright/codecs/aacenc/NOTICE b/media/libstagefright/codecs/aacenc/NOTICE
 new file mode 100644
-index 0000000..c5b1efa
+index 0000000000000000000000000000000000000000..c5b1efa7aac764ae6d8da63476a2d5cec02a6a5d
 --- /dev/null
 +++ b/media/libstagefright/codecs/aacenc/NOTICE
 @@ -0,0 +1,190 @@
@@ -2562,7 +2562,7 @@ index 0000000..c5b1efa
 +
 diff --git a/media/libstagefright/codecs/aacenc/SoftAACEncoder2.cpp b/media/libstagefright/codecs/aacenc/SoftAACEncoder2.cpp
 new file mode 100644
-index 0000000..90421b9
+index 0000000000000000000000000000000000000000..90421b984f2db07f4b383851cdeb5f0b61feddc1
 --- /dev/null
 +++ b/media/libstagefright/codecs/aacenc/SoftAACEncoder2.cpp
 @@ -0,0 +1,740 @@
@@ -3308,7 +3308,7 @@ index 0000000..90421b9
 +}
 diff --git a/media/libstagefright/codecs/aacenc/SoftAACEncoder2.h b/media/libstagefright/codecs/aacenc/SoftAACEncoder2.h
 new file mode 100644
-index 0000000..681dcf2
+index 0000000000000000000000000000000000000000..681dcf2d39c3baebce93b8b2c02a363db81a0fb3
 --- /dev/null
 +++ b/media/libstagefright/codecs/aacenc/SoftAACEncoder2.h
 @@ -0,0 +1,82 @@
@@ -3396,7 +3396,7 @@ index 0000000..681dcf2
 +#endif  // SOFT_AAC_ENCODER_2_H_
 diff --git a/media/libstagefright/codecs/aacenc/exports.lds b/media/libstagefright/codecs/aacenc/exports.lds
 new file mode 100644
-index 0000000..e24f3fa
+index 0000000000000000000000000000000000000000..e24f3faa68c4d9331125eed3720769a8627f2cb4
 --- /dev/null
 +++ b/media/libstagefright/codecs/aacenc/exports.lds
 @@ -0,0 +1,5 @@
@@ -3407,7 +3407,7 @@ index 0000000..e24f3fa
 +};
 diff --git a/media/libstagefright/codecs/aacenc/patent_disclaimer.txt b/media/libstagefright/codecs/aacenc/patent_disclaimer.txt
 new file mode 100644
-index 0000000..b4bf11d
+index 0000000000000000000000000000000000000000..b4bf11d4ab14011ba28ce5ff6090529d2b7b587f
 --- /dev/null
 +++ b/media/libstagefright/codecs/aacenc/patent_disclaimer.txt
 @@ -0,0 +1,9 @@
@@ -3422,7 +3422,7 @@ index 0000000..b4bf11d
 +require patent licenses from the relevant patent holders.
 diff --git a/media/libstagefright/codecs/amrnb/dec/Android.bp b/media/libstagefright/codecs/amrnb/dec/Android.bp
 new file mode 100644
-index 0000000..2c0954d
+index 0000000000000000000000000000000000000000..2c0954d00c21dacb68bf69e3296a472cf2b096db
 --- /dev/null
 +++ b/media/libstagefright/codecs/amrnb/dec/Android.bp
 @@ -0,0 +1,39 @@
@@ -3467,7 +3467,7 @@ index 0000000..2c0954d
 +}
 diff --git a/media/libstagefright/codecs/amrnb/dec/SoftAMR.cpp b/media/libstagefright/codecs/amrnb/dec/SoftAMR.cpp
 new file mode 100644
-index 0000000..01da3f8
+index 0000000000000000000000000000000000000000..01da3f8f246f38a182bd75c3619b1b0e358ecb53
 --- /dev/null
 +++ b/media/libstagefright/codecs/amrnb/dec/SoftAMR.cpp
 @@ -0,0 +1,585 @@
@@ -4058,7 +4058,7 @@ index 0000000..01da3f8
 +
 diff --git a/media/libstagefright/codecs/amrnb/dec/SoftAMR.h b/media/libstagefright/codecs/amrnb/dec/SoftAMR.h
 new file mode 100644
-index 0000000..d5aaed3
+index 0000000000000000000000000000000000000000..d5aaed38b9e62d0df278948c9a8e40986db6735d
 --- /dev/null
 +++ b/media/libstagefright/codecs/amrnb/dec/SoftAMR.h
 @@ -0,0 +1,91 @@
@@ -4155,7 +4155,7 @@ index 0000000..d5aaed3
 +
 diff --git a/media/libstagefright/codecs/amrnb/dec/exports.lds b/media/libstagefright/codecs/amrnb/dec/exports.lds
 new file mode 100644
-index 0000000..e24f3fa
+index 0000000000000000000000000000000000000000..e24f3faa68c4d9331125eed3720769a8627f2cb4
 --- /dev/null
 +++ b/media/libstagefright/codecs/amrnb/dec/exports.lds
 @@ -0,0 +1,5 @@
@@ -4166,7 +4166,7 @@ index 0000000..e24f3fa
 +};
 diff --git a/media/libstagefright/codecs/amrnb/enc/Android.bp b/media/libstagefright/codecs/amrnb/enc/Android.bp
 new file mode 100644
-index 0000000..6bf2d39
+index 0000000000000000000000000000000000000000..6bf2d397cb0db74426c02f8b68a406688851ddcc
 --- /dev/null
 +++ b/media/libstagefright/codecs/amrnb/enc/Android.bp
 @@ -0,0 +1,31 @@
@@ -4203,7 +4203,7 @@ index 0000000..6bf2d39
 +}
 diff --git a/media/libstagefright/codecs/amrnb/enc/SoftAMRNBEncoder.cpp b/media/libstagefright/codecs/amrnb/enc/SoftAMRNBEncoder.cpp
 new file mode 100644
-index 0000000..a1f6686
+index 0000000000000000000000000000000000000000..a1f66864a1ab868b4de910f84cabfaa9d8528b91
 --- /dev/null
 +++ b/media/libstagefright/codecs/amrnb/enc/SoftAMRNBEncoder.cpp
 @@ -0,0 +1,429 @@
@@ -4638,7 +4638,7 @@ index 0000000..a1f6686
 +}
 diff --git a/media/libstagefright/codecs/amrnb/enc/SoftAMRNBEncoder.h b/media/libstagefright/codecs/amrnb/enc/SoftAMRNBEncoder.h
 new file mode 100644
-index 0000000..c73e4dd
+index 0000000000000000000000000000000000000000..c73e4dd93dcd338553f7da6d71f34e7185661f8b
 --- /dev/null
 +++ b/media/libstagefright/codecs/amrnb/enc/SoftAMRNBEncoder.h
 @@ -0,0 +1,72 @@
@@ -4716,7 +4716,7 @@ index 0000000..c73e4dd
 +#endif  // SOFT_AMRNB_ENCODER_H_
 diff --git a/media/libstagefright/codecs/amrnb/enc/exports.lds b/media/libstagefright/codecs/amrnb/enc/exports.lds
 new file mode 100644
-index 0000000..e24f3fa
+index 0000000000000000000000000000000000000000..e24f3faa68c4d9331125eed3720769a8627f2cb4
 --- /dev/null
 +++ b/media/libstagefright/codecs/amrnb/enc/exports.lds
 @@ -0,0 +1,5 @@
@@ -4727,7 +4727,7 @@ index 0000000..e24f3fa
 +};
 diff --git a/media/libstagefright/codecs/amrwbenc/Android.bp b/media/libstagefright/codecs/amrwbenc/Android.bp
 new file mode 100644
-index 0000000..00e7bc9
+index 0000000000000000000000000000000000000000..00e7bc93afd47b8a04b59e0136d41da2fe72f7f3
 --- /dev/null
 +++ b/media/libstagefright/codecs/amrwbenc/Android.bp
 @@ -0,0 +1,31 @@
@@ -4764,7 +4764,7 @@ index 0000000..00e7bc9
 +}
 diff --git a/media/libstagefright/codecs/amrwbenc/SoftAMRWBEncoder.cpp b/media/libstagefright/codecs/amrwbenc/SoftAMRWBEncoder.cpp
 new file mode 100644
-index 0000000..657a5ce
+index 0000000000000000000000000000000000000000..657a5cea40c8db4328b5fdf03a69fed012e3639e
 --- /dev/null
 +++ b/media/libstagefright/codecs/amrwbenc/SoftAMRWBEncoder.cpp
 @@ -0,0 +1,484 @@
@@ -5254,7 +5254,7 @@ index 0000000..657a5ce
 +}
 diff --git a/media/libstagefright/codecs/amrwbenc/SoftAMRWBEncoder.h b/media/libstagefright/codecs/amrwbenc/SoftAMRWBEncoder.h
 new file mode 100644
-index 0000000..8950a8c
+index 0000000000000000000000000000000000000000..8950a8c5f20c560351f484b1dbae1c8f1d9722a4
 --- /dev/null
 +++ b/media/libstagefright/codecs/amrwbenc/SoftAMRWBEncoder.h
 @@ -0,0 +1,76 @@
@@ -5336,7 +5336,7 @@ index 0000000..8950a8c
 +#endif  // SOFT_AMRWB_ENCODER_H_
 diff --git a/media/libstagefright/codecs/amrwbenc/exports.lds b/media/libstagefright/codecs/amrwbenc/exports.lds
 new file mode 100644
-index 0000000..e24f3fa
+index 0000000000000000000000000000000000000000..e24f3faa68c4d9331125eed3720769a8627f2cb4
 --- /dev/null
 +++ b/media/libstagefright/codecs/amrwbenc/exports.lds
 @@ -0,0 +1,5 @@
@@ -5347,7 +5347,7 @@ index 0000000..e24f3fa
 +};
 diff --git a/media/libstagefright/codecs/avcdec/Android.bp b/media/libstagefright/codecs/avcdec/Android.bp
 new file mode 100644
-index 0000000..1c2f9be
+index 0000000000000000000000000000000000000000..1c2f9beb00241c69366da08fdeca6b4e0cb6293b
 --- /dev/null
 +++ b/media/libstagefright/codecs/avcdec/Android.bp
 @@ -0,0 +1,34 @@
@@ -5387,7 +5387,7 @@ index 0000000..1c2f9be
 +}
 diff --git a/media/libstagefright/codecs/avcdec/SoftAVCDec.cpp b/media/libstagefright/codecs/avcdec/SoftAVCDec.cpp
 new file mode 100644
-index 0000000..3891f23
+index 0000000000000000000000000000000000000000..3891f235c10cba1135b67f9abfeef2b63d58e75e
 --- /dev/null
 +++ b/media/libstagefright/codecs/avcdec/SoftAVCDec.cpp
 @@ -0,0 +1,732 @@
@@ -6125,7 +6125,7 @@ index 0000000..3891f23
 +}
 diff --git a/media/libstagefright/codecs/avcdec/SoftAVCDec.h b/media/libstagefright/codecs/avcdec/SoftAVCDec.h
 new file mode 100644
-index 0000000..679ed3e
+index 0000000000000000000000000000000000000000..679ed3e439ce9748341d4b1206c5fa608e7e5cc5
 --- /dev/null
 +++ b/media/libstagefright/codecs/avcdec/SoftAVCDec.h
 @@ -0,0 +1,168 @@
@@ -6299,7 +6299,7 @@ index 0000000..679ed3e
 +#endif  // SOFT_H264_DEC_H_
 diff --git a/media/libstagefright/codecs/avcdec/exports.lds b/media/libstagefright/codecs/avcdec/exports.lds
 new file mode 100644
-index 0000000..e24f3fa
+index 0000000000000000000000000000000000000000..e24f3faa68c4d9331125eed3720769a8627f2cb4
 --- /dev/null
 +++ b/media/libstagefright/codecs/avcdec/exports.lds
 @@ -0,0 +1,5 @@
@@ -6310,7 +6310,7 @@ index 0000000..e24f3fa
 +};
 diff --git a/media/libstagefright/codecs/avcenc/Android.bp b/media/libstagefright/codecs/avcenc/Android.bp
 new file mode 100644
-index 0000000..586088c
+index 0000000000000000000000000000000000000000..586088c6f1d9e226c4d232a429e2d3a099233f11
 --- /dev/null
 +++ b/media/libstagefright/codecs/avcenc/Android.bp
 @@ -0,0 +1,34 @@
@@ -6350,7 +6350,7 @@ index 0000000..586088c
 +}
 diff --git a/media/libstagefright/codecs/avcenc/SoftAVCEnc.cpp b/media/libstagefright/codecs/avcenc/SoftAVCEnc.cpp
 new file mode 100644
-index 0000000..01174c9
+index 0000000000000000000000000000000000000000..01174c983491e4a51ff28fa9d2a4cce1fd5fbe61
 --- /dev/null
 +++ b/media/libstagefright/codecs/avcenc/SoftAVCEnc.cpp
 @@ -0,0 +1,1515 @@
@@ -7871,7 +7871,7 @@ index 0000000..01174c9
 +}
 diff --git a/media/libstagefright/codecs/avcenc/SoftAVCEnc.h b/media/libstagefright/codecs/avcenc/SoftAVCEnc.h
 new file mode 100644
-index 0000000..6d2e084
+index 0000000000000000000000000000000000000000..6d2e0840bc5803ec5002bb37eee11e732024e246
 --- /dev/null
 +++ b/media/libstagefright/codecs/avcenc/SoftAVCEnc.h
 @@ -0,0 +1,317 @@
@@ -8194,7 +8194,7 @@ index 0000000..6d2e084
 +#endif  // __SOFT_AVC_ENC_H__
 diff --git a/media/libstagefright/codecs/avcenc/exports.lds b/media/libstagefright/codecs/avcenc/exports.lds
 new file mode 100644
-index 0000000..e24f3fa
+index 0000000000000000000000000000000000000000..e24f3faa68c4d9331125eed3720769a8627f2cb4
 --- /dev/null
 +++ b/media/libstagefright/codecs/avcenc/exports.lds
 @@ -0,0 +1,5 @@
@@ -8205,7 +8205,7 @@ index 0000000..e24f3fa
 +};
 diff --git a/media/libstagefright/codecs/flac/dec/Android.bp b/media/libstagefright/codecs/flac/dec/Android.bp
 new file mode 100644
-index 0000000..d06e0b7
+index 0000000000000000000000000000000000000000..d06e0b7623aa4f7950f120d67e10e3f3b086de12
 --- /dev/null
 +++ b/media/libstagefright/codecs/flac/dec/Android.bp
 @@ -0,0 +1,41 @@
@@ -8252,10 +8252,10 @@ index 0000000..d06e0b7
 +}
 diff --git a/media/libstagefright/codecs/flac/dec/MODULE_LICENSE_APACHE2 b/media/libstagefright/codecs/flac/dec/MODULE_LICENSE_APACHE2
 new file mode 100644
-index 0000000..e69de29
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 diff --git a/media/libstagefright/codecs/flac/dec/NOTICE b/media/libstagefright/codecs/flac/dec/NOTICE
 new file mode 100644
-index 0000000..c5b1efa
+index 0000000000000000000000000000000000000000..c5b1efa7aac764ae6d8da63476a2d5cec02a6a5d
 --- /dev/null
 +++ b/media/libstagefright/codecs/flac/dec/NOTICE
 @@ -0,0 +1,190 @@
@@ -8451,7 +8451,7 @@ index 0000000..c5b1efa
 +
 diff --git a/media/libstagefright/codecs/flac/dec/SoftFlacDecoder.cpp b/media/libstagefright/codecs/flac/dec/SoftFlacDecoder.cpp
 new file mode 100644
-index 0000000..d6448d3
+index 0000000000000000000000000000000000000000..d6448d37be2472780328cafd247b4cbfbab91418
 --- /dev/null
 +++ b/media/libstagefright/codecs/flac/dec/SoftFlacDecoder.cpp
 @@ -0,0 +1,500 @@
@@ -8957,7 +8957,7 @@ index 0000000..d6448d3
 +}
 diff --git a/media/libstagefright/codecs/flac/dec/SoftFlacDecoder.h b/media/libstagefright/codecs/flac/dec/SoftFlacDecoder.h
 new file mode 100644
-index 0000000..ba02074
+index 0000000000000000000000000000000000000000..ba02074c6dacd12973aa02192dd59c707cbc29a2
 --- /dev/null
 +++ b/media/libstagefright/codecs/flac/dec/SoftFlacDecoder.h
 @@ -0,0 +1,81 @@
@@ -9044,7 +9044,7 @@ index 0000000..ba02074
 +#endif  // SOFT_FLAC_DECODER_H
 diff --git a/media/libstagefright/codecs/flac/dec/exports.lds b/media/libstagefright/codecs/flac/dec/exports.lds
 new file mode 100644
-index 0000000..e24f3fa
+index 0000000000000000000000000000000000000000..e24f3faa68c4d9331125eed3720769a8627f2cb4
 --- /dev/null
 +++ b/media/libstagefright/codecs/flac/dec/exports.lds
 @@ -0,0 +1,5 @@
@@ -9055,7 +9055,7 @@ index 0000000..e24f3fa
 +};
 diff --git a/media/libstagefright/codecs/flac/enc/Android.bp b/media/libstagefright/codecs/flac/enc/Android.bp
 new file mode 100644
-index 0000000..59a4675
+index 0000000000000000000000000000000000000000..59a4675c046443fc5fa70a276f0f69d4a09f3425
 --- /dev/null
 +++ b/media/libstagefright/codecs/flac/enc/Android.bp
 @@ -0,0 +1,43 @@
@@ -9104,10 +9104,10 @@ index 0000000..59a4675
 +}
 diff --git a/media/libstagefright/codecs/flac/enc/MODULE_LICENSE_APACHE2 b/media/libstagefright/codecs/flac/enc/MODULE_LICENSE_APACHE2
 new file mode 100644
-index 0000000..e69de29
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 diff --git a/media/libstagefright/codecs/flac/enc/NOTICE b/media/libstagefright/codecs/flac/enc/NOTICE
 new file mode 100644
-index 0000000..c5b1efa
+index 0000000000000000000000000000000000000000..c5b1efa7aac764ae6d8da63476a2d5cec02a6a5d
 --- /dev/null
 +++ b/media/libstagefright/codecs/flac/enc/NOTICE
 @@ -0,0 +1,190 @@
@@ -9303,7 +9303,7 @@ index 0000000..c5b1efa
 +
 diff --git a/media/libstagefright/codecs/flac/enc/SoftFlacEncoder.cpp b/media/libstagefright/codecs/flac/enc/SoftFlacEncoder.cpp
 new file mode 100644
-index 0000000..24216a2
+index 0000000000000000000000000000000000000000..24216a20144ec4aa1575727fc79dfc8333a0434f
 --- /dev/null
 +++ b/media/libstagefright/codecs/flac/enc/SoftFlacEncoder.cpp
 @@ -0,0 +1,601 @@
@@ -9910,7 +9910,7 @@ index 0000000..24216a2
 +
 diff --git a/media/libstagefright/codecs/flac/enc/SoftFlacEncoder.h b/media/libstagefright/codecs/flac/enc/SoftFlacEncoder.h
 new file mode 100644
-index 0000000..722fc13
+index 0000000000000000000000000000000000000000..722fc13fa163916c77949bd622aba035d2d5ca4c
 --- /dev/null
 +++ b/media/libstagefright/codecs/flac/enc/SoftFlacEncoder.h
 @@ -0,0 +1,101 @@
@@ -10017,7 +10017,7 @@ index 0000000..722fc13
 +
 diff --git a/media/libstagefright/codecs/flac/enc/exports.lds b/media/libstagefright/codecs/flac/enc/exports.lds
 new file mode 100644
-index 0000000..e24f3fa
+index 0000000000000000000000000000000000000000..e24f3faa68c4d9331125eed3720769a8627f2cb4
 --- /dev/null
 +++ b/media/libstagefright/codecs/flac/enc/exports.lds
 @@ -0,0 +1,5 @@
@@ -10028,7 +10028,7 @@ index 0000000..e24f3fa
 +};
 diff --git a/media/libstagefright/codecs/g711/dec/Android.bp b/media/libstagefright/codecs/g711/dec/Android.bp
 new file mode 100644
-index 0000000..1dc34c3
+index 0000000000000000000000000000000000000000..1dc34c39a85d021a8f8cb22e900837ab5bc1ed5d
 --- /dev/null
 +++ b/media/libstagefright/codecs/g711/dec/Android.bp
 @@ -0,0 +1,35 @@
@@ -10069,10 +10069,10 @@ index 0000000..1dc34c3
 +}
 diff --git a/media/libstagefright/codecs/g711/dec/MODULE_LICENSE_APACHE2 b/media/libstagefright/codecs/g711/dec/MODULE_LICENSE_APACHE2
 new file mode 100644
-index 0000000..e69de29
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 diff --git a/media/libstagefright/codecs/g711/dec/NOTICE b/media/libstagefright/codecs/g711/dec/NOTICE
 new file mode 100644
-index 0000000..c5b1efa
+index 0000000000000000000000000000000000000000..c5b1efa7aac764ae6d8da63476a2d5cec02a6a5d
 --- /dev/null
 +++ b/media/libstagefright/codecs/g711/dec/NOTICE
 @@ -0,0 +1,190 @@
@@ -10268,7 +10268,7 @@ index 0000000..c5b1efa
 +
 diff --git a/media/libstagefright/codecs/g711/dec/SoftG711.cpp b/media/libstagefright/codecs/g711/dec/SoftG711.cpp
 new file mode 100644
-index 0000000..fe91510
+index 0000000000000000000000000000000000000000..fe9151051af42f4cc1d957504c31cf4aff7e1d80
 --- /dev/null
 +++ b/media/libstagefright/codecs/g711/dec/SoftG711.cpp
 @@ -0,0 +1,391 @@
@@ -10665,7 +10665,7 @@ index 0000000..fe91510
 +
 diff --git a/media/libstagefright/codecs/g711/dec/SoftG711.h b/media/libstagefright/codecs/g711/dec/SoftG711.h
 new file mode 100644
-index 0000000..3ece246
+index 0000000000000000000000000000000000000000..3ece246bfe92707d37de0859daf50eafd27c1956
 --- /dev/null
 +++ b/media/libstagefright/codecs/g711/dec/SoftG711.h
 @@ -0,0 +1,64 @@
@@ -10735,7 +10735,7 @@ index 0000000..3ece246
 +
 diff --git a/media/libstagefright/codecs/g711/dec/exports.lds b/media/libstagefright/codecs/g711/dec/exports.lds
 new file mode 100644
-index 0000000..e24f3fa
+index 0000000000000000000000000000000000000000..e24f3faa68c4d9331125eed3720769a8627f2cb4
 --- /dev/null
 +++ b/media/libstagefright/codecs/g711/dec/exports.lds
 @@ -0,0 +1,5 @@
@@ -10746,7 +10746,7 @@ index 0000000..e24f3fa
 +};
 diff --git a/media/libstagefright/codecs/gsm/dec/Android.bp b/media/libstagefright/codecs/gsm/dec/Android.bp
 new file mode 100644
-index 0000000..efa2f83
+index 0000000000000000000000000000000000000000..efa2f83f961443f8ca90ee0c54d86e9c33a67de6
 --- /dev/null
 +++ b/media/libstagefright/codecs/gsm/dec/Android.bp
 @@ -0,0 +1,37 @@
@@ -10789,10 +10789,10 @@ index 0000000..efa2f83
 +}
 diff --git a/media/libstagefright/codecs/gsm/dec/MODULE_LICENSE_APACHE2 b/media/libstagefright/codecs/gsm/dec/MODULE_LICENSE_APACHE2
 new file mode 100644
-index 0000000..e69de29
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 diff --git a/media/libstagefright/codecs/gsm/dec/NOTICE b/media/libstagefright/codecs/gsm/dec/NOTICE
 new file mode 100644
-index 0000000..c5b1efa
+index 0000000000000000000000000000000000000000..c5b1efa7aac764ae6d8da63476a2d5cec02a6a5d
 --- /dev/null
 +++ b/media/libstagefright/codecs/gsm/dec/NOTICE
 @@ -0,0 +1,190 @@
@@ -10988,7 +10988,7 @@ index 0000000..c5b1efa
 +
 diff --git a/media/libstagefright/codecs/gsm/dec/SoftGSM.cpp b/media/libstagefright/codecs/gsm/dec/SoftGSM.cpp
 new file mode 100644
-index 0000000..330cb8a
+index 0000000000000000000000000000000000000000..330cb8a3d6402eb265aee98d7003eb13699d1195
 --- /dev/null
 +++ b/media/libstagefright/codecs/gsm/dec/SoftGSM.cpp
 @@ -0,0 +1,363 @@
@@ -11357,7 +11357,7 @@ index 0000000..330cb8a
 +
 diff --git a/media/libstagefright/codecs/gsm/dec/SoftGSM.h b/media/libstagefright/codecs/gsm/dec/SoftGSM.h
 new file mode 100644
-index 0000000..d5885a6
+index 0000000000000000000000000000000000000000..d5885a63d6e7b0848bbe5eabca2849967bd10eed
 --- /dev/null
 +++ b/media/libstagefright/codecs/gsm/dec/SoftGSM.h
 @@ -0,0 +1,66 @@
@@ -11429,7 +11429,7 @@ index 0000000..d5885a6
 +
 diff --git a/media/libstagefright/codecs/gsm/dec/exports.lds b/media/libstagefright/codecs/gsm/dec/exports.lds
 new file mode 100644
-index 0000000..e24f3fa
+index 0000000000000000000000000000000000000000..e24f3faa68c4d9331125eed3720769a8627f2cb4
 --- /dev/null
 +++ b/media/libstagefright/codecs/gsm/dec/exports.lds
 @@ -0,0 +1,5 @@
@@ -11440,7 +11440,7 @@ index 0000000..e24f3fa
 +};
 diff --git a/media/libstagefright/codecs/hevcdec/Android.bp b/media/libstagefright/codecs/hevcdec/Android.bp
 new file mode 100644
-index 0000000..2c4091b
+index 0000000000000000000000000000000000000000..2c4091bcf3c2308467f4267df36f647379dbd45a
 --- /dev/null
 +++ b/media/libstagefright/codecs/hevcdec/Android.bp
 @@ -0,0 +1,38 @@
@@ -11484,7 +11484,7 @@ index 0000000..2c4091b
 +}
 diff --git a/media/libstagefright/codecs/hevcdec/SoftHEVC.cpp b/media/libstagefright/codecs/hevcdec/SoftHEVC.cpp
 new file mode 100644
-index 0000000..176da47
+index 0000000000000000000000000000000000000000..176da47c5780b49a7c84fb91811eb2359fea15f6
 --- /dev/null
 +++ b/media/libstagefright/codecs/hevcdec/SoftHEVC.cpp
 @@ -0,0 +1,726 @@
@@ -12216,7 +12216,7 @@ index 0000000..176da47
 +}
 diff --git a/media/libstagefright/codecs/hevcdec/SoftHEVC.h b/media/libstagefright/codecs/hevcdec/SoftHEVC.h
 new file mode 100644
-index 0000000..5800490
+index 0000000000000000000000000000000000000000..5800490114d1e61056e2d6eccd627f1aca64b14c
 --- /dev/null
 +++ b/media/libstagefright/codecs/hevcdec/SoftHEVC.h
 @@ -0,0 +1,123 @@
@@ -12345,7 +12345,7 @@ index 0000000..5800490
 +#endif  // SOFT_HEVC_H_
 diff --git a/media/libstagefright/codecs/hevcdec/exports.lds b/media/libstagefright/codecs/hevcdec/exports.lds
 new file mode 100644
-index 0000000..e24f3fa
+index 0000000000000000000000000000000000000000..e24f3faa68c4d9331125eed3720769a8627f2cb4
 --- /dev/null
 +++ b/media/libstagefright/codecs/hevcdec/exports.lds
 @@ -0,0 +1,5 @@
@@ -12356,7 +12356,7 @@ index 0000000..e24f3fa
 +};
 diff --git a/media/libstagefright/codecs/m4v_h263/dec/Android.bp b/media/libstagefright/codecs/m4v_h263/dec/Android.bp
 new file mode 100644
-index 0000000..725c79c
+index 0000000000000000000000000000000000000000..725c79cb0f46f49a1d9dffd5fb76e0b711341575
 --- /dev/null
 +++ b/media/libstagefright/codecs/m4v_h263/dec/Android.bp
 @@ -0,0 +1,28 @@
@@ -12390,7 +12390,7 @@ index 0000000..725c79c
 +}
 diff --git a/media/libstagefright/codecs/m4v_h263/dec/SoftMPEG4.cpp b/media/libstagefright/codecs/m4v_h263/dec/SoftMPEG4.cpp
 new file mode 100644
-index 0000000..800e2e1
+index 0000000000000000000000000000000000000000..800e2e1aaa236909820e30d75e0d98fcc29c664f
 --- /dev/null
 +++ b/media/libstagefright/codecs/m4v_h263/dec/SoftMPEG4.cpp
 @@ -0,0 +1,440 @@
@@ -12836,7 +12836,7 @@ index 0000000..800e2e1
 +
 diff --git a/media/libstagefright/codecs/m4v_h263/dec/SoftMPEG4.h b/media/libstagefright/codecs/m4v_h263/dec/SoftMPEG4.h
 new file mode 100644
-index 0000000..e399ac9
+index 0000000000000000000000000000000000000000..e399ac9b4dc3283413e4397c3846148514b7199c
 --- /dev/null
 +++ b/media/libstagefright/codecs/m4v_h263/dec/SoftMPEG4.h
 @@ -0,0 +1,79 @@
@@ -12921,7 +12921,7 @@ index 0000000..e399ac9
 +
 diff --git a/media/libstagefright/codecs/m4v_h263/dec/exports.lds b/media/libstagefright/codecs/m4v_h263/dec/exports.lds
 new file mode 100644
-index 0000000..e24f3fa
+index 0000000000000000000000000000000000000000..e24f3faa68c4d9331125eed3720769a8627f2cb4
 --- /dev/null
 +++ b/media/libstagefright/codecs/m4v_h263/dec/exports.lds
 @@ -0,0 +1,5 @@
@@ -12932,7 +12932,7 @@ index 0000000..e24f3fa
 +};
 diff --git a/media/libstagefright/codecs/m4v_h263/enc/Android.bp b/media/libstagefright/codecs/m4v_h263/enc/Android.bp
 new file mode 100644
-index 0000000..d10e40d
+index 0000000000000000000000000000000000000000..d10e40d3f4e275871e1d3bb05180079d2b868ee8
 --- /dev/null
 +++ b/media/libstagefright/codecs/m4v_h263/enc/Android.bp
 @@ -0,0 +1,30 @@
@@ -12968,7 +12968,7 @@ index 0000000..d10e40d
 +}
 diff --git a/media/libstagefright/codecs/m4v_h263/enc/SoftMPEG4Encoder.cpp b/media/libstagefright/codecs/m4v_h263/enc/SoftMPEG4Encoder.cpp
 new file mode 100644
-index 0000000..bb1cb0b
+index 0000000000000000000000000000000000000000..bb1cb0b89a901c63f42b6b2203fb9f9925708386
 --- /dev/null
 +++ b/media/libstagefright/codecs/m4v_h263/enc/SoftMPEG4Encoder.cpp
 @@ -0,0 +1,550 @@
@@ -13524,7 +13524,7 @@ index 0000000..bb1cb0b
 +}
 diff --git a/media/libstagefright/codecs/m4v_h263/enc/SoftMPEG4Encoder.h b/media/libstagefright/codecs/m4v_h263/enc/SoftMPEG4Encoder.h
 new file mode 100644
-index 0000000..71e1170
+index 0000000000000000000000000000000000000000..71e11700f33e5e129f7cea45af8ac53cde13fefc
 --- /dev/null
 +++ b/media/libstagefright/codecs/m4v_h263/enc/SoftMPEG4Encoder.h
 @@ -0,0 +1,88 @@
@@ -13618,7 +13618,7 @@ index 0000000..71e1170
 +#endif  // SOFT_MPEG4_ENCODER_H_
 diff --git a/media/libstagefright/codecs/m4v_h263/enc/exports.lds b/media/libstagefright/codecs/m4v_h263/enc/exports.lds
 new file mode 100644
-index 0000000..e24f3fa
+index 0000000000000000000000000000000000000000..e24f3faa68c4d9331125eed3720769a8627f2cb4
 --- /dev/null
 +++ b/media/libstagefright/codecs/m4v_h263/enc/exports.lds
 @@ -0,0 +1,5 @@
@@ -13629,7 +13629,7 @@ index 0000000..e24f3fa
 +};
 diff --git a/media/libstagefright/codecs/mp3dec/Android.bp b/media/libstagefright/codecs/mp3dec/Android.bp
 new file mode 100644
-index 0000000..b669c84
+index 0000000000000000000000000000000000000000..b669c84a6ff68d5540bc92819a67bbe0301273b5
 --- /dev/null
 +++ b/media/libstagefright/codecs/mp3dec/Android.bp
 @@ -0,0 +1,27 @@
@@ -13662,7 +13662,7 @@ index 0000000..b669c84
 +}
 diff --git a/media/libstagefright/codecs/mp3dec/SoftMP3.cpp b/media/libstagefright/codecs/mp3dec/SoftMP3.cpp
 new file mode 100644
-index 0000000..07bb45a
+index 0000000000000000000000000000000000000000..07bb45a3eb8487abb8e35e288085e763178b2bd2
 --- /dev/null
 +++ b/media/libstagefright/codecs/mp3dec/SoftMP3.cpp
 @@ -0,0 +1,506 @@
@@ -14174,7 +14174,7 @@ index 0000000..07bb45a
 +}
 diff --git a/media/libstagefright/codecs/mp3dec/SoftMP3.h b/media/libstagefright/codecs/mp3dec/SoftMP3.h
 new file mode 100644
-index 0000000..976fd00
+index 0000000000000000000000000000000000000000..976fd0045475d98a9d6c46bc2f6b7355da358bf9
 --- /dev/null
 +++ b/media/libstagefright/codecs/mp3dec/SoftMP3.h
 @@ -0,0 +1,84 @@
@@ -14264,7 +14264,7 @@ index 0000000..976fd00
 +
 diff --git a/media/libstagefright/codecs/mp3dec/exports.lds b/media/libstagefright/codecs/mp3dec/exports.lds
 new file mode 100644
-index 0000000..e24f3fa
+index 0000000000000000000000000000000000000000..e24f3faa68c4d9331125eed3720769a8627f2cb4
 --- /dev/null
 +++ b/media/libstagefright/codecs/mp3dec/exports.lds
 @@ -0,0 +1,5 @@
@@ -14275,7 +14275,7 @@ index 0000000..e24f3fa
 +};
 diff --git a/media/libstagefright/codecs/mpeg2dec/Android.bp b/media/libstagefright/codecs/mpeg2dec/Android.bp
 new file mode 100644
-index 0000000..abd1379
+index 0000000000000000000000000000000000000000..abd1379c9dc4052d0f8eb4158e12693eb3cbf8f3
 --- /dev/null
 +++ b/media/libstagefright/codecs/mpeg2dec/Android.bp
 @@ -0,0 +1,32 @@
@@ -14313,7 +14313,7 @@ index 0000000..abd1379
 +}
 diff --git a/media/libstagefright/codecs/mpeg2dec/SoftMPEG2.cpp b/media/libstagefright/codecs/mpeg2dec/SoftMPEG2.cpp
 new file mode 100644
-index 0000000..9f8001f
+index 0000000000000000000000000000000000000000..9f8001f9862a4f59cf6463f8894c3028ed2290fd
 --- /dev/null
 +++ b/media/libstagefright/codecs/mpeg2dec/SoftMPEG2.cpp
 @@ -0,0 +1,872 @@
@@ -15191,7 +15191,7 @@ index 0000000..9f8001f
 +}
 diff --git a/media/libstagefright/codecs/mpeg2dec/SoftMPEG2.h b/media/libstagefright/codecs/mpeg2dec/SoftMPEG2.h
 new file mode 100644
-index 0000000..338fc30
+index 0000000000000000000000000000000000000000..338fc3050e30ee0b2d7a94504cbc990c19210566
 --- /dev/null
 +++ b/media/libstagefright/codecs/mpeg2dec/SoftMPEG2.h
 @@ -0,0 +1,184 @@
@@ -15381,7 +15381,7 @@ index 0000000..338fc30
 +#endif  // SOFT_MPEG2_H_
 diff --git a/media/libstagefright/codecs/mpeg2dec/exports.lds b/media/libstagefright/codecs/mpeg2dec/exports.lds
 new file mode 100644
-index 0000000..e24f3fa
+index 0000000000000000000000000000000000000000..e24f3faa68c4d9331125eed3720769a8627f2cb4
 --- /dev/null
 +++ b/media/libstagefright/codecs/mpeg2dec/exports.lds
 @@ -0,0 +1,5 @@
@@ -15392,7 +15392,7 @@ index 0000000..e24f3fa
 +};
 diff --git a/media/libstagefright/codecs/on2/dec/Android.bp b/media/libstagefright/codecs/on2/dec/Android.bp
 new file mode 100644
-index 0000000..ba6dc2a
+index 0000000000000000000000000000000000000000..ba6dc2a4cccd6da361f578046e548ff151728f1b
 --- /dev/null
 +++ b/media/libstagefright/codecs/on2/dec/Android.bp
 @@ -0,0 +1,37 @@
@@ -15435,10 +15435,10 @@ index 0000000..ba6dc2a
 +}
 diff --git a/media/libstagefright/codecs/on2/dec/MODULE_LICENSE_APACHE2 b/media/libstagefright/codecs/on2/dec/MODULE_LICENSE_APACHE2
 new file mode 100644
-index 0000000..e69de29
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 diff --git a/media/libstagefright/codecs/on2/dec/NOTICE b/media/libstagefright/codecs/on2/dec/NOTICE
 new file mode 100644
-index 0000000..c5b1efa
+index 0000000000000000000000000000000000000000..c5b1efa7aac764ae6d8da63476a2d5cec02a6a5d
 --- /dev/null
 +++ b/media/libstagefright/codecs/on2/dec/NOTICE
 @@ -0,0 +1,190 @@
@@ -15634,7 +15634,7 @@ index 0000000..c5b1efa
 +
 diff --git a/media/libstagefright/codecs/on2/dec/SoftVPX.cpp b/media/libstagefright/codecs/on2/dec/SoftVPX.cpp
 new file mode 100644
-index 0000000..bffc23a
+index 0000000000000000000000000000000000000000..bffc23a910db5333848561f4a619aa0b89d45131
 --- /dev/null
 +++ b/media/libstagefright/codecs/on2/dec/SoftVPX.cpp
 @@ -0,0 +1,374 @@
@@ -16014,7 +16014,7 @@ index 0000000..bffc23a
 +}
 diff --git a/media/libstagefright/codecs/on2/dec/SoftVPX.h b/media/libstagefright/codecs/on2/dec/SoftVPX.h
 new file mode 100644
-index 0000000..0aa8e9c
+index 0000000000000000000000000000000000000000..0aa8e9cb120e75f27280026c306b2b91bb5a4594
 --- /dev/null
 +++ b/media/libstagefright/codecs/on2/dec/SoftVPX.h
 @@ -0,0 +1,84 @@
@@ -16104,7 +16104,7 @@ index 0000000..0aa8e9c
 +#endif  // SOFT_VPX_H_
 diff --git a/media/libstagefright/codecs/on2/dec/exports.lds b/media/libstagefright/codecs/on2/dec/exports.lds
 new file mode 100644
-index 0000000..e24f3fa
+index 0000000000000000000000000000000000000000..e24f3faa68c4d9331125eed3720769a8627f2cb4
 --- /dev/null
 +++ b/media/libstagefright/codecs/on2/dec/exports.lds
 @@ -0,0 +1,5 @@
@@ -16115,7 +16115,7 @@ index 0000000..e24f3fa
 +};
 diff --git a/media/libstagefright/codecs/on2/enc/Android.bp b/media/libstagefright/codecs/on2/enc/Android.bp
 new file mode 100644
-index 0000000..e85ff98
+index 0000000000000000000000000000000000000000..e85ff989750da8a242d11a1bf65b85a32ecae85d
 --- /dev/null
 +++ b/media/libstagefright/codecs/on2/enc/Android.bp
 @@ -0,0 +1,44 @@
@@ -16165,10 +16165,10 @@ index 0000000..e85ff98
 +}
 diff --git a/media/libstagefright/codecs/on2/enc/MODULE_LICENSE_APACHE2 b/media/libstagefright/codecs/on2/enc/MODULE_LICENSE_APACHE2
 new file mode 100644
-index 0000000..e69de29
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 diff --git a/media/libstagefright/codecs/on2/enc/NOTICE b/media/libstagefright/codecs/on2/enc/NOTICE
 new file mode 100644
-index 0000000..faed58a
+index 0000000000000000000000000000000000000000..faed58a1532f9936961dc9bfae1dcf2ccf606e0a
 --- /dev/null
 +++ b/media/libstagefright/codecs/on2/enc/NOTICE
 @@ -0,0 +1,190 @@
@@ -16364,7 +16364,7 @@ index 0000000..faed58a
 +
 diff --git a/media/libstagefright/codecs/on2/enc/SoftVP8Encoder.cpp b/media/libstagefright/codecs/on2/enc/SoftVP8Encoder.cpp
 new file mode 100644
-index 0000000..9198b7c
+index 0000000000000000000000000000000000000000..9198b7c327228972de660564a2876d395c5a3152
 --- /dev/null
 +++ b/media/libstagefright/codecs/on2/enc/SoftVP8Encoder.cpp
 @@ -0,0 +1,172 @@
@@ -16542,7 +16542,7 @@ index 0000000..9198b7c
 +}  // namespace android
 diff --git a/media/libstagefright/codecs/on2/enc/SoftVP8Encoder.h b/media/libstagefright/codecs/on2/enc/SoftVP8Encoder.h
 new file mode 100644
-index 0000000..c5c2abf
+index 0000000000000000000000000000000000000000..c5c2abfa0eff6957061e4206f678b7388ddd4c90
 --- /dev/null
 +++ b/media/libstagefright/codecs/on2/enc/SoftVP8Encoder.h
 @@ -0,0 +1,93 @@
@@ -16641,7 +16641,7 @@ index 0000000..c5c2abf
 +#endif  // SOFT_VP8_ENCODER_H_
 diff --git a/media/libstagefright/codecs/on2/enc/SoftVP9Encoder.cpp b/media/libstagefright/codecs/on2/enc/SoftVP9Encoder.cpp
 new file mode 100644
-index 0000000..f8495c2
+index 0000000000000000000000000000000000000000..f8495c2da4fa3a6214c1abc6ffb417a7d0816b96
 --- /dev/null
 +++ b/media/libstagefright/codecs/on2/enc/SoftVP9Encoder.cpp
 @@ -0,0 +1,179 @@
@@ -16826,7 +16826,7 @@ index 0000000..f8495c2
 +}  // namespace android
 diff --git a/media/libstagefright/codecs/on2/enc/SoftVP9Encoder.h b/media/libstagefright/codecs/on2/enc/SoftVP9Encoder.h
 new file mode 100644
-index 0000000..308a9ac
+index 0000000000000000000000000000000000000000..308a9ac95fbd6a5164950128abdcd10e6362c151
 --- /dev/null
 +++ b/media/libstagefright/codecs/on2/enc/SoftVP9Encoder.h
 @@ -0,0 +1,91 @@
@@ -16923,7 +16923,7 @@ index 0000000..308a9ac
 +#endif  // SOFT_VP9_ENCODER_H_
 diff --git a/media/libstagefright/codecs/on2/enc/SoftVPXEncoder.cpp b/media/libstagefright/codecs/on2/enc/SoftVPXEncoder.cpp
 new file mode 100644
-index 0000000..cbedb72
+index 0000000000000000000000000000000000000000..cbedb723ed902ca09360803f85bb171a648f94c9
 --- /dev/null
 +++ b/media/libstagefright/codecs/on2/enc/SoftVPXEncoder.cpp
 @@ -0,0 +1,799 @@
@@ -17728,7 +17728,7 @@ index 0000000..cbedb72
 +}
 diff --git a/media/libstagefright/codecs/on2/enc/SoftVPXEncoder.h b/media/libstagefright/codecs/on2/enc/SoftVPXEncoder.h
 new file mode 100644
-index 0000000..7208d69
+index 0000000000000000000000000000000000000000..7208d694acf5f217682afb17e5f1755c3faf6728
 --- /dev/null
 +++ b/media/libstagefright/codecs/on2/enc/SoftVPXEncoder.h
 @@ -0,0 +1,251 @@
@@ -17985,7 +17985,7 @@ index 0000000..7208d69
 +#endif  // SOFT_VPX_ENCODER_H_
 diff --git a/media/libstagefright/codecs/on2/enc/exports.lds b/media/libstagefright/codecs/on2/enc/exports.lds
 new file mode 100644
-index 0000000..e24f3fa
+index 0000000000000000000000000000000000000000..e24f3faa68c4d9331125eed3720769a8627f2cb4
 --- /dev/null
 +++ b/media/libstagefright/codecs/on2/enc/exports.lds
 @@ -0,0 +1,5 @@
@@ -17996,7 +17996,7 @@ index 0000000..e24f3fa
 +};
 diff --git a/media/libstagefright/codecs/opus/dec/Android.bp b/media/libstagefright/codecs/opus/dec/Android.bp
 new file mode 100644
-index 0000000..3d8af69
+index 0000000000000000000000000000000000000000..3d8af6950e91c7c94298a3e03b7a804182dd05dd
 --- /dev/null
 +++ b/media/libstagefright/codecs/opus/dec/Android.bp
 @@ -0,0 +1,29 @@
@@ -18031,7 +18031,7 @@ index 0000000..3d8af69
 +}
 diff --git a/media/libstagefright/codecs/opus/dec/SoftOpus.cpp b/media/libstagefright/codecs/opus/dec/SoftOpus.cpp
 new file mode 100644
-index 0000000..dcd8dda
+index 0000000000000000000000000000000000000000..dcd8dda3f1809f95b579037598220748b97cceed
 --- /dev/null
 +++ b/media/libstagefright/codecs/opus/dec/SoftOpus.cpp
 @@ -0,0 +1,674 @@
@@ -18711,7 +18711,7 @@ index 0000000..dcd8dda
 +}
 diff --git a/media/libstagefright/codecs/opus/dec/SoftOpus.h b/media/libstagefright/codecs/opus/dec/SoftOpus.h
 new file mode 100644
-index 0000000..00058c8
+index 0000000000000000000000000000000000000000..00058c82124c56743a43013708e57293f61b1c79
 --- /dev/null
 +++ b/media/libstagefright/codecs/opus/dec/SoftOpus.h
 @@ -0,0 +1,98 @@
@@ -18815,7 +18815,7 @@ index 0000000..00058c8
 +#endif  // SOFT_OPUS_H_
 diff --git a/media/libstagefright/codecs/opus/dec/exports.lds b/media/libstagefright/codecs/opus/dec/exports.lds
 new file mode 100644
-index 0000000..e24f3fa
+index 0000000000000000000000000000000000000000..e24f3faa68c4d9331125eed3720769a8627f2cb4
 --- /dev/null
 +++ b/media/libstagefright/codecs/opus/dec/exports.lds
 @@ -0,0 +1,5 @@
@@ -18826,7 +18826,7 @@ index 0000000..e24f3fa
 +};
 diff --git a/media/libstagefright/codecs/raw/Android.bp b/media/libstagefright/codecs/raw/Android.bp
 new file mode 100644
-index 0000000..3673786
+index 0000000000000000000000000000000000000000..3673786c56a08e8bef76a5b551c6526a5c0ad500
 --- /dev/null
 +++ b/media/libstagefright/codecs/raw/Android.bp
 @@ -0,0 +1,35 @@
@@ -18867,10 +18867,10 @@ index 0000000..3673786
 +}
 diff --git a/media/libstagefright/codecs/raw/MODULE_LICENSE_APACHE2 b/media/libstagefright/codecs/raw/MODULE_LICENSE_APACHE2
 new file mode 100644
-index 0000000..e69de29
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 diff --git a/media/libstagefright/codecs/raw/NOTICE b/media/libstagefright/codecs/raw/NOTICE
 new file mode 100644
-index 0000000..c5b1efa
+index 0000000000000000000000000000000000000000..c5b1efa7aac764ae6d8da63476a2d5cec02a6a5d
 --- /dev/null
 +++ b/media/libstagefright/codecs/raw/NOTICE
 @@ -0,0 +1,190 @@
@@ -19066,7 +19066,7 @@ index 0000000..c5b1efa
 +
 diff --git a/media/libstagefright/codecs/raw/SoftRaw.cpp b/media/libstagefright/codecs/raw/SoftRaw.cpp
 new file mode 100644
-index 0000000..82dd171
+index 0000000000000000000000000000000000000000..82dd171c0a28b445cb855d57ad3c4292af3466ba
 --- /dev/null
 +++ b/media/libstagefright/codecs/raw/SoftRaw.cpp
 @@ -0,0 +1,281 @@
@@ -19353,7 +19353,7 @@ index 0000000..82dd171
 +}
 diff --git a/media/libstagefright/codecs/raw/SoftRaw.h b/media/libstagefright/codecs/raw/SoftRaw.h
 new file mode 100644
-index 0000000..ebc2741
+index 0000000000000000000000000000000000000000..ebc27413b510a1e6e95da3f86db80dfa2ec0b97f
 --- /dev/null
 +++ b/media/libstagefright/codecs/raw/SoftRaw.h
 @@ -0,0 +1,64 @@
@@ -19423,7 +19423,7 @@ index 0000000..ebc2741
 +#endif  // SOFT_RAW_H_
 diff --git a/media/libstagefright/codecs/raw/exports.lds b/media/libstagefright/codecs/raw/exports.lds
 new file mode 100644
-index 0000000..e24f3fa
+index 0000000000000000000000000000000000000000..e24f3faa68c4d9331125eed3720769a8627f2cb4
 --- /dev/null
 +++ b/media/libstagefright/codecs/raw/exports.lds
 @@ -0,0 +1,5 @@
@@ -19434,7 +19434,7 @@ index 0000000..e24f3fa
 +};
 diff --git a/media/libstagefright/codecs/vorbis/dec/Android.bp b/media/libstagefright/codecs/vorbis/dec/Android.bp
 new file mode 100644
-index 0000000..7764294
+index 0000000000000000000000000000000000000000..7764294662324ac07900ab60f6fb62a39836f039
 --- /dev/null
 +++ b/media/libstagefright/codecs/vorbis/dec/Android.bp
 @@ -0,0 +1,38 @@
@@ -19478,10 +19478,10 @@ index 0000000..7764294
 +}
 diff --git a/media/libstagefright/codecs/vorbis/dec/MODULE_LICENSE_APACHE2 b/media/libstagefright/codecs/vorbis/dec/MODULE_LICENSE_APACHE2
 new file mode 100644
-index 0000000..e69de29
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 diff --git a/media/libstagefright/codecs/vorbis/dec/NOTICE b/media/libstagefright/codecs/vorbis/dec/NOTICE
 new file mode 100644
-index 0000000..c5b1efa
+index 0000000000000000000000000000000000000000..c5b1efa7aac764ae6d8da63476a2d5cec02a6a5d
 --- /dev/null
 +++ b/media/libstagefright/codecs/vorbis/dec/NOTICE
 @@ -0,0 +1,190 @@
@@ -19677,7 +19677,7 @@ index 0000000..c5b1efa
 +
 diff --git a/media/libstagefright/codecs/vorbis/dec/SoftVorbis.cpp b/media/libstagefright/codecs/vorbis/dec/SoftVorbis.cpp
 new file mode 100644
-index 0000000..3daed10
+index 0000000000000000000000000000000000000000..3daed10c20fb750fb44675f553cec84c5232d536
 --- /dev/null
 +++ b/media/libstagefright/codecs/vorbis/dec/SoftVorbis.cpp
 @@ -0,0 +1,644 @@
@@ -20327,7 +20327,7 @@ index 0000000..3daed10
 +}
 diff --git a/media/libstagefright/codecs/vorbis/dec/SoftVorbis.h b/media/libstagefright/codecs/vorbis/dec/SoftVorbis.h
 new file mode 100644
-index 0000000..5ff8ea4
+index 0000000000000000000000000000000000000000..5ff8ea4d6102d2e0e8f3a8745a686dfdeef8f8fa
 --- /dev/null
 +++ b/media/libstagefright/codecs/vorbis/dec/SoftVorbis.h
 @@ -0,0 +1,83 @@
@@ -20416,7 +20416,7 @@ index 0000000..5ff8ea4
 +
 diff --git a/media/libstagefright/codecs/vorbis/dec/exports.lds b/media/libstagefright/codecs/vorbis/dec/exports.lds
 new file mode 100644
-index 0000000..e24f3fa
+index 0000000000000000000000000000000000000000..e24f3faa68c4d9331125eed3720769a8627f2cb4
 --- /dev/null
 +++ b/media/libstagefright/codecs/vorbis/dec/exports.lds
 @@ -0,0 +1,5 @@
@@ -20427,7 +20427,7 @@ index 0000000..e24f3fa
 +};
 diff --git a/media/libstagefright/codecs/xaacdec/Android.bp b/media/libstagefright/codecs/xaacdec/Android.bp
 new file mode 100644
-index 0000000..1d03c16
+index 0000000000000000000000000000000000000000..1d03c16bbd4b13844b5b4108ca15de56985c9d07
 --- /dev/null
 +++ b/media/libstagefright/codecs/xaacdec/Android.bp
 @@ -0,0 +1,36 @@
@@ -20469,7 +20469,7 @@ index 0000000..1d03c16
 +}
 diff --git a/media/libstagefright/codecs/xaacdec/SoftXAAC.cpp b/media/libstagefright/codecs/xaacdec/SoftXAAC.cpp
 new file mode 100644
-index 0000000..a478642
+index 0000000000000000000000000000000000000000..a47864214b81e0e04e0ae0f78739e1bf6676501d
 --- /dev/null
 +++ b/media/libstagefright/codecs/xaacdec/SoftXAAC.cpp
 @@ -0,0 +1,1702 @@
@@ -22177,7 +22177,7 @@ index 0000000..a478642
 +}
 diff --git a/media/libstagefright/codecs/xaacdec/SoftXAAC.h b/media/libstagefright/codecs/xaacdec/SoftXAAC.h
 new file mode 100644
-index 0000000..a62a797
+index 0000000000000000000000000000000000000000..a62a797e7ce7b421b766c0294223a7eb5ee96d37
 --- /dev/null
 +++ b/media/libstagefright/codecs/xaacdec/SoftXAAC.h
 @@ -0,0 +1,130 @@
@@ -22312,10 +22312,10 @@ index 0000000..a62a797
 +
 +#endif  // SOFTXAAC_H_
 diff --git a/media/libstagefright/omx/Android.bp b/media/libstagefright/omx/Android.bp
-index cb32954..c7d5a1f 100644
+index 1c90b120ea6765dc18ca8fce3399f19a8e8652bc..d3c6fcb4c299dfdd702f471bc2f9defbf303febc 100644
 --- a/media/libstagefright/omx/Android.bp
 +++ b/media/libstagefright/omx/Android.bp
-@@ -180,6 +180,39 @@ cc_library_shared {
+@@ -181,6 +181,39 @@ cc_library_shared {
      },
  }
  
@@ -22355,7 +22355,7 @@ index cb32954..c7d5a1f 100644
  cc_library_shared {
      name: "libstagefright_omx_utils",
      vendor_available: true,
-@@ -209,8 +242,5 @@ cc_library_shared {
+@@ -211,8 +244,5 @@ cc_library_shared {
          ],
          cfi: true,
      },
@@ -22365,6 +22365,3 @@ index cb32954..c7d5a1f 100644
 -    ],
 +    cflags: ["-Wall", "-Werror"],
  }
--- 
-2.53.0
-

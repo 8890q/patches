@@ -1,12 +1,14 @@
-From efe0d36312ba08cf96d9ca2734dcb4846285d373 Mon Sep 17 00:00:00 2001
+From 879e97da133ae3105826bccad1b413e5b68467b0 Mon Sep 17 00:00:00 2001
 From: Yaroslav Zviezda <acroreiser@gmail.com>
 Date: Mon, 20 Oct 2025 21:58:53 +0300
-Subject: [PATCH 1/8] Revert "Delete genTextures and deleteTextures from
+Subject: [PATCH] Revert "Delete genTextures and deleteTextures from 
  RenderEngine"
 
 This reverts commit c3a17824aed485229dba17819e5ee4e4ecf4db1e.
 
 Change-Id: I7be7475c8c8ab8cf075c1e84cfc1fe9c36ffeb62
+
+Adapt layer creation and diagnostic printing to Android 17.
 ---
  .../include/renderengine/LayerSettings.h      |  6 +++
  .../include/renderengine/RenderEngine.h       |  3 ++
@@ -31,10 +33,10 @@ Change-Id: I7be7475c8c8ab8cf075c1e84cfc1fe9c36ffeb62
  20 files changed, 151 insertions(+), 8 deletions(-)
 
 diff --git a/libs/renderengine/include/renderengine/LayerSettings.h b/libs/renderengine/include/renderengine/LayerSettings.h
-index bd5a3db..eb47aec 100644
+index 36b9a4cd53be4a293f2c2fbd799385118e8a08aa..3959cb24d5218aeed34cd384fc979c82a5059e19 100644
 --- a/libs/renderengine/include/renderengine/LayerSettings.h
 +++ b/libs/renderengine/include/renderengine/LayerSettings.h
-@@ -53,6 +53,10 @@ struct Buffer {
+@@ -69,6 +69,10 @@ struct Buffer {
      // Fence that will fire when the buffer is ready to be bound.
      sp<Fence> fence = nullptr;
  
@@ -45,7 +47,7 @@ index bd5a3db..eb47aec 100644
      // Whether to use filtering when rendering the texture.
      bool useTextureFiltering = false;
  
-@@ -172,6 +176,7 @@ struct LayerSettings {
+@@ -202,6 +206,7 @@ struct LayerSettings {
  // compositionengine/impl/ClientCompositionRequestCache.cpp
  static inline bool operator==(const Buffer& lhs, const Buffer& rhs) {
      return lhs.buffer == rhs.buffer && lhs.fence == rhs.fence &&
@@ -53,19 +55,19 @@ index bd5a3db..eb47aec 100644
              lhs.useTextureFiltering == rhs.useTextureFiltering &&
              lhs.textureTransform == rhs.textureTransform &&
              lhs.usePremultipliedAlpha == rhs.usePremultipliedAlpha &&
-@@ -218,6 +223,7 @@ static inline void PrintTo(const Buffer& settings, ::std::ostream* os) {
-         << (settings.buffer.get() ? decodePixelFormat(settings.buffer->getPixelFormat()).c_str()
-                                   : "");
-     *os << "\n    .fence = " << settings.fence.get();
-+    *os << "\n    .textureName = " << settings.textureName;
-     *os << "\n    .useTextureFiltering = " << settings.useTextureFiltering;
-     *os << "\n    .textureTransform = ";
+@@ -248,6 +253,7 @@ static inline void PrintTo(const Buffer& settings, ::std::ostream* os,
+     *os << "Buffer {";
+     *os << newline << ".buffer = " << *settings.buffer.get();
+     *os << newline << ".fence = " << settings.fence.get();
++    *os << newline << ".textureName = " << settings.textureName;
+     *os << newline << ".useTextureFiltering = " << settings.useTextureFiltering;
+     *os << newline << ".textureTransform = ";
      PrintMatrix(settings.textureTransform, os);
 diff --git a/libs/renderengine/include/renderengine/RenderEngine.h b/libs/renderengine/include/renderengine/RenderEngine.h
-index ee61d3b..77c86a4 100644
+index 3dd2faad99fea5d1a248767da3e195d46c49494b..fb6f56f125f3c2a217a9e2b7da6448dab5f946a3 100644
 --- a/libs/renderengine/include/renderengine/RenderEngine.h
 +++ b/libs/renderengine/include/renderengine/RenderEngine.h
-@@ -197,6 +197,9 @@ public:
+@@ -204,6 +204,9 @@ public:
      // dump the extension strings. always call the base class.
      virtual void dump(std::string& result) = 0;
  
@@ -76,7 +78,7 @@ index ee61d3b..77c86a4 100644
      virtual size_t getMaxTextureSize() const = 0;
      virtual size_t getMaxViewportDims() const = 0;
 diff --git a/libs/renderengine/include/renderengine/mock/RenderEngine.h b/libs/renderengine/include/renderengine/mock/RenderEngine.h
-index c42e403..0f98822 100644
+index c42e4034e02c6daba21fe3776bfb5e0710c4b55d..0f98822f96098957f3e9d99563dd24af8282edf7 100644
 --- a/libs/renderengine/include/renderengine/mock/RenderEngine.h
 +++ b/libs/renderengine/include/renderengine/mock/RenderEngine.h
 @@ -35,6 +35,9 @@ public:
@@ -98,10 +100,10 @@ index c42e403..0f98822 100644
      MOCK_METHOD0(supportsBackgroundBlur, bool());
      MOCK_METHOD1(onActiveDisplaySizeChanged, void(ui::Size));
 diff --git a/libs/renderengine/skia/SkiaRenderEngine.h b/libs/renderengine/skia/SkiaRenderEngine.h
-index 26fab27..b59a3b2 100644
+index 25f3038a751e10bad9e5a4668ab80f8c91812438..8ff109a519287c7ffdc49bc2c5cc37855a7ecbc6 100644
 --- a/libs/renderengine/skia/SkiaRenderEngine.h
 +++ b/libs/renderengine/skia/SkiaRenderEngine.h
-@@ -75,6 +75,8 @@ public:
+@@ -84,6 +84,8 @@ public:
      void onActiveDisplaySizeChanged(ui::Size size) override final;
      int reportShadersCompiled();
  
@@ -111,10 +113,10 @@ index 26fab27..b59a3b2 100644
  
      void useProtectedContext(bool useProtectedContext) override;
 diff --git a/libs/renderengine/tests/RenderEngineTest.cpp b/libs/renderengine/tests/RenderEngineTest.cpp
-index 06a0017..1951b45 100644
+index 54fd1e220b8a2ffedf62ce5f0cdc95faaf5e9557..46d4e5b0b20930dfe0a35640729610aeffd47604 100644
 --- a/libs/renderengine/tests/RenderEngineTest.cpp
 +++ b/libs/renderengine/tests/RenderEngineTest.cpp
-@@ -213,6 +213,9 @@ public:
+@@ -214,6 +214,9 @@ public:
          if (WRITE_BUFFER_TO_FILE_ON_FAILURE && ::testing::Test::HasFailure()) {
              writeBufferToFile("/data/local/tmp/RenderEngineTest/");
          }
@@ -124,7 +126,7 @@ index 06a0017..1951b45 100644
          const ::testing::TestInfo* const test_info =
                  ::testing::UnitTest::GetInstance()->current_test_info();
          ALOGI("**** Tearing down after %s.%s\n", test_info->test_case_name(), test_info->name());
-@@ -604,6 +607,8 @@ public:
+@@ -608,6 +611,8 @@ public:
  
      std::unique_ptr<renderengine::RenderEngine> mRE;
      std::shared_ptr<renderengine::ExternalTexture> mBuffer;
@@ -133,7 +135,7 @@ index 06a0017..1951b45 100644
  };
  
  void RenderEngineTest::initializeRenderEngine() {
-@@ -647,6 +652,9 @@ struct BufferSourceVariant {
+@@ -651,6 +656,9 @@ struct BufferSourceVariant {
      static void fillColor(renderengine::LayerSettings& layer, half r, half g, half b,
                            RenderEngineTest* fixture) {
          const auto buf = fixture->allocateSourceBuffer(1, 1);
@@ -143,7 +145,7 @@ index 06a0017..1951b45 100644
  
          uint8_t* pixels;
          buf->getBuffer()->lock(GRALLOC_USAGE_SW_READ_OFTEN | GRALLOC_USAGE_SW_WRITE_OFTEN,
-@@ -666,6 +674,7 @@ struct BufferSourceVariant {
+@@ -670,6 +678,7 @@ struct BufferSourceVariant {
          buf->getBuffer()->unlock();
  
          layer.source.buffer.buffer = buf;
@@ -151,7 +153,7 @@ index 06a0017..1951b45 100644
          layer.sourceDataspace = ui::Dataspace::V0_SRGB_LINEAR;
          OpaquenessVariant::setOpaqueBit(layer);
      }
-@@ -1214,6 +1223,9 @@ void RenderEngineTest::fillRedBufferTextureTransform() {
+@@ -1218,6 +1227,9 @@ void RenderEngineTest::fillRedBufferTextureTransform() {
      // Here will allocate a checker board texture, but transform texture
      // coordinates so that only the upper left is applied.
      const auto buf = allocateSourceBuffer(2, 2);
@@ -161,7 +163,7 @@ index 06a0017..1951b45 100644
  
      uint8_t* pixels;
      buf->getBuffer()->lock(GRALLOC_USAGE_SW_READ_OFTEN | GRALLOC_USAGE_SW_WRITE_OFTEN,
-@@ -1234,6 +1246,7 @@ void RenderEngineTest::fillRedBufferTextureTransform() {
+@@ -1238,6 +1250,7 @@ void RenderEngineTest::fillRedBufferTextureTransform() {
      buf->getBuffer()->unlock();
  
      layer.source.buffer.buffer = buf;
@@ -169,7 +171,7 @@ index 06a0017..1951b45 100644
      // Transform coordinates to only be inside the red quadrant.
      layer.source.buffer.textureTransform = mat4::scale(vec4(0.2f, 0.2f, 1.f, 1.f));
      layer.alpha = 1.0f;
-@@ -1259,6 +1272,9 @@ void RenderEngineTest::fillRedBufferWithPremultiplyAlpha() {
+@@ -1263,6 +1276,9 @@ void RenderEngineTest::fillRedBufferWithPremultiplyAlpha() {
  
      renderengine::LayerSettings layer;
      const auto buf = allocateSourceBuffer(1, 1);
@@ -179,7 +181,7 @@ index 06a0017..1951b45 100644
  
      uint8_t* pixels;
      buf->getBuffer()->lock(GRALLOC_USAGE_SW_READ_OFTEN | GRALLOC_USAGE_SW_WRITE_OFTEN,
-@@ -1270,6 +1286,7 @@ void RenderEngineTest::fillRedBufferWithPremultiplyAlpha() {
+@@ -1274,6 +1290,7 @@ void RenderEngineTest::fillRedBufferWithPremultiplyAlpha() {
      buf->getBuffer()->unlock();
  
      layer.source.buffer.buffer = buf;
@@ -187,7 +189,7 @@ index 06a0017..1951b45 100644
      layer.source.buffer.usePremultipliedAlpha = true;
      layer.alpha = 0.5f;
      layer.geometry.boundaries = Rect(1, 1).toFloatRect();
-@@ -1299,6 +1316,9 @@ void RenderEngineTest::fillRedBufferWithoutPremultiplyAlpha() {
+@@ -1303,6 +1320,9 @@ void RenderEngineTest::fillRedBufferWithoutPremultiplyAlpha() {
  
      renderengine::LayerSettings layer;
      const auto buf = allocateSourceBuffer(1, 1);
@@ -197,7 +199,7 @@ index 06a0017..1951b45 100644
  
      uint8_t* pixels;
      buf->getBuffer()->lock(GRALLOC_USAGE_SW_READ_OFTEN | GRALLOC_USAGE_SW_WRITE_OFTEN,
-@@ -1310,6 +1330,7 @@ void RenderEngineTest::fillRedBufferWithoutPremultiplyAlpha() {
+@@ -1314,6 +1334,7 @@ void RenderEngineTest::fillRedBufferWithoutPremultiplyAlpha() {
      buf->getBuffer()->unlock();
  
      layer.source.buffer.buffer = buf;
@@ -206,10 +208,10 @@ index 06a0017..1951b45 100644
      layer.alpha = 0.5f;
      layer.geometry.boundaries = Rect(1, 1).toFloatRect();
 diff --git a/libs/renderengine/threaded/RenderEngineThreaded.cpp b/libs/renderengine/threaded/RenderEngineThreaded.cpp
-index c6c3252..1458e57 100644
+index 3790ecd7e4a23df4d9f55a9d1aaeb94e4197fcd9..e4153b56b81623989dc0e940f44faae5d0a41feb 100644
 --- a/libs/renderengine/threaded/RenderEngineThreaded.cpp
 +++ b/libs/renderengine/threaded/RenderEngineThreaded.cpp
-@@ -187,6 +187,18 @@ void RenderEngineThreaded::dump(std::string& result) {
+@@ -189,6 +189,18 @@ void RenderEngineThreaded::dump(std::string& result) {
      result.assign(resultFuture.get());
  }
  
@@ -229,7 +231,7 @@ index c6c3252..1458e57 100644
                                                      bool isRenderable) {
      SFTRACE_CALL();
 diff --git a/libs/renderengine/threaded/RenderEngineThreaded.h b/libs/renderengine/threaded/RenderEngineThreaded.h
-index 6c3c619..a091114 100644
+index 6c3c619da524d533c678dddbc138a350e5f00a15..a091114b6c06b4f810660b7dc741d151dcd651b4 100644
 --- a/libs/renderengine/threaded/RenderEngineThreaded.h
 +++ b/libs/renderengine/threaded/RenderEngineThreaded.h
 @@ -45,6 +45,8 @@ public:
@@ -242,7 +244,7 @@ index 6c3c619..a091114 100644
      size_t getMaxViewportDims() const override;
  
 diff --git a/services/surfaceflinger/CompositionEngine/src/ClientCompositionRequestCache.cpp b/services/surfaceflinger/CompositionEngine/src/ClientCompositionRequestCache.cpp
-index 35eeb9b..66533e8 100644
+index 051dc7c623af713644d8a40b3f1ffe55a13b5ee9..91838bb0140b499b6a84c44e5510be52f699e69c 100644
 --- a/services/surfaceflinger/CompositionEngine/src/ClientCompositionRequestCache.cpp
 +++ b/services/surfaceflinger/CompositionEngine/src/ClientCompositionRequestCache.cpp
 @@ -44,7 +44,8 @@ inline bool equalIgnoringSource(const renderengine::LayerSettings& lhs,
@@ -256,22 +258,22 @@ index 35eeb9b..66533e8 100644
              lhs.usePremultipliedAlpha == rhs.usePremultipliedAlpha &&
              lhs.isOpaque == rhs.isOpaque && lhs.maxLuminanceNits == rhs.maxLuminanceNits;
 diff --git a/services/surfaceflinger/FrontEnd/LayerCreationArgs.h b/services/surfaceflinger/FrontEnd/LayerCreationArgs.h
-index 73baeb0..194a813 100644
+index 4b10143fad5da27792aac0140e4151413969a9ef..3bfcad0bf7b73b30d1797298ff4640ff30720db8 100644
 --- a/services/surfaceflinger/FrontEnd/LayerCreationArgs.h
 +++ b/services/surfaceflinger/FrontEnd/LayerCreationArgs.h
-@@ -54,6 +54,7 @@ struct LayerCreationArgs {
-     gui::LayerMetadata metadata;
+@@ -56,6 +56,7 @@ struct LayerCreationArgs {
      pid_t ownerPid;
      uid_t ownerUid;
-+    uint32_t textureName;
+     uint64_t ownerPermissions;
++    uint32_t textureName = 0;
      uint32_t sequence;
      bool addToRoot = true;
      wp<IBinder> parentHandle = nullptr;
 diff --git a/services/surfaceflinger/FrontEnd/LayerSnapshot.cpp b/services/surfaceflinger/FrontEnd/LayerSnapshot.cpp
-index 3196752..22965ae 100644
+index 8fceaa0b87146864b90d336553cad34423ff6609..9814cd5d04be1d158aca721f368c54311b1a3869 100644
 --- a/services/surfaceflinger/FrontEnd/LayerSnapshot.cpp
 +++ b/services/surfaceflinger/FrontEnd/LayerSnapshot.cpp
-@@ -121,6 +121,7 @@ LayerSnapshot::LayerSnapshot(const RequestedLayerState& state,
+@@ -122,6 +122,7 @@ LayerSnapshot::LayerSnapshot(const RequestedLayerState& state,
      sequence = static_cast<int32_t>(state.id);
      name = state.name;
      debugName = state.debugName;
@@ -280,10 +282,10 @@ index 3196752..22965ae 100644
      inputInfo.name = state.name;
      inputInfo.id = static_cast<int32_t>(uniqueSequence);
 diff --git a/services/surfaceflinger/FrontEnd/LayerSnapshot.h b/services/surfaceflinger/FrontEnd/LayerSnapshot.h
-index 35d8afe..57e0ec0 100644
+index 5fe91eb9d0695e9a7efd70da1b697ba550c9b8bb..bb057749704c350a2adae80458c00bfda13470c5 100644
 --- a/services/surfaceflinger/FrontEnd/LayerSnapshot.h
 +++ b/services/surfaceflinger/FrontEnd/LayerSnapshot.h
-@@ -80,6 +80,7 @@ struct LayerSnapshot : public compositionengine::LayerFECompositionState {
+@@ -87,6 +87,7 @@ struct LayerSnapshot : public compositionengine::LayerFECompositionState {
      int32_t sequence;
      std::string name;
      std::string debugName;
@@ -292,22 +294,22 @@ index 35d8afe..57e0ec0 100644
      bool layerOpaqueFlagSet;
      RoundedCornerState roundedCorner;
 diff --git a/services/surfaceflinger/FrontEnd/RequestedLayerState.cpp b/services/surfaceflinger/FrontEnd/RequestedLayerState.cpp
-index 83ddaae..36997aa 100644
+index 03bc5b67ce88547e702fa467a4a2dc926e32eda7..0127e4a5e25e0548b9842afc5a15b693fa21ebfa 100644
 --- a/services/surfaceflinger/FrontEnd/RequestedLayerState.cpp
 +++ b/services/surfaceflinger/FrontEnd/RequestedLayerState.cpp
-@@ -51,6 +51,7 @@ RequestedLayerState::RequestedLayerState(const LayerCreationArgs& args)
+@@ -52,6 +52,7 @@ RequestedLayerState::RequestedLayerState(const LayerCreationArgs& args)
          name(args.name + "#" + std::to_string(args.sequence)),
          canBeRoot(args.addToRoot),
          layerCreationFlags(args.flags),
 +        textureName(args.textureName),
          ownerUid(args.ownerUid),
          ownerPid(args.ownerPid),
-         parentId(args.parentId),
+         ownerPermissions(args.ownerPermissions),
 diff --git a/services/surfaceflinger/FrontEnd/RequestedLayerState.h b/services/surfaceflinger/FrontEnd/RequestedLayerState.h
-index 065f569..b1b62e2 100644
+index 360285c5c92dd83bea84c287e2b91a966c6f952a..5a2690200cf863d01bdab35c87847f34bdc7f497 100644
 --- a/services/surfaceflinger/FrontEnd/RequestedLayerState.h
 +++ b/services/surfaceflinger/FrontEnd/RequestedLayerState.h
-@@ -107,6 +107,7 @@ struct RequestedLayerState : layer_state_t {
+@@ -111,6 +111,7 @@ struct RequestedLayerState : layer_state_t {
      const std::string name;
      bool canBeRoot = false;
      const uint32_t layerCreationFlags;
@@ -316,7 +318,7 @@ index 065f569..b1b62e2 100644
      // If created from a system process, the value can be passed in.
      const gui::Uid ownerUid;
 diff --git a/services/surfaceflinger/Layer.cpp b/services/surfaceflinger/Layer.cpp
-index 6f0ca87..e94912d 100644
+index 38b7c439be47e11d0c793e08cfb94883830c561b..482d1c5f4f978ff3b2225f447298aebfae31d186 100644
 --- a/services/surfaceflinger/Layer.cpp
 +++ b/services/surfaceflinger/Layer.cpp
 @@ -134,7 +134,8 @@ Layer::Layer(const surfaceflinger::LayerCreationArgs& args)
@@ -329,7 +331,7 @@ index 6f0ca87..e94912d 100644
      ALOGV("Creating Layer %s", getDebugName());
  
      mDrawingState.crop = {0, 0, -1, -1};
-@@ -161,6 +162,8 @@ Layer::Layer(const surfaceflinger::LayerCreationArgs& args)
+@@ -159,6 +160,8 @@ Layer::Layer(const surfaceflinger::LayerCreationArgs& args)
      mPotentialCursor = args.flags & ISurfaceComposerClient::eCursorWindow;
      mLayerFEs.emplace_back(frontend::LayerHierarchy::TraversalPath{static_cast<uint32_t>(sequence)},
                             args.flinger->getFactory().createLayerFE(mName, this));
@@ -338,7 +340,7 @@ index 6f0ca87..e94912d 100644
  }
  
  void Layer::onFirstRef() {
-@@ -176,6 +179,13 @@ Layer::~Layer() {
+@@ -174,6 +177,13 @@ Layer::~Layer() {
                                    mBufferInfo.mBuffer->getBuffer(), mBufferInfo.mFrameNumber,
                                    mBufferInfo.mFence);
      }
@@ -353,10 +355,10 @@ index 6f0ca87..e94912d 100644
      mFlinger->mTimeStats->onDestroy(layerId);
      mFlinger->mFrameTracer->onDestroy(layerId);
 diff --git a/services/surfaceflinger/Layer.h b/services/surfaceflinger/Layer.h
-index fff5e91..94d5b00 100644
+index 90b55383f0a14392922aa3b12af5265f3b42f2a8..3940a4a199bdcc0cc3cc25ede8afe7d08bc764b0 100644
 --- a/services/surfaceflinger/Layer.h
 +++ b/services/surfaceflinger/Layer.h
-@@ -527,6 +527,8 @@ private:
+@@ -536,6 +536,8 @@ private:
      void releasePreviousBuffer();
      void resetDrawingStateBufferInfo();
  
@@ -366,10 +368,10 @@ index fff5e91..94d5b00 100644
      // the mStateLock.
      std::optional<ui::Transform::RotationFlags> mTransformHint = std::nullopt;
 diff --git a/services/surfaceflinger/LayerFE.cpp b/services/surfaceflinger/LayerFE.cpp
-index eafcb41..cf1244b 100644
+index 32c3f3888e7ce9039253d756a84edd7e10a93f61..77977ba925d4c58078259dfdf5d88eb8385c5a47 100644
 --- a/services/surfaceflinger/LayerFE.cpp
 +++ b/services/surfaceflinger/LayerFE.cpp
-@@ -248,6 +248,7 @@ void LayerFE::prepareBufferStateClientComposition(
+@@ -257,6 +257,7 @@ void LayerFE::prepareBufferStateClientComposition(
      layerSettings.source.buffer.buffer = mSnapshot->externalTexture;
      layerSettings.source.buffer.isOpaque = mSnapshot->contentOpaque;
      layerSettings.source.buffer.fence = mSnapshot->acquireFence;
@@ -378,10 +380,10 @@ index eafcb41..cf1244b 100644
      bool hasSmpte2086 = mSnapshot->hdrMetadata.validTypes & HdrMetadata::SMPTE2086;
      bool hasCta861_3 = mSnapshot->hdrMetadata.validTypes & HdrMetadata::CTA861_3;
 diff --git a/services/surfaceflinger/SurfaceFlinger.cpp b/services/surfaceflinger/SurfaceFlinger.cpp
-index c3a2693..17e8e1b 100644
+index 9128394aa18b24846745d673566117732774fb07..57f847469632b802843545b06c4d5355d613192c 100644
 --- a/services/surfaceflinger/SurfaceFlinger.cpp
 +++ b/services/surfaceflinger/SurfaceFlinger.cpp
-@@ -885,6 +885,42 @@ bool shouldUseGraphiteIfSupported() {
+@@ -894,6 +894,42 @@ bool shouldUseGraphiteIfSupported() {
               base::GetBoolProperty(PROPERTY_DEBUG_RENDERENGINE_GRAPHITE_DESKTOP_OPTIN, false));
  }
  
@@ -424,7 +426,7 @@ index c3a2693..17e8e1b 100644
  void chooseRenderEngineType(renderengine::RenderEngineCreationArgs::Builder& builder) {
      char prop[PROPERTY_VALUE_MAX];
      property_get(PROPERTY_DEBUG_RENDERENGINE_BACKEND, prop, "");
-@@ -3831,6 +3867,23 @@ void SurfaceFlinger::onCompositionPresented(PhysicalDisplayId pacesetterId,
+@@ -4036,6 +4072,23 @@ void SurfaceFlinger::onCompositionPresented(PhysicalDisplayId pacesetterId,
      // Cleanup any outstanding resources due to rendering a prior frame.
      getRenderEngine().cleanupPostRender();
  
@@ -448,7 +450,7 @@ index c3a2693..17e8e1b 100644
      if (mNumTrustedPresentationListeners > 0) {
          // We avoid any reverse traversal upwards so this shouldn't be too expensive
          traverseLegacyLayers([&](Layer* layer) FTL_FAKE_GUARD(kMainThreadContext) {
-@@ -6033,6 +6086,7 @@ status_t SurfaceFlinger::createLayer(const LayerCreationArgs& args, sp<IBinder>*
+@@ -6295,6 +6348,7 @@ status_t SurfaceFlinger::createLayer(const LayerCreationArgs& args, sp<IBinder>*
      if (checkLayerLeaks() != NO_ERROR) {
          return NO_MEMORY;
      }
@@ -457,10 +459,10 @@ index c3a2693..17e8e1b 100644
      *handle = (*outLayer)->getHandle();
      return NO_ERROR;
 diff --git a/services/surfaceflinger/SurfaceFlinger.h b/services/surfaceflinger/SurfaceFlinger.h
-index caec6af..529ba9d 100644
+index 9d8ef0345470fb6f9cd8b2644dcf525507f02976..0ddb80e405c4caea075469fdf49af1fbd61ddb96 100644
 --- a/services/surfaceflinger/SurfaceFlinger.h
 +++ b/services/surfaceflinger/SurfaceFlinger.h
-@@ -293,6 +293,13 @@ public:
+@@ -298,6 +298,13 @@ public:
      // The CompositionEngine encapsulates all composition related interfaces and actions.
      compositionengine::CompositionEngine& getCompositionEngine() const;
  
@@ -474,7 +476,7 @@ index caec6af..529ba9d 100644
      renderengine::RenderEngine& getRenderEngine() const;
  
      void onLayerFirstRef(Layer*);
-@@ -1528,6 +1535,13 @@ private:
+@@ -1566,6 +1573,13 @@ private:
  
      TransactionCallbackInvoker mTransactionCallbackInvoker;
  
@@ -489,7 +491,7 @@ index caec6af..529ba9d 100644
  
      // to linkToDeath
 diff --git a/services/surfaceflinger/tests/unittests/CompositionTest.cpp b/services/surfaceflinger/tests/unittests/CompositionTest.cpp
-index f7feda9..89c78b3 100644
+index f7feda99bfe291ca368ad525f7c0b662bfd2a297..89c78b3b005fa9125bd8baa9c7397bc972c35b3a 100644
 --- a/services/surfaceflinger/tests/unittests/CompositionTest.cpp
 +++ b/services/surfaceflinger/tests/unittests/CompositionTest.cpp
 @@ -582,6 +582,7 @@ struct BaseLayerProperties {
@@ -526,10 +528,10 @@ index f7feda9..89c78b3 100644
          LayerProperties::setupLayerState(test, layer);
  
 diff --git a/services/surfaceflinger/tests/unittests/TestableSurfaceFlinger.h b/services/surfaceflinger/tests/unittests/TestableSurfaceFlinger.h
-index 181d135..f27de8f 100644
+index d84271630c56cc03cec1579f8d5ee77e1b0d33e0..35bca9eb12201d1adf80d4220fd183b2c301a2ba 100644
 --- a/services/surfaceflinger/tests/unittests/TestableSurfaceFlinger.h
 +++ b/services/surfaceflinger/tests/unittests/TestableSurfaceFlinger.h
-@@ -680,6 +680,7 @@ public:
+@@ -684,6 +684,7 @@ public:
      auto& mutablePendingHotplugEvents() NO_THREAD_SAFETY_ANALYSIS {
          return mFlinger->mPendingHotplugEvents;
      }
@@ -537,6 +539,3 @@ index 181d135..f27de8f 100644
      auto& mutableTransactionFlags() { return mFlinger->mTransactionFlags; }
      auto& mutableDebugDisableHWC() { return mFlinger->mDebugDisableHWC; }
      auto& mutableMaxRenderTargetSize() { return mFlinger->mMaxRenderTargetSize; }
--- 
-2.53.0
-

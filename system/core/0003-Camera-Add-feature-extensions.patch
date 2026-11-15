@@ -1,4 +1,4 @@
-From f5f2bd6d9dfea490217fc57849256f9d505c7060 Mon Sep 17 00:00:00 2001
+From 4c64d0b4bd05a8342edd424a216fb729044c8f76 Mon Sep 17 00:00:00 2001
 From: Sauhard Pande <sauhardp@codeaurora.org>
 Date: Wed, 24 Jun 2015 22:38:25 -0700
 Subject: [PATCH] Camera: Add feature extensions
@@ -22,7 +22,7 @@ Change-Id: I654a40661e6e101da2a06986abeceb20639cccd9
  1 file changed, 52 insertions(+), 1 deletion(-)
 
 diff --git a/libsystem/include/system/camera.h b/libsystem/include/system/camera.h
-index 2ca90c395..990edcf32 100644
+index 2ca90c395ba133662b342ff672bc95816f115cc2..990edcf326f3f99198d8db573e71395467ea1149 100644
 --- a/libsystem/include/system/camera.h
 +++ b/libsystem/include/system/camera.h
 @@ -88,9 +88,20 @@ enum {
@@ -105,6 +105,3 @@ index 2ca90c395..990edcf32 100644
  /**
   * The metadata of the frame data.
   */
--- 
-2.47.3
-

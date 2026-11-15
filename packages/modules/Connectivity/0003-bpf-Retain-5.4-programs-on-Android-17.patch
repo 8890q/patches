@@ -1,0 +1,58 @@
+From 0f06a7752a62cd8f83cdc6c1090f75dbd5073552 Mon Sep 17 00:00:00 2001
+From: ivanmeler <i_ivan@windowslive.com>
+Date: Sun, 15 Nov 2026 21:36:25 +0000
+Subject: [PATCH] bpf: Retain 5.4 traffic-accounting programs on Android 17
+
+Allow the explicit 5.4 backport capability level through the Android 17 loader gate, and retain the matching ingress/egress program variants. Keep traffic accounting, firewall and local-network filtering without selecting unsupported 5.10 helpers. Newer unoverridden kernels retain the upstream requirements.
+
+Reference: https://github.com/pa-sanji/packages_modules_Connectivity/commit/7989a13dcc898a5caa2b957bd4ea9a62d250fa5c
+Change-Id: I1fb41ce769d5c87403500962cadbf32be97120cb
+---
+ bpf/loader/NetBpfLoad.cpp | 7 +++++--
+ bpf/progs/netd.c          | 8 ++++----
+ 2 files changed, 9 insertions(+), 6 deletions(-)
+
+diff --git a/bpf/loader/NetBpfLoad.cpp b/bpf/loader/NetBpfLoad.cpp
+index a933fb620be71a0b6dbc3f6acc29a9255b386ae6..d0af9d7b5b3177f0751ce049e41ffc2b80de3094 100644
+--- a/bpf/loader/NetBpfLoad.cpp
++++ b/bpf/loader/NetBpfLoad.cpp
+@@ -1576,8 +1576,11 @@ static int doLoad(char** argv, char * const envp[]) {
+     // 25Q4 bumps the kernel requirement up to 5.10
+     // see also: //system/netd/tests/kernel_test.cpp TestKernel510
+     if (isAtLeast25Q4 && !isAtLeastKernelVersion(5, 10)) {
+-        ALOGE("Android 25Q4 requires kernel 5.10.");
+-        return 7;
++        if (!kernelVersionOverridden || !isAtLeastKernelVersion(5, 4)) {
++            ALOGE("Android 25Q4 requires kernel 5.10 or explicit legacy BPF support.");
++            return 7;
++        }
++        ALOGW("Using legacy 5.4 BPF programs selected by ro.bpf.kver_override.");
+     }
+ 
+     // 26Q4 bumps the kernel requirement up to 5.15
+diff --git a/bpf/progs/netd.c b/bpf/progs/netd.c
+index e4cd7c93b40b022916697121bd9bae7cfe63362d..4319b09e2f930a88b1413f1ab814d4e77e8e7f5f 100644
+--- a/bpf/progs/netd.c
++++ b/bpf/progs/netd.c
+@@ -1001,8 +1001,8 @@ DEFINE_NETD_BPF_PROG_RANGES(ingress, stats, 5_10, INF, 25Q2, 25Q4)
+     return bpf_traffic_account(skb, INGRESS, KVER_5_10, API(25Q2));
+ }
+ 
+-// Android 25Q2/25Q3 5.4 (localnet protection)
+-DEFINE_NETD_BPF_PROG_RANGES(ingress, stats, 5_4, 5_10, 25Q2, 25Q4)
++// Android 25Q2+ 5.4 (localnet protection; no 5.10-only hooks)
++DEFINE_NETD_BPF_PROG_RANGES(ingress, stats, 5_4, 5_10, 25Q2, MAXAPI)
+ (struct __sk_buff* skb) {
+     return bpf_traffic_account(skb, INGRESS, KVER_5_4, API(25Q2));
+ }
+@@ -1057,8 +1057,8 @@ DEFINE_NETD_BPF_PROG_RANGES(egress, stats, 5_10, INF, 25Q2, 25Q4)
+     return bpf_traffic_account(skb, EGRESS, KVER_5_10, API(25Q2));
+ }
+ 
+-// Android 25Q2/25Q3 5.4 (localnet protection)
+-DEFINE_NETD_BPF_PROG_RANGES(egress, stats, 5_4, 5_10, 25Q2, 25Q4)
++// Android 25Q2+ 5.4 (localnet protection; no 5.10-only hooks)
++DEFINE_NETD_BPF_PROG_RANGES(egress, stats, 5_4, 5_10, 25Q2, MAXAPI)
+ (struct __sk_buff* skb) {
+     return bpf_traffic_account(skb, EGRESS, KVER_5_4, API(25Q2));
+ }

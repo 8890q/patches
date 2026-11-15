@@ -1,7 +1,7 @@
-From c4b170bbc20288d07f2b75b5b02fa7465d362d14 Mon Sep 17 00:00:00 2001
+From bce87d0a14bbb9a688a1f4a90617a146627ed930 Mon Sep 17 00:00:00 2001
 From: Roman Stratiienko <r.stratiienko@gmail.com>
 Date: Thu, 9 Jun 2022 20:44:54 +0300
-Subject: [PATCH 4/8] Don't use stretch effect by default
+Subject: [PATCH] Don't use stretch effect by default
 
 Old SOCs simply can't handle it and FPS is dropped down to 10.
 
@@ -14,7 +14,7 @@ Change-Id: Ic91f23d4f57aa2043b5acf8f5bc2f38b827db5ac
  1 file changed, 4 insertions(+), 2 deletions(-)
 
 diff --git a/core/java/android/widget/EdgeEffect.java b/core/java/android/widget/EdgeEffect.java
-index c110ab956..0352da3a0 100644
+index c110ab9560303925151a81aee018afc97a683d5e..0352da3a068f342487c0884cc4dfade58c05da12 100644
 --- a/core/java/android/widget/EdgeEffect.java
 +++ b/core/java/android/widget/EdgeEffect.java
 @@ -245,8 +245,10 @@ public class EdgeEffect {
@@ -30,6 +30,3 @@ index c110ab956..0352da3a0 100644
          a.recycle();
  
          mPaint.setAntiAlias(true);
--- 
-2.53.0
-

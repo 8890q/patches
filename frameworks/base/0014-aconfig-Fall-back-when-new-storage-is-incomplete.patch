@@ -1,18 +1,20 @@
-From 307d459e32130e5dd3881e63ea0c0e99565e845d Mon Sep 17 00:00:00 2001
+From 8c66550dfe8898444c3e5dca5a0854faf1512d37 Mon Sep 17 00:00:00 2001
 From: ivanmeler <i_ivan@windowslive.com>
 Date: Thu, 17 Sep 2026 19:24:20 +0000
 Subject: [PATCH] aconfig: Fall back when new storage is incomplete
 
 Change-Id: I49def9d5b55ac40c48fef193e41eb69be2611cb7
+
+Preserve the Android 17 singleton and initialize the storage decision before early returns.
 ---
  .../pm/pkg/component/AconfigFlags.java        | 31 +++++++++++++++++--
  1 file changed, 28 insertions(+), 3 deletions(-)
 
 diff --git a/core/java/com/android/internal/pm/pkg/component/AconfigFlags.java b/core/java/com/android/internal/pm/pkg/component/AconfigFlags.java
-index d1067a79ddcc52d217302df6c647c7a31e795047..0c484bf621806d345314ab2005d46a6ed8f4cfa5 100644
+index f970c1b2e8e2fbc74e2ceef4c14a8b6fc79d10e5..6876f58f03928f9021124d639ad74a3d89309222 100644
 --- a/core/java/com/android/internal/pm/pkg/component/AconfigFlags.java
 +++ b/core/java/com/android/internal/pm/pkg/component/AconfigFlags.java
-@@ -63,11 +63,17 @@ public class AconfigFlags {
+@@ -64,7 +64,11 @@ public class AconfigFlags {
      private static final String LOG_TAG = "AconfigFlags";
      private static final String OVERRIDE_PREFIX = "device_config_overrides/";
      private static final String STAGED_PREFIX = "staged/";
@@ -20,17 +22,20 @@ index d1067a79ddcc52d217302df6c647c7a31e795047..0c484bf621806d345314ab2005d46a6e
 +            "system", "system_ext", "vendor", "product"
 +    };
  
++    private final boolean mUseNewStorage;
      private final Map<String, Boolean> mFlagValues = new ArrayMap<>();
      private final Map<String, AconfigPackage> mAconfigPackages = new ConcurrentHashMap<>();
-+    private final boolean mUseNewStorage;
  
-     public AconfigFlags() {
+@@ -80,6 +84,8 @@ public class AconfigFlags {
+     };
+ 
+     private AconfigFlags() {
 +        mUseNewStorage = useNewStorage();
 +
          if (!Flags.manifestFlagging()) {
              if (DEBUG) {
                  Slog.v(LOG_TAG, "Feature disabled, skipped all loading");
-@@ -75,7 +81,7 @@ public class AconfigFlags {
+@@ -87,7 +93,7 @@ public class AconfigFlags {
              return;
          }
  
@@ -39,7 +44,7 @@ index d1067a79ddcc52d217302df6c647c7a31e795047..0c484bf621806d345314ab2005d46a6e
              Slog.i(LOG_TAG, "Using new flag storage");
          } else {
              Slog.i(LOG_TAG, "Using OLD proto flag storage");
-@@ -102,7 +108,26 @@ public class AconfigFlags {
+@@ -114,7 +120,26 @@ public class AconfigFlags {
      }
  
      private static boolean useNewStorage() {
@@ -67,7 +72,7 @@ index d1067a79ddcc52d217302df6c647c7a31e795047..0c484bf621806d345314ab2005d46a6e
      }
  
      private void loadServerOverrides() {
-@@ -224,7 +249,7 @@ public class AconfigFlags {
+@@ -236,7 +261,7 @@ public class AconfigFlags {
       */
      @Nullable
      public Boolean getFlagValue(@NonNull String flagPackageAndName) {

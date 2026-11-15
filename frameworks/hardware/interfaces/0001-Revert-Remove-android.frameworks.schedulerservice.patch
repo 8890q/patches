@@ -1,4 +1,4 @@
-From f0e6ba5be001a29a6c957a597a09062a7db525ff Mon Sep 17 00:00:00 2001
+From 02382ee778ec96902c7d15e36a588c5a35fdd0a8 Mon Sep 17 00:00:00 2001
 From: Dominggoes Isakh <drjisakh@gmail.com>
 Date: Tue, 10 Mar 2026 22:34:35 +0100
 Subject: [PATCH] Revert "Remove android.frameworks.schedulerservice"
@@ -13,7 +13,7 @@ This reverts commit 8437743be135936b5b741da323c587331ebcb59d.
  create mode 100644 schedulerservice/1.0/ISchedulingPolicyService.hal
 
 diff --git a/current.txt b/current.txt
-index 340035f4a97055af2b2581c0369151c807399ec8..54c2b0796722f0eb1f700ae21672b5ef393cf3e9 100644
+index d942600a4890ed6f564e51536d041be498d1ebf2..d13d580d16e40ad4491cc1961e60a2d8298a38a2 100644
 --- a/current.txt
 +++ b/current.txt
 @@ -3,6 +3,7 @@

@@ -1,4 +1,4 @@
-From 59326e76d2aeb9ddf85369a44b337af4c538fc57 Mon Sep 17 00:00:00 2001
+From 9848223cca35c61575dfc534b50e217e07a45047 Mon Sep 17 00:00:00 2001
 From: Dominggoes Isakh <drjisakh@gmail.com>
 Date: Fri, 5 Dec 2025 17:52:07 +0100
 Subject: [PATCH] universal8890-common: Patch wifi_hal.h until
@@ -11,10 +11,10 @@ Signed-off-by: ivanmeler <i_ivan@windowslive.com>
  1 file changed, 6 insertions(+), 6 deletions(-)
 
 diff --git a/wifi/legacy_headers/include/hardware_legacy/wifi_hal.h b/wifi/legacy_headers/include/hardware_legacy/wifi_hal.h
-index c78fb7d37362bec0818f11c33beb77bd39d557d6..6bb521abbdf162c2bfd891d5ae4b0a9d06c7fa29 100644
+index 38e13b41d2f5c2d46f73322c9bdd1d7496122538..bd93772972078d3d4f10b67a78b48b4b86a38b96 100644
 --- a/wifi/legacy_headers/include/hardware_legacy/wifi_hal.h
 +++ b/wifi/legacy_headers/include/hardware_legacy/wifi_hal.h
-@@ -791,15 +791,9 @@ typedef struct {
+@@ -794,15 +794,9 @@ typedef struct {
      wifi_error (* wifi_get_valid_channels)(wifi_interface_handle,int, int, wifi_channel *, int *);
      wifi_error (* wifi_rtt_range_request)(wifi_request_id, wifi_interface_handle, unsigned,
              wifi_rtt_config[], wifi_rtt_event_handler);
@@ -30,7 +30,7 @@ index c78fb7d37362bec0818f11c33beb77bd39d557d6..6bb521abbdf162c2bfd891d5ae4b0a9d
      wifi_error (* wifi_rtt_get_responder_info)(wifi_interface_handle iface,
              wifi_rtt_responder *responder_info);
      wifi_error (* wifi_enable_responder)(wifi_request_id id, wifi_interface_handle iface,
-@@ -1423,6 +1417,12 @@ typedef struct {
+@@ -1426,6 +1420,12 @@ typedef struct {
       * when adding new functions make sure to add stubs in
       * wifi_legacy_hal_stubs.cpp::initHalFuncTableWithStubs
       */

@@ -1,4 +1,4 @@
-From 883dec6cb79bab06ca738dfcd3afd51e519c1df4 Mon Sep 17 00:00:00 2001
+From 4b2787eaa8f3a37f8e832ddffd6846edabc96c68 Mon Sep 17 00:00:00 2001
 From: "Arun Kumar K.R" <akumarkr@codeaurora.org>
 Date: Wed, 2 Dec 2015 18:58:50 -0800
 Subject: [PATCH] hardware/libhw: Add display_defs.h to declare custom
@@ -36,7 +36,7 @@ Change-Id: Idbc7e43d4fa8ec2299b4c7ee8378a1afd710cdf1
 
 diff --git a/include/hardware/display_defs.h b/include/hardware/display_defs.h
 new file mode 120000
-index 00000000..2660e81c
+index 0000000000000000000000000000000000000000..2660e81cf8009bb24bf01ca84275581501cdf989
 --- /dev/null
 +++ b/include/hardware/display_defs.h
 @@ -0,0 +1 @@
@@ -44,7 +44,7 @@ index 00000000..2660e81c
 \ No newline at end of file
 diff --git a/include_all/hardware/display_defs.h b/include_all/hardware/display_defs.h
 new file mode 100644
-index 00000000..0ec356fe
+index 0000000000000000000000000000000000000000..0ec356fe3b3e91afb68e0492d27678c9a8d4e8f3
 --- /dev/null
 +++ b/include_all/hardware/display_defs.h
 @@ -0,0 +1,79 @@
@@ -127,6 +127,3 @@ index 00000000..0ec356fe
 +__END_DECLS
 +
 +#endif /* ANDROID_INCLUDE_DISPLAY_DEFS_H*/
--- 
-2.47.3
-

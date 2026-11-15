@@ -1,47 +1,52 @@
-From 2bfcf0ec5f2ef596e844b532742813befbac3cf1 Mon Sep 17 00:00:00 2001
+From afb9591a389fe8f839cfa7f494ab78205b80c8ad Mon Sep 17 00:00:00 2001
 From: Yaroslav Zviezda <acroreiser@gmail.com>
 Date: Mon, 23 Mar 2026 17:36:56 -0400
-Subject: [PATCH 6/8] hwui: return to ashmem
+Subject: [PATCH] hwui: return to ashmem
 
 Fixes "java.lang.RuntimeException: Could not copy bitmap to parcel blob." in music apps
 on album artwork displaying.
 
 Change-Id: Iba72b850c218800f2dd108d57066cedf4beae0d5
+
+Restore the ashmem allocation path removed in Android 17. Use libcutils to select a compatible shared-memory implementation.
 ---
- libs/hwui/jni/Bitmap.cpp | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
+ libs/hwui/jni/Bitmap.cpp | 19 ++++++-------------
+ 1 file changed, 6 insertions(+), 13 deletions(-)
 
 diff --git a/libs/hwui/jni/Bitmap.cpp b/libs/hwui/jni/Bitmap.cpp
-index 1d4576156..16250a9d4 100644
+index e01c42fadf7f2c7075b16878cb6a81cb56d0eacc..7396ea34bcd437429fd2d63b02a7a888c81d1041 100644
 --- a/libs/hwui/jni/Bitmap.cpp
 +++ b/libs/hwui/jni/Bitmap.cpp
-@@ -784,7 +784,7 @@ static binder_status_t writeBlob(AParcel* parcel, uint64_t bitmapId, const SkBit
+@@ -797,26 +797,19 @@ static binder_status_t writeBlob(AParcel* parcel, uint64_t bitmapId, const SkBit
                                              bitmap.width(), bitmap.height(), size);
          base::unique_fd fd;
  
--        if (com::android::graphics::hwui::flags::bitmap_use_memfd()) {
-+/*        if (com::android::graphics::hwui::flags::bitmap_use_memfd()) {
-             fd.reset(syscall(__NR_memfd_create, ashmemId.c_str(), MFD_CLOEXEC | MFD_ALLOW_SEALING));
-             if (fd.get() < 0) {
-                 return STATUS_NO_MEMORY;
-@@ -808,7 +808,7 @@ static binder_status_t writeBlob(AParcel* parcel, uint64_t bitmapId, const SkBit
-                 return STATUS_UNKNOWN_ERROR;
-             }
+-        fd.reset(syscall(__NR_memfd_create, ashmemId.c_str(), MFD_CLOEXEC | MFD_ALLOW_SEALING));
++        fd.reset(ashmem_create_region(ashmemId.c_str(), size));
+         if (fd.get() < 0) {
+             return STATUS_NO_MEMORY;
+         }
  
--        } else {
-+        } else { */
-             fd.reset(ashmem_create_region(ashmemId.c_str(), size));
-             if (fd.get() < 0) {
-                 return STATUS_NO_MEMORY;
-@@ -826,7 +826,7 @@ static binder_status_t writeBlob(AParcel* parcel, uint64_t bitmapId, const SkBit
-             if (immutable && ashmem_set_prot_region(fd.get(), PROT_READ) < 0) {
-                 return STATUS_UNKNOWN_ERROR;
-             }
--        }
-+//        }
+-        ssize_t written = write(fd.get(), data, size);
+-        if (written != size) {
++        void* ptr = mmap(nullptr, size, PROT_READ | PROT_WRITE, MAP_SHARED, fd.get(), 0);
++        if (ptr == MAP_FAILED) {
+             return STATUS_NO_MEMORY;
+         }
++        memcpy(ptr, data, size);
++        munmap(ptr, size);
  
-         // Workaround b/149851140 in AParcel_writeParcelFileDescriptor
-         int rawFd = fd.release();
--- 
-2.53.0
-
+-        if (fcntl(fd, F_ADD_SEALS,
+-                    // Disallow growing / shrinking.
+-                    F_SEAL_GROW | F_SEAL_SHRINK
+-                    // If immutable, disallow writing.
+-                    // Use F_SEAL_FUTURE_WRITE instead of F_SEAL_WRITE to work around a bug in
+-                    // pre-6.7 kernels.
+-                    // There are no writable mappings made prior to this, so both seals are
+-                    // functionally equivalent.
+-                    // See: b/409846908#comment39
+-                    | (immutable ? F_SEAL_FUTURE_WRITE : 0))) {
++        if (immutable && ashmem_set_prot_region(fd.get(), PROT_READ) < 0) {
+             return STATUS_UNKNOWN_ERROR;
+         }
+ 

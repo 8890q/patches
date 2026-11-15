@@ -1,4 +1,4 @@
-From 688d2c76aa208c19392e44dc778cfc9450b9b047 Mon Sep 17 00:00:00 2001
+From da3a5a123dfead38ef580aab3844ab53ca43999c Mon Sep 17 00:00:00 2001
 From: M1cha <sigmaepsilon92@gmail.com>
 Date: Fri, 26 Aug 2016 06:32:25 +0200
 Subject: [PATCH] mkbootimg: add support for --dt
@@ -6,11 +6,11 @@ Subject: [PATCH] mkbootimg: add support for --dt
 Change-Id: I19f149fac693420cf1f630b51293bbd3650a1b59
 Signed-off-by: SamarV-121 <samarvispute121@pm.me>
 ---
- mkbootimg.py | 10 ++++++++--
- 1 file changed, 8 insertions(+), 2 deletions(-)
+ mkbootimg.py | 11 +++++++++--
+ 1 file changed, 9 insertions(+), 2 deletions(-)
 
 diff --git a/mkbootimg.py b/mkbootimg.py
-index ec29581..dcf7265 100755
+index ec2958179691a434df917cd1b6f196edaa80e31d..4016d29b499856030631fb564a9ae87809493ebd 100755
 --- a/mkbootimg.py
 +++ b/mkbootimg.py
 @@ -218,8 +218,8 @@ def write_header(args):
@@ -24,15 +24,16 @@ index ec29581..dcf7265 100755
      # os version and patch level
      args.output.write(pack('I', (args.os_version << 11) | args.os_patch_level))
      # asciiz product name
-@@ -230,6 +230,7 @@ def write_header(args):
+@@ -230,6 +230,8 @@ def write_header(args):
      update_sha(sha, args.kernel)
      update_sha(sha, args.ramdisk)
      update_sha(sha, args.second)
-+    update_sha(sha, args.dt)
++    if args.dt is not None:
++        update_sha(sha, args.dt)
  
      if args.header_version > 0:
          update_sha(sha, args.recovery_dtbo)
-@@ -540,6 +541,7 @@ def parse_cmdline():
+@@ -540,6 +542,7 @@ def parse_cmdline():
                          help='print the image ID on standard output')
      parser.add_argument('--header_version', type=parse_int, default=0,
                          help='boot image header version')
@@ -40,7 +41,7 @@ index ec29581..dcf7265 100755
      parser.add_argument('-o', '--output', type=FileType('wb'),
                          help='output file name')
      parser.add_argument('--vendor_boot', type=FileType('wb'),
-@@ -574,6 +576,9 @@ def parse_cmdline():
+@@ -574,6 +577,9 @@ def parse_cmdline():
          assert len(args.cmdline) <= BOOT_ARGS_SIZE
          assert len(args.extra_cmdline) <= BOOT_EXTRA_ARGS_SIZE
  
@@ -50,7 +51,7 @@ index ec29581..dcf7265 100755
      return args
  
  
-@@ -617,6 +622,7 @@ def write_data(args, pagesize):
+@@ -617,6 +623,7 @@ def write_data(args, pagesize):
      write_padded_file(args.output, args.kernel, pagesize)
      write_padded_file(args.output, args.ramdisk, pagesize)
      write_padded_file(args.output, args.second, pagesize)
@@ -58,6 +59,3 @@ index ec29581..dcf7265 100755
  
      if args.header_version > 0 and args.header_version < 3:
          write_padded_file(args.output, args.recovery_dtbo, pagesize)
--- 
-2.53.0
-

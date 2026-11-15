@@ -1,4 +1,4 @@
-From 8b2871a90cb9a13532e123dda4ea1e8f71c30f11 Mon Sep 17 00:00:00 2001
+From f6b8e816bce8c7878524edd4b76521eb9ee16638 Mon Sep 17 00:00:00 2001
 From: Yaroslav Zviezda <acroreiser@gmail.com>
 Date: Sun, 6 Sep 2026 23:33:10 +0300
 Subject: [PATCH] SystemUI: convert HD icon to VoLTE
@@ -17,7 +17,7 @@ Signed-off-by: Yaroslav Zviezda <acroreiser@gmail.com>
  4 files changed, 16 insertions(+), 44 deletions(-)
 
 diff --git a/packages/SystemUI/res-keyguard/layout/status_bar_mobile_signal_group_inner.xml b/packages/SystemUI/res-keyguard/layout/status_bar_mobile_signal_group_inner.xml
-index 3686ed35ddd1..ab6994841fb3 100644
+index 3686ed35ddd16941f3890428af89c29acbe9740b..ab6994841fb3aedfc1f29a2658b76ef3976e122a 100644
 --- a/packages/SystemUI/res-keyguard/layout/status_bar_mobile_signal_group_inner.xml
 +++ b/packages/SystemUI/res-keyguard/layout/status_bar_mobile_signal_group_inner.xml
 @@ -28,22 +28,12 @@
@@ -47,7 +47,7 @@ index 3686ed35ddd1..ab6994841fb3 100644
              android:visibility="gone" />
  
 diff --git a/packages/SystemUI/res/drawable/ic_hd_calling.xml b/packages/SystemUI/res/drawable/ic_hd_calling.xml
-index 0a3bddf6e8ff..a8e3bb3bd0f1 100644
+index 0a3bddf6e8ffc21e03d126718c9a7d06059c878a..a8e3bb3bd0f18d5c4b08e841a2ba824d8608b064 100644
 --- a/packages/SystemUI/res/drawable/ic_hd_calling.xml
 +++ b/packages/SystemUI/res/drawable/ic_hd_calling.xml
 @@ -1,13 +1,12 @@
@@ -77,10 +77,10 @@ index 0a3bddf6e8ff..a8e3bb3bd0f1 100644
 +</vector>
 \ No newline at end of file
 diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/pipeline/mobile/ui/binder/MobileIconBinder.kt b/packages/SystemUI/src/com/android/systemui/statusbar/pipeline/mobile/ui/binder/MobileIconBinder.kt
-index 565d863b3dd6..2f46f03809a1 100644
+index 889647e2c57e8fb2d72778398674b4128ed052c7..b7b1b6c98dd8b6cd710fad87564d7328e35e52c4 100644
 --- a/packages/SystemUI/src/com/android/systemui/statusbar/pipeline/mobile/ui/binder/MobileIconBinder.kt
 +++ b/packages/SystemUI/src/com/android/systemui/statusbar/pipeline/mobile/ui/binder/MobileIconBinder.kt
-@@ -74,7 +74,6 @@ object MobileIconBinder {
+@@ -71,7 +71,6 @@ object MobileIconBinder {
          val roamingSpace = view.requireViewById<Space>(R.id.mobile_roaming_space)
          val endSideRoamingView = view.requireViewById<ImageView>(R.id.mobile_roaming_updated)
          val mobileHdView = view.requireViewById<ImageView>(R.id.mobile_hd)
@@ -88,7 +88,7 @@ index 565d863b3dd6..2f46f03809a1 100644
          val dotView = view.requireViewById<StatusBarIconView>(R.id.status_bar_dot)
  
          view.isVisible = viewModel.isVisible.value
-@@ -192,7 +191,6 @@ object MobileIconBinder {
+@@ -193,7 +192,6 @@ object MobileIconBinder {
                      launch {
                          viewModel.showHd.distinctUntilChanged().collect { isHd ->
                              mobileHdView.isVisible = isHd
@@ -96,7 +96,7 @@ index 565d863b3dd6..2f46f03809a1 100644
                          }
                      }
  
-@@ -281,6 +279,8 @@ object MobileIconBinder {
+@@ -263,6 +261,8 @@ object MobileIconBinder {
                              val tint = ColorStateList.valueOf(colors.tint)
                              val contrast = ColorStateList.valueOf(colors.contrast)
  
@@ -105,7 +105,7 @@ index 565d863b3dd6..2f46f03809a1 100644
                              iconView.imageTintList = tint
  
                              // If the bg is visible, tint it and use the contrast for the fg
-@@ -293,7 +293,6 @@ object MobileIconBinder {
+@@ -275,7 +275,6 @@ object MobileIconBinder {
  
                              roamingView.imageTintList = tint
                              endSideRoamingView.imageTintList = tint
@@ -114,10 +114,10 @@ index 565d863b3dd6..2f46f03809a1 100644
                              activityOut.imageTintList = tint
                              dotView.setDecorColor(colors.tint)
 diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/pipeline/mobile/ui/view/ModernStatusBarMobileView.kt b/packages/SystemUI/src/com/android/systemui/statusbar/pipeline/mobile/ui/view/ModernStatusBarMobileView.kt
-index b8f25d36e11c..7c0317a6f181 100644
+index c74da39a327ccf24531e786ca060489a55f4e143..0c0c0f224429d4d8e97750965ba6c5ab3e7ffd0f 100644
 --- a/packages/SystemUI/src/com/android/systemui/statusbar/pipeline/mobile/ui/view/ModernStatusBarMobileView.kt
 +++ b/packages/SystemUI/src/com/android/systemui/statusbar/pipeline/mobile/ui/view/ModernStatusBarMobileView.kt
-@@ -109,22 +109,6 @@ class ModernStatusBarMobileView(context: Context, attrs: AttributeSet?) :
+@@ -105,22 +105,6 @@ class ModernStatusBarMobileView(context: Context, attrs: AttributeSet?) :
          }
      }
  
@@ -140,6 +140,3 @@ index b8f25d36e11c..7c0317a6f181 100644
      companion object {
  
          /**
--- 
-2.47.3
-

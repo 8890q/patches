@@ -1,7 +1,7 @@
-From 51f09e366a788409616175335ed78a98a3eaa028 Mon Sep 17 00:00:00 2001
+From ee9de08d76f5437e21d165ba015e79b60ff68d24 Mon Sep 17 00:00:00 2001
 From: Yaroslav Zviezda <acroreiser@gmail.com>
 Date: Sat, 30 May 2026 17:11:35 -0400
-Subject: [PATCH 2/2] Revert "Disable building software OMX codecs"
+Subject: [PATCH] Revert "Disable building software OMX codecs"
 
 This reverts commit 60ea1ce6e8f5e8b258e15a2f7eaf10b9563e8614.
 ---
@@ -10,10 +10,10 @@ This reverts commit 60ea1ce6e8f5e8b258e15a2f7eaf10b9563e8614.
  2 files changed, 25 insertions(+), 3 deletions(-)
 
 diff --git a/media/libstagefright/omx/Android.bp b/media/libstagefright/omx/Android.bp
-index c7d5a1f..afd818e 100644
+index d3c6fcb4c299dfdd702f471bc2f9defbf303febc..c66b1de0fcf03a9ef3b394ca41b316abd686c442 100644
 --- a/media/libstagefright/omx/Android.bp
 +++ b/media/libstagefright/omx/Android.bp
-@@ -182,9 +182,6 @@ cc_library_shared {
+@@ -183,9 +183,6 @@ cc_library_shared {
  
  cc_defaults {
      name: "libstagefright_softomx-defaults",
@@ -24,7 +24,7 @@ index c7d5a1f..afd818e 100644
  
      cflags: [
 diff --git a/services/mediacodec/Android.bp b/services/mediacodec/Android.bp
-index 4b69409..d6b6960 100644
+index 4b694093feebcf5bee2c8bc11a654455cf16868c..d6b6960688497242688c28006d824ca638555f11 100644
 --- a/services/mediacodec/Android.bp
 +++ b/services/mediacodec/Android.bp
 @@ -96,6 +96,31 @@ cc_binary {
@@ -59,6 +59,3 @@ index 4b69409..d6b6960 100644
      // OMX interfaces force this to stay in 32-bit mode;
      compile_multilib: "32",
  
--- 
-2.53.0
-

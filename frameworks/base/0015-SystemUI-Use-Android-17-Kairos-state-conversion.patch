@@ -1,0 +1,35 @@
+From f0a6c0e5be843efe383b75f37de46e99b82a6129 Mon Sep 17 00:00:00 2001
+From: ivanmeler <i_ivan@windowslive.com>
+Date: Sun, 15 Nov 2026 21:53:17 +0000
+Subject: [PATCH] SystemUI: Use Android 17 Kairos state conversion for IMS
+ visibility
+
+Change-Id: I4bd80cfdd6fbf7a1b1952ba8b57d331aa3e05b17
+---
+ .../domain/interactor/MobileIconInteractorKairosAdapter.kt  | 6 ++----
+ 1 file changed, 2 insertions(+), 4 deletions(-)
+
+diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/pipeline/mobile/domain/interactor/MobileIconInteractorKairosAdapter.kt b/packages/SystemUI/src/com/android/systemui/statusbar/pipeline/mobile/domain/interactor/MobileIconInteractorKairosAdapter.kt
+index 0eae3cdfd0f78f6c38d9fc1026c56376033bddb7..d1e6505fb04b9d77cfd120a1a80a1c3584b3e938 100644
+--- a/packages/SystemUI/src/com/android/systemui/statusbar/pipeline/mobile/domain/interactor/MobileIconInteractorKairosAdapter.kt
++++ b/packages/SystemUI/src/com/android/systemui/statusbar/pipeline/mobile/domain/interactor/MobileIconInteractorKairosAdapter.kt
+@@ -134,8 +134,7 @@ fun BuildScope.MobileIconInteractorKairosAdapter(
+                     "MobileIconInteractorKairosAdapter(subId=$subscriptionId).isMobileHd"
+                 }
+             ),
+-            isMobileHdForceHidden = isMobileHdForceHidden.toColdConflatedFlow(
+-                kairosNetwork,
++            isMobileHdForceHidden = isMobileHdForceHidden.toStateFlow(
+                 nameTag {
+                     "MobileIconInteractorKairosAdapter(subId=$subscriptionId).isMobileHdForceHidden"
+                 }
+@@ -145,8 +144,7 @@ fun BuildScope.MobileIconInteractorKairosAdapter(
+                     "MobileIconInteractorKairosAdapter(subId=$subscriptionId).isVoWifi"
+                 }
+             ),
+-            isVoWifiForceHidden = isVoWifiForceHidden.toColdConflatedFlow(
+-                kairosNetwork,
++            isVoWifiForceHidden = isVoWifiForceHidden.toStateFlow(
+                 nameTag {
+                     "MobileIconInteractorKairosAdapter(subId=$subscriptionId).isVoWifiForceHidden"
+                 }

@@ -1,30 +1,30 @@
-From 3a6fafdf2c8fd22acf8364305d68c4cbc66a0355 Mon Sep 17 00:00:00 2001
+From 9be8254df40794a3e9397aec86e73237401d5601 Mon Sep 17 00:00:00 2001
 From: Yaroslav Zviezda <acroreiser@gmail.com>
 Date: Mon, 13 Apr 2026 14:09:22 -0400
-Subject: [PATCH 7/8] am: do not protect cached processes from proactive
- killing on low ram targets
+Subject: [PATCH] am: do not protect cached processes from proactive  killing
+ on low ram targets
 
 * 57c0df88 causes high memory pressure first 5 minutes after boot completion.
 
 Change-Id: Ie761e311e297f1aad9e25cdaff9be25c8d87b4e4
+
+Follow OomAdjuster into its Android 17 psc package.
 ---
- services/core/java/com/android/server/am/OomAdjuster.java | 3 +++
- 1 file changed, 3 insertions(+)
+ services/core/java/com/android/server/am/psc/OomAdjuster.java | 4 ++++
+ 1 file changed, 4 insertions(+)
 
-diff --git a/services/core/java/com/android/server/am/OomAdjuster.java b/services/core/java/com/android/server/am/OomAdjuster.java
-index 1ae9c6b72..5383dfcb0 100644
---- a/services/core/java/com/android/server/am/OomAdjuster.java
-+++ b/services/core/java/com/android/server/am/OomAdjuster.java
-@@ -1456,6 +1456,9 @@ public abstract class OomAdjuster {
+diff --git a/services/core/java/com/android/server/am/psc/OomAdjuster.java b/services/core/java/com/android/server/am/psc/OomAdjuster.java
+index f927002a8617af087288300ed8ec848ed7a416f1..8b53110b5bfd997ba77d3152e1b7543e2f0d4cd9 100644
+--- a/services/core/java/com/android/server/am/psc/OomAdjuster.java
++++ b/services/core/java/com/android/server/am/psc/OomAdjuster.java
+@@ -1694,6 +1694,10 @@ public abstract class OomAdjuster {
+      * Return true if we should kill excessive cached/empty processes.
+      */
      private boolean shouldKillExcessiveProcesses(long nowUptime) {
-         final long lastUserUnlockingUptime = mService.mUserController.getLastUserUnlockingUptime();
- 
-+        if (ActivityManager.isLowRamDeviceStatic())
++        if (ActivityManager.isLowRamDeviceStatic()) {
 +            return true;
++        }
 +
+         final long lastUserUnlockingUptime = mGlobalState.getLastUserUnlockingUptime();
+ 
          if (lastUserUnlockingUptime == 0) {
-             // No users have been unlocked.
-             return !mConstants.mNoKillCachedProcessesUntilBootCompleted;
--- 
-2.53.0
-

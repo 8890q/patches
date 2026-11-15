@@ -1,4 +1,4 @@
-From 53abc9815bf628cc498b6cd9c78223c532a25c50 Mon Sep 17 00:00:00 2001
+From 0ef5bfe3224dee1d95a532b1b7558074486b5b9b Mon Sep 17 00:00:00 2001
 From: CakesTwix <oleg.kiryazov@gmail.com>
 Date: Sat, 27 Jun 2026 13:14:12 -0400
 Subject: [PATCH] omx: suppress unused-but-set-variable
@@ -12,7 +12,7 @@ Change-Id: I2a5c020d24a2374052ac5d9d9f7b1c5a6e94bce7
  4 files changed, 4 insertions(+)
 
 diff --git a/media/libstagefright/codecs/avcdec/Android.bp b/media/libstagefright/codecs/avcdec/Android.bp
-index 1c2f9beb00..1b9b84f076 100644
+index 1c2f9beb00241c69366da08fdeca6b4e0cb6293b..1b9b84f076741b057120824e422fd7ba7c3d7fa6 100644
 --- a/media/libstagefright/codecs/avcdec/Android.bp
 +++ b/media/libstagefright/codecs/avcdec/Android.bp
 @@ -16,6 +16,7 @@ cc_library_shared {
@@ -24,7 +24,7 @@ index 1c2f9beb00..1b9b84f076 100644
  
      version_script: "exports.lds",
 diff --git a/media/libstagefright/codecs/avcenc/Android.bp b/media/libstagefright/codecs/avcenc/Android.bp
-index 586088c6f1..ccf66210ee 100644
+index 586088c6f1d9e226c4d232a429e2d3a099233f11..ccf66210ee6f09721e187373489fe277e9ea5c57 100644
 --- a/media/libstagefright/codecs/avcenc/Android.bp
 +++ b/media/libstagefright/codecs/avcenc/Android.bp
 @@ -27,6 +27,7 @@ cc_library_shared {
@@ -36,7 +36,7 @@ index 586088c6f1..ccf66210ee 100644
      ldflags: ["-Wl,-Bsymbolic"],
  
 diff --git a/media/libstagefright/codecs/hevcdec/Android.bp b/media/libstagefright/codecs/hevcdec/Android.bp
-index 2c4091bcf3..21bc5f5b12 100644
+index 2c4091bcf3c2308467f4267df36f647379dbd45a..21bc5f5b129a20b1844361edfaccbba37a855905 100644
 --- a/media/libstagefright/codecs/hevcdec/Android.bp
 +++ b/media/libstagefright/codecs/hevcdec/Android.bp
 @@ -17,6 +17,7 @@ cc_library_shared {
@@ -48,7 +48,7 @@ index 2c4091bcf3..21bc5f5b12 100644
  
      version_script: "exports.lds",
 diff --git a/media/libstagefright/codecs/mpeg2dec/Android.bp b/media/libstagefright/codecs/mpeg2dec/Android.bp
-index abd1379c9d..fc3a41d520 100644
+index abd1379c9dc4052d0f8eb4158e12693eb3cbf8f3..fc3a41d520fe8d4af4b31a664cef55c19d9d0296 100644
 --- a/media/libstagefright/codecs/mpeg2dec/Android.bp
 +++ b/media/libstagefright/codecs/mpeg2dec/Android.bp
 @@ -17,6 +17,7 @@ cc_library_shared {
@@ -59,6 +59,3 @@ index abd1379c9d..fc3a41d520 100644
      ],
  
      version_script: "exports.lds",
--- 
-2.47.3
-

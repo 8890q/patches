@@ -1,27 +1,31 @@
-From d15984d13201d83cbed94a33a57f1894d7bb775c Mon Sep 17 00:00:00 2001
+From fa0aeedc0a2b6a260339ab1426c9a92960928f91 Mon Sep 17 00:00:00 2001
 From: Yaroslav Zviezda <acroreiser@gmail.com>
 Date: Sat, 27 Jun 2026 13:13:19 -0400
 Subject: [PATCH] allow microG on user build
 
 Change-Id: Id6e62f6c9cce909ad5e8fadb44ba9e2cd2207c22
----
- .../core/java/com/android/server/pm/ComputerEngine.java     | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
 
-diff --git a/services/core/java/com/android/server/pm/ComputerEngine.java b/services/core/java/com/android/server/pm/ComputerEngine.java
-index 3300f34817920d927b2b251fc54c2b629fa3f028..40e567bc1d7c87e99cb44660becf4eecd181d4d6 100644
---- a/services/core/java/com/android/server/pm/ComputerEngine.java
-+++ b/services/core/java/com/android/server/pm/ComputerEngine.java
-@@ -1486,9 +1486,9 @@ public class ComputerEngine implements Computer {
-     public static native boolean isDebuggable();
+Follow signature verification into Android 17 MicrogUtils, retaining package and signer checks.
+---
+ core/java/com/android/internal/content/MicrogUtils.java | 5 ++---
+ 1 file changed, 2 insertions(+), 3 deletions(-)
+
+diff --git a/core/java/com/android/internal/content/MicrogUtils.java b/core/java/com/android/internal/content/MicrogUtils.java
+index 71b32ff6bb24056b4dd3d49fa0e5d392d43dfa72..06f874fa91e03b6cd50a55e3192be65d54694e40 100644
+--- a/core/java/com/android/internal/content/MicrogUtils.java
++++ b/core/java/com/android/internal/content/MicrogUtils.java
+@@ -42,12 +42,11 @@ public final class MicrogUtils {
+     }
  
-     public static boolean isMicrogSigned(AndroidPackage p) {
--        if (!isDebuggable()) {
--            return false;
--        }
-+        //if (!isDebuggable()) {
-+        //    return false;
-+        //}
- 
-         // Allowlist the following apps:
-         // * com.android.vending - microG Companion
+     /**
+-     * Whether the package is a microG package signed with the real microG key. Always false on
+-     * non-debuggable builds.
++     * Whether the package is a microG package signed with the real microG key.
+      */
+     public static boolean isMicrogSigned(@NonNull AndroidPackage pkg) {
+         SigningDetails signingDetails = pkg.getSigningDetails();
+-        return isDebuggable() && isMicrogPackageName(pkg.getPackageName())
++        return isMicrogPackageName(pkg.getPackageName())
+                 && signingDetails != null
+                 && Signature.areExactMatch(signingDetails, new Signature[]{REAL_SIGNATURE});
+     }

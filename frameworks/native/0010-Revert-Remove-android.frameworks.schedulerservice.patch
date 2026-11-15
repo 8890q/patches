@@ -1,4 +1,4 @@
-From a3d91d7a7053353cf350e2b66c8cdab1f5caab30 Mon Sep 17 00:00:00 2001
+From 9642218d67420ebef4a05f2ab49997d3462e1d6b Mon Sep 17 00:00:00 2001
 From: Dominggoes Isakh <drjisakh@gmail.com>
 Date: Tue, 10 Mar 2026 22:31:22 +0100
 Subject: [PATCH] Revert "Remove android.frameworks.schedulerservice"

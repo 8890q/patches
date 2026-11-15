@@ -1,7 +1,7 @@
-From 5710ab7b5679a0bbb59be513ac425800abbc8c35 Mon Sep 17 00:00:00 2001
+From ef4f92405ef6d23d0d54c37a52940b8e1b97802c Mon Sep 17 00:00:00 2001
 From: Yaroslav Zviezda <acroreiser@gmail.com>
 Date: Sun, 22 Mar 2026 15:35:37 -0400
-Subject: [PATCH 8/8] renderengine: compilation fixes for 16 QPR1
+Subject: [PATCH] renderengine: compilation fixes for 16 QPR1
 
 Change-Id: I09543b85e637cfe8fe64a704f0e381ba57f2334b
 ---
@@ -10,10 +10,10 @@ Change-Id: I09543b85e637cfe8fe64a704f0e381ba57f2334b
  2 files changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/services/surfaceflinger/SurfaceFlinger.cpp b/services/surfaceflinger/SurfaceFlinger.cpp
-index c8a3e00..e35e6a8 100644
+index 07bbea21a7b048961e155ec7cb125bb9e3fe90cd..aaf585a22d86ac3b32652b47612f846221bb1147 100644
 --- a/services/surfaceflinger/SurfaceFlinger.cpp
 +++ b/services/surfaceflinger/SurfaceFlinger.cpp
-@@ -6084,7 +6084,7 @@ status_t SurfaceFlinger::createLayer(LayerCreationArgs& args, gui::CreateSurface
+@@ -6346,7 +6346,7 @@ status_t SurfaceFlinger::createLayer(LayerCreationArgs& args, gui::CreateSurface
      return result;
  }
  
@@ -23,10 +23,10 @@ index c8a3e00..e35e6a8 100644
      if (checkLayerLeaks() != NO_ERROR) {
          return NO_MEMORY;
 diff --git a/services/surfaceflinger/SurfaceFlinger.h b/services/surfaceflinger/SurfaceFlinger.h
-index 529ba9d..04072ac 100644
+index 0ddb80e405c4caea075469fdf49af1fbd61ddb96..13423169948cb22b3eadb4ccee047c034c8b97c0 100644
 --- a/services/surfaceflinger/SurfaceFlinger.h
 +++ b/services/surfaceflinger/SurfaceFlinger.h
-@@ -863,7 +863,7 @@ private:
+@@ -882,7 +882,7 @@ private:
       */
      status_t createLayer(LayerCreationArgs& args, gui::CreateSurfaceResult& outResult);
  
@@ -35,6 +35,3 @@ index 529ba9d..04072ac 100644
                           sp<Layer>* outLayer);
  
      // Checks if there are layer leaks before creating layer
--- 
-2.53.0
-

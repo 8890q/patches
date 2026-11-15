@@ -1,7 +1,7 @@
-From 9fc9c95ff2b489855e6f886aad9eb18e878b3de3 Mon Sep 17 00:00:00 2001
+From 0baead9293b0b55235c6ab5bc0ed73fcd9687a6f Mon Sep 17 00:00:00 2001
 From: davigamer987 <davimarchesiprimo@gmail.com>
 Date: Mon, 20 Oct 2025 22:04:05 +0300
-Subject: [PATCH 5/8] renderengine: gles: Fix QPR2 build errors
+Subject: [PATCH] renderengine: gles: Fix QPR2 build errors
 
 Change-Id: I0535f85380a926e59900a6359309119a806c4ef0
 ---
@@ -9,7 +9,7 @@ Change-Id: I0535f85380a926e59900a6359309119a806c4ef0
  1 file changed, 4 insertions(+), 2 deletions(-)
 
 diff --git a/libs/renderengine/gl/GLESRenderEngine.cpp b/libs/renderengine/gl/GLESRenderEngine.cpp
-index 4a879ab..038708d 100644
+index 4a879ab9fd3508c22e895ad2a3004e245179f4fa..038708d99a51a3c1aca12d34cbd9fb5469d4611c 100644
 --- a/libs/renderengine/gl/GLESRenderEngine.cpp
 +++ b/libs/renderengine/gl/GLESRenderEngine.cpp
 @@ -1110,7 +1110,7 @@ void GLESRenderEngine::drawLayersInternal(
@@ -32,6 +32,3 @@ index 4a879ab..038708d 100644
              blurLayers.pop_front();
  
              auto status = mBlurFilter->prepare();
--- 
-2.53.0
-

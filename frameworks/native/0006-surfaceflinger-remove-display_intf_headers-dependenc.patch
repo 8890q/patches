@@ -1,7 +1,7 @@
-From f86b6d69aee7fb0beda01319b257d2e043a62c65 Mon Sep 17 00:00:00 2001
+From 8e66f2a8a041e414c822956e7065f87b413b4528 Mon Sep 17 00:00:00 2001
 From: Yaroslav Zviezda <acroreiser@gmail.com>
 Date: Mon, 20 Oct 2025 22:05:10 +0300
-Subject: [PATCH 6/8] surfaceflinger: remove display_intf_headers dependency
+Subject: [PATCH] surfaceflinger: remove display_intf_headers dependency
 
 Change-Id: I5057c9f6d978eddd4a2c5325a0bbb78c2edbcf93
 ---
@@ -9,10 +9,10 @@ Change-Id: I5057c9f6d978eddd4a2c5325a0bbb78c2edbcf93
  1 file changed, 2 insertions(+), 8 deletions(-)
 
 diff --git a/services/surfaceflinger/Android.bp b/services/surfaceflinger/Android.bp
-index ed1ec01..ce5b4bb 100644
+index f69e5bc1ab7ebb92167ebb13f30f1c547182ec90..e4396638177dd311bb88bdb30600ac788f2c60bb 100644
 --- a/services/surfaceflinger/Android.bp
 +++ b/services/surfaceflinger/Android.bp
-@@ -65,10 +65,7 @@ cc_defaults {
+@@ -121,10 +121,7 @@ cc_defaults {
      cflags: [
          "-DEGL_EGLEXT_PROTOTYPES",
          "-DGL_GLEXT_PROTOTYPES",
@@ -24,7 +24,7 @@ index ed1ec01..ce5b4bb 100644
      shared_libs: [
          "android.hardware.common-V2-ndk",
          "android.hardware.common.fmq-V1-ndk",
-@@ -124,10 +121,7 @@ cc_defaults {
+@@ -177,10 +174,7 @@ cc_defaults {
          "android.hardware.graphics.composer@2.2-command-buffer",
          "android.hardware.graphics.composer@2.3-command-buffer",
          "android.hardware.graphics.composer@2.4-command-buffer",
@@ -36,6 +36,3 @@ index ed1ec01..ce5b4bb 100644
      export_static_lib_headers: [
          "libcompositionengine",
          "librenderengine",
--- 
-2.53.0
-

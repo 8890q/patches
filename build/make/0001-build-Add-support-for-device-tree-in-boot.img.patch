@@ -1,4 +1,4 @@
-From 105f010497355b857e582c5c162646ee687f2635 Mon Sep 17 00:00:00 2001
+From 1787e1f0b409503bc74c72a9f98793d9e43cb80f Mon Sep 17 00:00:00 2001
 From: David Ng <dave@codeaurora.org>
 Date: Fri, 27 Jul 2012 18:39:48 -0700
 Subject: [PATCH] build: Add support for device tree in boot.img
@@ -52,10 +52,10 @@ Signed-off-by: ivanmeler <i_ivan@windowslive.com>
  2 files changed, 25 insertions(+), 3 deletions(-)
 
 diff --git a/core/Makefile b/core/Makefile
-index b8c418940c5d580d87c501e9485389355e6533ba..c1562106c6497bb6178c96661e47f6e1a70a6fd7 100644
+index 65c45cb835d01281314fd418cc4f52947e337d92..b6fee4909a5b32243060b9351da13a14c28ebec0 100644
 --- a/core/Makefile
 +++ b/core/Makefile
-@@ -1354,6 +1354,12 @@ else ifndef BUILDING_VENDOR_BOOT_IMAGE # && BOARD_USES_GENERIC_KERNEL_IMAGE != t
+@@ -1350,6 +1350,12 @@ else ifndef BUILDING_VENDOR_BOOT_IMAGE # && BOARD_USES_GENERIC_KERNEL_IMAGE != t
    endif
  endif # BUILDING_VENDOR_BOOT_IMAGE == "" && BOARD_USES_GENERIC_KERNEL_IMAGE != true
  
@@ -68,7 +68,7 @@ index b8c418940c5d580d87c501e9485389355e6533ba..c1562106c6497bb6178c96661e47f6e1
  # Define these only if we are building boot
  ifdef BUILDING_BOOT_IMAGE
  INSTALLED_BOOTIMAGE_TARGET := $(BUILT_BOOTIMAGE_TARGET)
-@@ -1374,7 +1380,7 @@ define build_boot_board_avb_enabled
+@@ -1370,7 +1376,7 @@ define build_boot_board_avb_enabled
    $(call build_boot_from_kernel_avb_enabled,$(1),$(kernel))
  endef
  
@@ -77,7 +77,7 @@ index b8c418940c5d580d87c501e9485389355e6533ba..c1562106c6497bb6178c96661e47f6e1
  	$(call pretty,"Target boot image: $@")
  	$(call build_boot_board_avb_enabled,$@)
  
-@@ -1396,7 +1402,7 @@ define build_boot_novboot
+@@ -1392,7 +1398,7 @@ define build_boot_novboot
    $(call assert-max-image-size,$1,$(call get-bootimage-partition-size,$(1),boot))
  endef
  
@@ -86,7 +86,7 @@ index b8c418940c5d580d87c501e9485389355e6533ba..c1562106c6497bb6178c96661e47f6e1
  	$(call pretty,"Target boot image: $@")
  	$(call build_boot_novboot,$@)
  
-@@ -2756,6 +2762,11 @@ ifndef BOARD_RECOVERY_MKBOOTIMG_ARGS
+@@ -2742,6 +2748,11 @@ ifndef BOARD_RECOVERY_MKBOOTIMG_ARGS
    BOARD_RECOVERY_MKBOOTIMG_ARGS := $(BOARD_MKBOOTIMG_ARGS)
  endif
  
@@ -98,7 +98,7 @@ index b8c418940c5d580d87c501e9485389355e6533ba..c1562106c6497bb6178c96661e47f6e1
  $(INTERNAL_RECOVERY_RAMDISK_FILES_TIMESTAMP): $(MKBOOTFS) \
  	    $(INTERNAL_ROOT_FILES) \
  	    $(INSTALLED_RAMDISK_TARGET) \
-@@ -2853,7 +2864,7 @@ UNMOUNTED_NOTICE_VENDOR_DEPS+= $(INSTALLED_BOOTIMAGE_TARGET)
+@@ -2837,7 +2848,7 @@ UNMOUNTED_NOTICE_VENDOR_DEPS+= $(INSTALLED_BOOTIMAGE_TARGET)
  endif # BOARD_USES_RECOVERY_AS_BOOT
  
  ifndef BOARD_CUSTOM_BOOTIMG_MK
@@ -107,7 +107,7 @@ index b8c418940c5d580d87c501e9485389355e6533ba..c1562106c6497bb6178c96661e47f6e1
  	$(call build-recoveryimage-target, $@, \
  	  $(if $(filter true, $(BOARD_EXCLUDE_KERNEL_FROM_RECOVERY_IMAGE)),, $(recovery_kernel)))
  else
-@@ -6709,6 +6720,9 @@ endif
+@@ -6798,6 +6809,9 @@ endif
  ifdef BOARD_KERNEL_PAGESIZE
  	echo "$(BOARD_KERNEL_PAGESIZE)" > $(zip_root)/$(PRIVATE_RECOVERY_OUT)/pagesize
  endif
@@ -117,7 +117,7 @@ index b8c418940c5d580d87c501e9485389355e6533ba..c1562106c6497bb6178c96661e47f6e1
  endif # not (BUILDING_VENDOR_BOOT_IMAGE and BOARD_USES_RECOVERY_AS_BOOT)
  endif # INSTALLED_RECOVERYIMAGE_TARGET defined or BOARD_USES_RECOVERY_AS_BOOT is true
  	@# Components of the boot image
-@@ -6736,6 +6750,9 @@ endif
+@@ -6825,6 +6839,9 @@ endif
  ifdef BOARD_KERNEL_PAGESIZE
  	echo "$(BOARD_KERNEL_PAGESIZE)" > $(zip_root)/BOOT/pagesize
  endif
@@ -128,10 +128,10 @@ index b8c418940c5d580d87c501e9485389355e6533ba..c1562106c6497bb6178c96661e47f6e1
  endif # BOARD_USES_RECOVERY_AS_BOOT not true
  	$(hide) $(foreach t,$(INSTALLED_RADIOIMAGE_TARGET),\
 diff --git a/tools/releasetools/common.py b/tools/releasetools/common.py
-index 3a49da7d7ec8087cf2b341dcf7a17d8d38953408..7ed04bc58deb68bf66c0da494416e20e23177510 100644
+index fef646f3aec7e8fc2b75a8a8341a3762d6b94668..6b21916314e12e8531e245020e5aaea7bc3c3165 100644
 --- a/tools/releasetools/common.py
 +++ b/tools/releasetools/common.py
-@@ -1811,6 +1811,11 @@ def _BuildBootableImage(image_name, sourcedir, fs_config_file,
+@@ -1823,6 +1823,11 @@ def _BuildBootableImage(image_name, sourcedir, fs_config_file,
      cmd.append("--pagesize")
      cmd.append(open(fn).read().rstrip("\n"))
  

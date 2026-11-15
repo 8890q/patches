@@ -1,4 +1,4 @@
-From 6027f2b6d89f7bc87c79f7391e2e6652247ac768 Mon Sep 17 00:00:00 2001
+From 0c0bd86095bd8fc378e1c4ec0fe74d4861b953c5 Mon Sep 17 00:00:00 2001
 From: Dominggoes Isakh <drjisakh@gmail.com>
 Date: Sat, 17 Jan 2026 22:26:04 +0100
 Subject: [PATCH] radio: Fix linker errors for legacy /vendor/bin/hw/rild

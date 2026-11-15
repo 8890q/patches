@@ -1,8 +1,8 @@
-From 26841d494480a25e9f630c37ac7239dceb187945 Mon Sep 17 00:00:00 2001
+From cca4641d0f957aab26936bc67f7a8f6fb000ba0d Mon Sep 17 00:00:00 2001
 From: Yaroslav Zviezda <acroreiser@gmail.com>
 Date: Sun, 16 Jul 2023 13:38:58 +0300
-Subject: [PATCH 5/8] batterysaver: add property to disable night mode on
- battery saver
+Subject: [PATCH] batterysaver: add property to disable night mode on battery
+ saver
 
 Night theme on battery saver mode is useful on AMOLED panels
 but does not provide benefits for IPS. To avoid runtime overhead of theme switch
@@ -14,7 +14,7 @@ Change-Id: I4800d0d3aa3965bb8fbd5301482061dc8153cda6
  1 file changed, 2 insertions(+), 1 deletion(-)
 
 diff --git a/services/core/java/com/android/server/power/batterysaver/BatterySaverPolicy.java b/services/core/java/com/android/server/power/batterysaver/BatterySaverPolicy.java
-index 5d9085144..9664d8666 100644
+index 5d90851443346ed11ebd0eba6ceeb6508ea64417..9664d8666d18933173d1349f6a25a615adebd7e0 100644
 --- a/services/core/java/com/android/server/power/batterysaver/BatterySaverPolicy.java
 +++ b/services/core/java/com/android/server/power/batterysaver/BatterySaverPolicy.java
 @@ -27,6 +27,7 @@ import android.os.Handler;
@@ -34,6 +34,3 @@ index 5d9085144..9664d8666 100644
                  rawPolicy.enableQuickDoze,
                  rawPolicy.forceAllAppsStandby,
                  rawPolicy.forceBackgroundCheck,
--- 
-2.53.0
-

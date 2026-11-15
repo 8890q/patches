@@ -1,19 +1,23 @@
-From d2124f041f54191ea91a1b7eceec2e2fb63ea702 Mon Sep 17 00:00:00 2001
+From afe52d7e75a22f0a010a40b22a86ecbaeacfd34f Mon Sep 17 00:00:00 2001
 From: Dominggoes Isakh <drjisakh@gmail.com>
 Date: Fri, 13 Mar 2026 19:20:27 +0100
 Subject: [PATCH] Revert "Remove android.frameworks.schedulerservice"
 
 This reverts commit 7c38da99d8c08622221cfd0bb1622cf04fea597d.
+
+Restore scheduler-service JNI against Android 17.
+
+Change-Id: I2eba34dd7d33f66c697e6117420513d232fe6e83
 ---
  services/core/jni/Android.bp                  |  2 ++
  .../jni/com_android_server_SystemServer.cpp   | 19 ++++++++++++++++++-
  2 files changed, 20 insertions(+), 1 deletion(-)
 
 diff --git a/services/core/jni/Android.bp b/services/core/jni/Android.bp
-index 109abd5330be9f587cdb2ce7dbb843550eb3a305..5fd1043d3656df8b7173ebaca06aab6714e78437 100644
+index 91604bfc094ea1c0358aa9019fa77d44ea36b04f..d8965cce25927193680994c716cc0261a6c46e33 100644
 --- a/services/core/jni/Android.bp
 +++ b/services/core/jni/Android.bp
-@@ -153,6 +153,7 @@ cc_defaults {
+@@ -154,6 +154,7 @@ cc_defaults {
          "libstatssocket",
          "libstatslog_inputflinger",
          "libstatslog_surfaceflinger",
@@ -21,16 +25,16 @@ index 109abd5330be9f587cdb2ce7dbb843550eb3a305..5fd1043d3656df8b7173ebaca06aab67
          "libsensorservice",
          "libsensorservicehidl",
          "libsensorserviceaidl",
-@@ -201,6 +202,7 @@ cc_defaults {
+@@ -198,6 +199,7 @@ cc_defaults {
          "android.hardware.tv.input-V3-ndk",
-         "android.hardware.vibrator-V3-ndk",
+         "android.hardware.vibrator-V4-ndk",
          "android.hidl.token@1.0-utils",
 +        "android.frameworks.schedulerservice@1.0",
          "android.frameworks.sensorservice@1.0",
          "android.frameworks.sensorservice-V1-ndk",
-         "android.frameworks.stats@1.0",
+         "android.frameworks.stats-V2-ndk",
 diff --git a/services/core/jni/com_android_server_SystemServer.cpp b/services/core/jni/com_android_server_SystemServer.cpp
-index f03477131bb835363fecb1ffedf648b8a648b906..be18f6419e1572c060f7bd63592bc106b30617ce 100644
+index 4ed86f7def0f7a4ca600ef1a21437f37aa571647..d32b8c2371e800b9b3a2d48e6c2a3d8883c8e281 100644
 --- a/services/core/jni/com_android_server_SystemServer.cpp
 +++ b/services/core/jni/com_android_server_SystemServer.cpp
 @@ -28,6 +28,7 @@
@@ -41,7 +45,7 @@ index f03477131bb835363fecb1ffedf648b8a648b906..be18f6419e1572c060f7bd63592bc106
  #include <sensorserviceaidl/SensorManagerAidl.h>
  #include <sensorservicehidl/SensorManager.h>
  #include <stats/StatsAidl.h>
-@@ -133,7 +134,23 @@ static void android_server_SystemServer_startMemtrackProxyService(JNIEnv* env,
+@@ -122,7 +123,23 @@ static void android_server_SystemServer_startMemtrackProxyService(JNIEnv* env,
  }
  
  static void android_server_SystemServer_startHidlServices(JNIEnv* /* env */, jobject /* clazz */) {

@@ -1,7 +1,7 @@
-From dfc9fc68cbb8918ef8cecb5b1a3a328342f8ce43 Mon Sep 17 00:00:00 2001
+From 23ffa2a2b42af02778435384a2c30f6076afdc32 Mon Sep 17 00:00:00 2001
 From: Roman Stratiienko <r.stratiienko@gmail.com>
 Date: Mon, 13 Jun 2022 17:01:01 +0300
-Subject: [PATCH 3/8] Don't use PATTERNED style ripple effect by default
+Subject: [PATCH] Don't use PATTERNED style ripple effect by default
 
 Slow GPUs (MALI400) can't handle PATTERNED_STYLE ripple effect.
 It causes FPS drop down to ~20.
@@ -13,7 +13,7 @@ Change-Id: Ib12eb32259b5bbd0de8986c534c94ea23c2fc3e1
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/graphics/java/android/graphics/drawable/RippleDrawable.java b/graphics/java/android/graphics/drawable/RippleDrawable.java
-index 641a2ae7b..320146cf3 100644
+index 641a2ae7b2c324a54e2f4c90d203fe5a02879dd9..320146cf3de8957b16e26e6c66e075b04249ef83 100644
 --- a/graphics/java/android/graphics/drawable/RippleDrawable.java
 +++ b/graphics/java/android/graphics/drawable/RippleDrawable.java
 @@ -158,7 +158,7 @@ public class RippleDrawable extends LayerDrawable {
@@ -25,6 +25,3 @@ index 641a2ae7b..320146cf3 100644
  
      private final Rect mTempRect = new Rect();
  
--- 
-2.53.0
-

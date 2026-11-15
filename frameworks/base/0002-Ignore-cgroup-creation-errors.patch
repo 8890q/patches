@@ -1,54 +1,48 @@
-From 22fe8bedfeca9e035c310a48e552f0c08e2093bb Mon Sep 17 00:00:00 2001
+From b58a08265805901258cb269c9ef905c164506c84 Mon Sep 17 00:00:00 2001
 From: Pierre-Hugues Husson <phh@phh.me>
 Date: Wed, 18 Oct 2023 16:53:40 -0400
-Subject: [PATCH 2/8] Ignore cgroup creation errors
+Subject: [PATCH] Ignore cgroup creation errors
 
 For old kernels who don't have those modern cgroups
 
 Change-Id: I4fe01f38c2dd00455394838ad78c4cbcfea10657
+
+Adapt the Android 17 error-reporting path, retaining diagnostic logs.
 ---
- core/jni/com_android_internal_os_Zygote.cpp               | 2 ++
- services/core/java/com/android/server/am/ProcessList.java | 5 -----
- 2 files changed, 2 insertions(+), 5 deletions(-)
+ core/jni/com_android_internal_os_Zygote.cpp               | 5 +----
+ services/core/java/com/android/server/am/ProcessList.java | 6 +-----
+ 2 files changed, 2 insertions(+), 9 deletions(-)
 
 diff --git a/core/jni/com_android_internal_os_Zygote.cpp b/core/jni/com_android_internal_os_Zygote.cpp
-index a92c6c871..902d67079 100644
+index 15a7ee4a0a39240aa72475d8ec15798c32b81df6..94a99487e1448522415be9bcab0e484aabee9e70 100644
 --- a/core/jni/com_android_internal_os_Zygote.cpp
 +++ b/core/jni/com_android_internal_os_Zygote.cpp
-@@ -1968,12 +1968,14 @@ static void SpecializeCommon(JNIEnv* env, uid_t uid, gid_t gid, jintArray gids,
-     // since the directory is owned by root.
+@@ -1985,10 +1985,7 @@ static void SpecializeCommon(JNIEnv* env, uid_t uid, gid_t gid, jintArray gids,
      if (getuid() == 0) {
          const int rc = createProcessGroup(uid, getpid());
-+#if 0
          if (rc != 0) {
-             fail_fn(rc == -EROFS ? CREATE_ERROR("createProcessGroup failed, kernel missing "
-                                                 "CONFIG_CGROUP_CPUACCT?")
-                                  : CREATE_ERROR("createProcessGroup(%d, %d) failed: %s", uid,
-                                                 /* pid= */ 0, strerror(-rc)));
+-            fail_fn(rc == -EROFS ? CREATE_ERROR("createProcessGroup failed, kernel missing "
+-                                                "CONFIG_CGROUP_CPUACCT?")
+-                                 : CREATE_ERROR("createProcessGroup(%d, %d) failed: %s", uid,
+-                                                /* pid= */ 0, strerror(-rc)));
++            ALOGW("createProcessGroup(%d, %d) failed: %s", uid, getpid(), strerror(-rc));
          }
-+#endif
  
-         if (is_system_server && UsePerAppMemcg()) {
-             // Assign system_server to the correct memory cgroup.
+         if (is_system_server) {
 diff --git a/services/core/java/com/android/server/am/ProcessList.java b/services/core/java/com/android/server/am/ProcessList.java
-index 3defe011e..2060d0689 100644
+index d8e2cfaae0671d20740f11da8698eace47e925d4..bb172064b87b5cc336c3fc5867a381ff8cdd63b9 100644
 --- a/services/core/java/com/android/server/am/ProcessList.java
 +++ b/services/core/java/com/android/server/am/ProcessList.java
-@@ -2655,14 +2655,9 @@ public final class ProcessList implements ProcessStateController.ProcessLruUpdat
-                         // If we're not told to skip the process group creation, go create it.
-                         final int res = Process.createProcessGroup(uid, startResult.pid);
-                         if (res < 0) {
+@@ -2691,11 +2691,7 @@ public final class ProcessList extends ProcessListInternal
+                             String errorStr = "Unable to create process group for "
+                                 + app.processName + " (uid: " + uid + ", pid: " + startResult.pid
+                                 + "), errno: " + res;
 -                            if (res == -OsConstants.ESRCH) {
-                                 Slog.e(ActivityManagerService.TAG,
-                                         "Unable to create process group for "
-                                         + app.processName + " (" + startResult.pid + ")");
+-                                Slog.e(ActivityManagerService.TAG, errorStr);
 -                            } else {
--                                throw new AssertionError("Unable to create process group for "
--                                    + app.processName + " (" + startResult.pid + ")");
+-                                throw new AssertionError(errorStr);
 -                            }
++                            Slog.e(ActivityManagerService.TAG, errorStr);
                          } else {
                              app.mProcessGroupCreated = true;
                          }
--- 
-2.53.0
-

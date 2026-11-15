@@ -1,8 +1,7 @@
-From 32b8274d72127299e46e9592993b9f6b72ced536 Mon Sep 17 00:00:00 2001
+From aaa6951e0c955ea5e60b5c70a34043cf21b35d76 Mon Sep 17 00:00:00 2001
 From: Yaroslav Zviezda <acroreiser@gmail.com>
 Date: Mon, 20 Oct 2025 22:02:31 +0300
-Subject: [PATCH 4/8] renderengine: gles: unconditionally skip
- PostRenderCleanup
+Subject: [PATCH] renderengine: gles: unconditionally skip PostRenderCleanup
 
 Ultra-legacy targets works better without this.
 
@@ -16,7 +15,7 @@ Change-Id: I7974628d1207672fb3b6ad91f0bb4638b7584f7c
  1 file changed, 3 insertions(+), 2 deletions(-)
 
 diff --git a/libs/renderengine/gl/GLESRenderEngine.cpp b/libs/renderengine/gl/GLESRenderEngine.cpp
-index 0e9fa8d..4a879ab 100644
+index 0e9fa8df3de57b62161969584f4fffe5d5a4998d..4a879ab9fd3508c22e895ad2a3004e245179f4fa 100644
 --- a/libs/renderengine/gl/GLESRenderEngine.cpp
 +++ b/libs/renderengine/gl/GLESRenderEngine.cpp
 @@ -970,8 +970,9 @@ void GLESRenderEngine::unbindFrameBuffer(Framebuffer* /*framebuffer*/) {
@@ -31,6 +30,3 @@ index 0e9fa8d..4a879ab 100644
  }
  
  void GLESRenderEngine::cleanupPostRender() {
--- 
-2.53.0
-

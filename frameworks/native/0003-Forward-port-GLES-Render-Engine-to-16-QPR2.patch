@@ -1,7 +1,7 @@
-From 6cf75f1b2ba86a36e34086746e256ef25c7b59cd Mon Sep 17 00:00:00 2001
+From 2f4bb99f9591360ea882b06a379a5acd08c7f2fc Mon Sep 17 00:00:00 2001
 From: Yaroslav Zviezda <acroreiser@gmail.com>
 Date: Mon, 20 Oct 2025 22:01:25 +0300
-Subject: [PATCH 3/8] Forward-port GLES Render Engine to 16 QPR2
+Subject: [PATCH] Forward-port GLES Render Engine to 16 QPR2
 
 Technically a revert "Delete GLESRenderEngine" + fixes.
 
@@ -11,12 +11,14 @@ This reverts commit e2b61c6265d4cda693daeb1313d0aaab48874452.
 
 Change-Id: I98df289c6eb70295df8afda12ecbb9d8551f6561
 Change-Id: I0caac7477fa5ee725116a996aa0db3d78cf9f662
+
+Adapt the legacy GLES renderer to Android 17 while retaining the current Skia/Vulkan implementations and display lifecycle.
 ---
  libs/renderengine/Android.bp                  |   27 +-
  libs/renderengine/Description.cpp             |   61 +
  libs/renderengine/ExternalTexture.cpp         |    4 +
  libs/renderengine/Mesh.cpp                    |  146 ++
- libs/renderengine/RenderEngine.cpp            |    3 +-
+ libs/renderengine/RenderEngine.cpp            |    5 +-
  libs/renderengine/Texture.cpp                 |   77 +
  libs/renderengine/gl/GLESRenderEngine.cpp     | 1862 +++++++++++++++++
  libs/renderengine/gl/GLESRenderEngine.h       |  314 +++
@@ -55,16 +57,16 @@ Change-Id: I0caac7477fa5ee725116a996aa0db3d78cf9f662
  .../renderengine/private/Description.h        |   92 +
  libs/renderengine/mock/Framebuffer.cpp        |   30 +
  libs/renderengine/mock/Image.cpp              |   30 +
- libs/renderengine/skia/SkiaGLRenderEngine.cpp |   33 +-
+ libs/renderengine/skia/SkiaGLRenderEngine.cpp |   20 +-
  libs/renderengine/skia/SkiaRenderEngine.h     |    1 +
  .../tests/RenderEngineThreadedTest.cpp        |   12 +
- .../threaded/RenderEngineThreaded.cpp         |   56 +-
+ .../threaded/RenderEngineThreaded.cpp         |   52 +-
  .../threaded/RenderEngineThreaded.h           |    1 +
  services/surfaceflinger/Layer.cpp             |   14 +-
  services/surfaceflinger/Layer.h               |    2 +
  services/surfaceflinger/SurfaceFlinger.cpp    |   13 +-
  .../tests/unittests/CompositionTest.cpp       |    2 +
- 52 files changed, 6672 insertions(+), 50 deletions(-)
+ 52 files changed, 6668 insertions(+), 39 deletions(-)
  create mode 100644 libs/renderengine/Description.cpp
  create mode 100644 libs/renderengine/Mesh.cpp
  create mode 100644 libs/renderengine/Texture.cpp
@@ -105,21 +107,23 @@ Change-Id: I0caac7477fa5ee725116a996aa0db3d78cf9f662
  create mode 100644 libs/renderengine/mock/Image.cpp
 
 diff --git a/libs/renderengine/Android.bp b/libs/renderengine/Android.bp
-index 847a886..447ee80 100644
+index ba03b58ef282ab1445650ec1c0c6c5df4ca0a3cb..994c2a866e86de18d4485711cb62056304b34ec8 100644
 --- a/libs/renderengine/Android.bp
 +++ b/libs/renderengine/Android.bp
-@@ -70,8 +70,30 @@ cc_library_static {
+@@ -65,6 +65,9 @@ cc_defaults {
  filegroup {
      name: "librenderengine_sources",
      srcs: [
 +        "Description.cpp",
-         "ExternalTexture.cpp",
 +        "Mesh.cpp",
-         "RenderEngine.cpp",
 +        "Texture.cpp",
-+    ],
-+}
-+
+         "ColorSpaces.cpp",
+         "ExternalTexture.cpp",
+         "RenderEngine.cpp",
+@@ -78,6 +81,25 @@ filegroup {
+     ],
+ }
+ 
 +filegroup {
 +    name: "librenderengine_gl_sources",
 +    srcs: [
@@ -136,11 +140,14 @@ index 847a886..447ee80 100644
 +        "gl/ProgramCache.cpp",
 +        "gl/filters/BlurFilter.cpp",
 +        "gl/filters/GenericProgram.cpp",
-     ],
- }
- 
-@@ -90,7 +112,7 @@ filegroup {
-         "skia/ColorSpaces.cpp",
++    ],
++}
++
+ filegroup {
+     name: "librenderengine_skia_sources",
+     srcs: [
+@@ -85,7 +107,7 @@ filegroup {
+         "skia/Cache.cpp",
          "skia/GaneshVkRenderEngine.cpp",
          "skia/GraphiteVkRenderEngine.cpp",
 -        "skia/GLExtensions.cpp",
@@ -148,7 +155,7 @@ index 847a886..447ee80 100644
          "skia/ShaderCache.cpp",
          "skia/SkiaRenderEngine.cpp",
          "skia/RenderDocUtils.cpp",
-@@ -158,6 +180,7 @@ cc_library_static {
+@@ -154,6 +176,7 @@ cc_library_static {
      ],
      srcs: [
          ":librenderengine_sources",
@@ -156,7 +163,7 @@ index 847a886..447ee80 100644
          ":librenderengine_threaded_sources",
          ":librenderengine_skia_sources",
      ],
-@@ -176,6 +199,8 @@ cc_library_static {
+@@ -172,6 +195,8 @@ cc_library_static {
      name: "librenderengine_mocks",
      defaults: ["librenderengine_defaults"],
      srcs: [
@@ -167,7 +174,7 @@ index 847a886..447ee80 100644
      static_libs: [
 diff --git a/libs/renderengine/Description.cpp b/libs/renderengine/Description.cpp
 new file mode 100644
-index 0000000..245c9e1
+index 0000000000000000000000000000000000000000..245c9e1e3036c43562abd9d4711cf623dae8088f
 --- /dev/null
 +++ b/libs/renderengine/Description.cpp
 @@ -0,0 +1,61 @@
@@ -233,7 +240,7 @@ index 0000000..245c9e1
 +} // namespace renderengine
 +} // namespace android
 diff --git a/libs/renderengine/ExternalTexture.cpp b/libs/renderengine/ExternalTexture.cpp
-index 8d0fbba..55a8f6e 100644
+index 8d0fbba2e0631e6766797d90f8361ac6ba23a82b..55a8f6e9dff2759ed0c852ae14544ac2a72a9232 100644
 --- a/libs/renderengine/ExternalTexture.cpp
 +++ b/libs/renderengine/ExternalTexture.cpp
 @@ -27,6 +27,10 @@ ExternalTexture::ExternalTexture(const sp<GraphicBuffer>& buffer,
@@ -249,7 +256,7 @@ index 8d0fbba..55a8f6e 100644
  
 diff --git a/libs/renderengine/Mesh.cpp b/libs/renderengine/Mesh.cpp
 new file mode 100644
-index 0000000..ed2f45f
+index 0000000000000000000000000000000000000000..ed2f45fdf5492b966ceea078450d0fcfcca55c3f
 --- /dev/null
 +++ b/libs/renderengine/Mesh.cpp
 @@ -0,0 +1,146 @@
@@ -400,7 +407,7 @@ index 0000000..ed2f45f
 +} // namespace renderengine
 +} // namespace android
 diff --git a/libs/renderengine/RenderEngine.cpp b/libs/renderengine/RenderEngine.cpp
-index cc9d1ca..d09a117 100644
+index c70f05414e25e00a42158c26ebd7c105a3fc325d..bc09e83db7fdef97f8a8bb5bada6dbe83a3a0459 100644
 --- a/libs/renderengine/RenderEngine.cpp
 +++ b/libs/renderengine/RenderEngine.cpp
 @@ -16,6 +16,7 @@
@@ -409,12 +416,14 @@ index cc9d1ca..d09a117 100644
  
 +#include "gl/GLESRenderEngine.h"
  #include "renderengine/ExternalTexture.h"
+ #include "skia/Cache.h"
  #include "skia/GaneshVkRenderEngine.h"
- #include "skia/GraphiteVkRenderEngine.h"
-@@ -50,7 +51,7 @@ std::unique_ptr<RenderEngine> RenderEngine::create(const RenderEngineCreationArg
+@@ -55,9 +56,7 @@ std::unique_ptr<RenderEngine> RenderEngine::create(const RenderEngineCreationArg
              };
          } else { // GL
              createInstanceFactory = [args]() {
+-                skia::Cache::initializeGaneshDiskCache();
+-
 -                return android::renderengine::skia::SkiaGLRenderEngine::create(args);
 +                return android::renderengine::gl::GLESRenderEngine::create(args);
              };
@@ -422,7 +431,7 @@ index cc9d1ca..d09a117 100644
      }
 diff --git a/libs/renderengine/Texture.cpp b/libs/renderengine/Texture.cpp
 new file mode 100644
-index 0000000..154cde8
+index 0000000000000000000000000000000000000000..154cde80b9ddb0f9f368399d3bf61af925659d6f
 --- /dev/null
 +++ b/libs/renderengine/Texture.cpp
 @@ -0,0 +1,77 @@
@@ -505,7 +514,7 @@ index 0000000..154cde8
 +} // namespace android
 diff --git a/libs/renderengine/gl/GLESRenderEngine.cpp b/libs/renderengine/gl/GLESRenderEngine.cpp
 new file mode 100644
-index 0000000..0e9fa8d
+index 0000000000000000000000000000000000000000..0e9fa8df3de57b62161969584f4fffe5d5a4998d
 --- /dev/null
 +++ b/libs/renderengine/gl/GLESRenderEngine.cpp
 @@ -0,0 +1,1862 @@
@@ -2373,7 +2382,7 @@ index 0000000..0e9fa8d
 +} // namespace android
 diff --git a/libs/renderengine/gl/GLESRenderEngine.h b/libs/renderengine/gl/GLESRenderEngine.h
 new file mode 100644
-index 0000000..53133af
+index 0000000000000000000000000000000000000000..53133afc801f3d6a739244e96b5f4be9a9991497
 --- /dev/null
 +++ b/libs/renderengine/gl/GLESRenderEngine.h
 @@ -0,0 +1,314 @@
@@ -2695,7 +2704,7 @@ diff --git a/libs/renderengine/skia/GLExtensions.cpp b/libs/renderengine/gl/GLEx
 similarity index 97%
 rename from libs/renderengine/skia/GLExtensions.cpp
 rename to libs/renderengine/gl/GLExtensions.cpp
-index 1d4d35f..b479400 100644
+index 1d4d35fb54e01e8427eaacbe8c48f4142f92a694..b479400a069a843bc3f0a2fa2a7096be6f280c67 100644
 --- a/libs/renderengine/skia/GLExtensions.cpp
 +++ b/libs/renderengine/gl/GLExtensions.cpp
 @@ -23,11 +23,11 @@
@@ -2724,7 +2733,7 @@ diff --git a/libs/renderengine/skia/GLExtensions.h b/libs/renderengine/gl/GLExte
 similarity index 98%
 rename from libs/renderengine/skia/GLExtensions.h
 rename to libs/renderengine/gl/GLExtensions.h
-index 0cb1bda..e415ff3 100644
+index 0cb1bda0df59bdf484d7f83362c3da03529bda5f..e415ff304af085ffd828447a2a5acdb66bc0d92a 100644
 --- a/libs/renderengine/skia/GLExtensions.h
 +++ b/libs/renderengine/gl/GLExtensions.h
 @@ -29,7 +29,7 @@
@@ -2747,7 +2756,7 @@ index 0cb1bda..e415ff3 100644
  
 diff --git a/libs/renderengine/gl/GLFramebuffer.cpp b/libs/renderengine/gl/GLFramebuffer.cpp
 new file mode 100644
-index 0000000..58d6caa
+index 0000000000000000000000000000000000000000..58d6caa48abc00f5e5bda3f2d12ce8aaf225a2aa
 --- /dev/null
 +++ b/libs/renderengine/gl/GLFramebuffer.cpp
 @@ -0,0 +1,115 @@
@@ -2868,7 +2877,7 @@ index 0000000..58d6caa
 +} // namespace android
 diff --git a/libs/renderengine/gl/GLFramebuffer.h b/libs/renderengine/gl/GLFramebuffer.h
 new file mode 100644
-index 0000000..6757695
+index 0000000000000000000000000000000000000000..6757695ddb438a5ad8caa481b8c0794fe602fd0a
 --- /dev/null
 +++ b/libs/renderengine/gl/GLFramebuffer.h
 @@ -0,0 +1,68 @@
@@ -2942,7 +2951,7 @@ index 0000000..6757695
 +} // namespace android
 diff --git a/libs/renderengine/gl/GLImage.cpp b/libs/renderengine/gl/GLImage.cpp
 new file mode 100644
-index 0000000..8497721
+index 0000000000000000000000000000000000000000..8497721956739ad8c1baf890047c47ae21c1dca4
 --- /dev/null
 +++ b/libs/renderengine/gl/GLImage.cpp
 @@ -0,0 +1,83 @@
@@ -3031,7 +3040,7 @@ index 0000000..8497721
 +} // namespace android
 diff --git a/libs/renderengine/gl/GLImage.h b/libs/renderengine/gl/GLImage.h
 new file mode 100644
-index 0000000..59d6ce3
+index 0000000000000000000000000000000000000000..59d6ce354947f21a6dc877394acb2683812dfea0
 --- /dev/null
 +++ b/libs/renderengine/gl/GLImage.h
 @@ -0,0 +1,54 @@
@@ -3091,7 +3100,7 @@ index 0000000..59d6ce3
 +} // namespace android
 diff --git a/libs/renderengine/gl/GLShadowTexture.cpp b/libs/renderengine/gl/GLShadowTexture.cpp
 new file mode 100644
-index 0000000..2423a34
+index 0000000000000000000000000000000000000000..2423a3467e60cd855e14283b2c444d1e8ee0da84
 --- /dev/null
 +++ b/libs/renderengine/gl/GLShadowTexture.cpp
 @@ -0,0 +1,52 @@
@@ -3149,7 +3158,7 @@ index 0000000..2423a34
 +} // namespace android
 diff --git a/libs/renderengine/gl/GLShadowTexture.h b/libs/renderengine/gl/GLShadowTexture.h
 new file mode 100644
-index 0000000..250a9d7
+index 0000000000000000000000000000000000000000..250a9d77d0983d5cfd36a9f24d2ecd50d03e1cea
 --- /dev/null
 +++ b/libs/renderengine/gl/GLShadowTexture.h
 @@ -0,0 +1,44 @@
@@ -3199,7 +3208,7 @@ index 0000000..250a9d7
 +} // namespace android
 diff --git a/libs/renderengine/gl/GLShadowVertexGenerator.cpp b/libs/renderengine/gl/GLShadowVertexGenerator.cpp
 new file mode 100644
-index 0000000..3181f9b
+index 0000000000000000000000000000000000000000..3181f9bebb81062ae3af50c60d8334033ca0ac3f
 --- /dev/null
 +++ b/libs/renderengine/gl/GLShadowVertexGenerator.cpp
 @@ -0,0 +1,98 @@
@@ -3303,7 +3312,7 @@ index 0000000..3181f9b
 +} // namespace android
 diff --git a/libs/renderengine/gl/GLShadowVertexGenerator.h b/libs/renderengine/gl/GLShadowVertexGenerator.h
 new file mode 100644
-index 0000000..112f976
+index 0000000000000000000000000000000000000000..112f97623b50ebf2b4a1ba6a873b35743bc73471
 --- /dev/null
 +++ b/libs/renderengine/gl/GLShadowVertexGenerator.h
 @@ -0,0 +1,65 @@
@@ -3374,7 +3383,7 @@ index 0000000..112f976
 +} // namespace android
 diff --git a/libs/renderengine/gl/GLSkiaShadowPort.cpp b/libs/renderengine/gl/GLSkiaShadowPort.cpp
 new file mode 100644
-index 0000000..da8b435
+index 0000000000000000000000000000000000000000..da8b435854d53b71ad66270695eb0572c4f5005f
 --- /dev/null
 +++ b/libs/renderengine/gl/GLSkiaShadowPort.cpp
 @@ -0,0 +1,656 @@
@@ -4036,7 +4045,7 @@ index 0000000..da8b435
 +} // namespace android
 diff --git a/libs/renderengine/gl/GLSkiaShadowPort.h b/libs/renderengine/gl/GLSkiaShadowPort.h
 new file mode 100644
-index 0000000..912c8bb
+index 0000000000000000000000000000000000000000..912c8bb7b39c73a2cd288f85a309931461c794cc
 --- /dev/null
 +++ b/libs/renderengine/gl/GLSkiaShadowPort.h
 @@ -0,0 +1,96 @@
@@ -4138,7 +4147,7 @@ index 0000000..912c8bb
 +} // namespace android
 diff --git a/libs/renderengine/gl/GLVertexBuffer.cpp b/libs/renderengine/gl/GLVertexBuffer.cpp
 new file mode 100644
-index 0000000..e50c471
+index 0000000000000000000000000000000000000000..e50c471b6d0dd62c638c45cbe9ec7cd41a77c710
 --- /dev/null
 +++ b/libs/renderengine/gl/GLVertexBuffer.cpp
 @@ -0,0 +1,55 @@
@@ -4199,7 +4208,7 @@ index 0000000..e50c471
 +} // namespace android
 diff --git a/libs/renderengine/gl/GLVertexBuffer.h b/libs/renderengine/gl/GLVertexBuffer.h
 new file mode 100644
-index 0000000..c0fd0c1
+index 0000000000000000000000000000000000000000..c0fd0c1b04214b57b2375f93c3409a9f6e66787e
 --- /dev/null
 +++ b/libs/renderengine/gl/GLVertexBuffer.h
 @@ -0,0 +1,49 @@
@@ -4254,7 +4263,7 @@ index 0000000..c0fd0c1
 +} // namespace android
 diff --git a/libs/renderengine/gl/ImageManager.cpp b/libs/renderengine/gl/ImageManager.cpp
 new file mode 100644
-index 0000000..6256649
+index 0000000000000000000000000000000000000000..62566494f0053e864ef4c9df9f8d6f96654dc9a4
 --- /dev/null
 +++ b/libs/renderengine/gl/ImageManager.cpp
 @@ -0,0 +1,148 @@
@@ -4408,7 +4417,7 @@ index 0000000..6256649
 +} // namespace android
 diff --git a/libs/renderengine/gl/ImageManager.h b/libs/renderengine/gl/ImageManager.h
 new file mode 100644
-index 0000000..be67de8
+index 0000000000000000000000000000000000000000..be67de8367c589637f1a037a9d803f3036a33356
 --- /dev/null
 +++ b/libs/renderengine/gl/ImageManager.h
 @@ -0,0 +1,74 @@
@@ -4488,7 +4497,7 @@ index 0000000..be67de8
 +} // namespace android
 diff --git a/libs/renderengine/gl/Program.cpp b/libs/renderengine/gl/Program.cpp
 new file mode 100644
-index 0000000..26f6166
+index 0000000000000000000000000000000000000000..26f61667616b45058450b993026c5cced8ae92b4
 --- /dev/null
 +++ b/libs/renderengine/gl/Program.cpp
 @@ -0,0 +1,175 @@
@@ -4669,7 +4678,7 @@ index 0000000..26f6166
 +} // namespace android
 diff --git a/libs/renderengine/gl/Program.h b/libs/renderengine/gl/Program.h
 new file mode 100644
-index 0000000..41f1bf8
+index 0000000000000000000000000000000000000000..41f1bf865e2c3408bdee8c03ad566e1e3572178e
 --- /dev/null
 +++ b/libs/renderengine/gl/Program.h
 @@ -0,0 +1,120 @@
@@ -4795,7 +4804,7 @@ index 0000000..41f1bf8
 +#endif /* SF_RENDER_ENGINE_PROGRAM_H */
 diff --git a/libs/renderengine/gl/ProgramCache.cpp b/libs/renderengine/gl/ProgramCache.cpp
 new file mode 100644
-index 0000000..de22862
+index 0000000000000000000000000000000000000000..de2286288591d75a76adec6e287e27b5e25714dd
 --- /dev/null
 +++ b/libs/renderengine/gl/ProgramCache.cpp
 @@ -0,0 +1,802 @@
@@ -5603,7 +5612,7 @@ index 0000000..de22862
 +} // namespace android
 diff --git a/libs/renderengine/gl/ProgramCache.h b/libs/renderengine/gl/ProgramCache.h
 new file mode 100644
-index 0000000..83fef8e
+index 0000000000000000000000000000000000000000..83fef8e1dbfc41d3f5b24b1f42d601888c85a5c3
 --- /dev/null
 +++ b/libs/renderengine/gl/ProgramCache.h
 @@ -0,0 +1,233 @@
@@ -5842,7 +5851,7 @@ index 0000000..83fef8e
 +#endif /* SF_RENDER_ENGINE_PROGRAMCACHE_H */
 diff --git a/libs/renderengine/gl/filters/BlurFilter.cpp b/libs/renderengine/gl/filters/BlurFilter.cpp
 new file mode 100644
-index 0000000..3455e08
+index 0000000000000000000000000000000000000000..3455e08cfefd9291689d23b6e4ba15af7597c2a9
 --- /dev/null
 +++ b/libs/renderengine/gl/filters/BlurFilter.cpp
 @@ -0,0 +1,268 @@
@@ -6116,7 +6125,7 @@ index 0000000..3455e08
 +} // namespace android
 diff --git a/libs/renderengine/gl/filters/BlurFilter.h b/libs/renderengine/gl/filters/BlurFilter.h
 new file mode 100644
-index 0000000..593a8fd
+index 0000000000000000000000000000000000000000..593a8fd54ea4105859180d1d6bcf81f8379bd32c
 --- /dev/null
 +++ b/libs/renderengine/gl/filters/BlurFilter.h
 @@ -0,0 +1,95 @@
@@ -6217,7 +6226,7 @@ index 0000000..593a8fd
 +} // namespace android
 diff --git a/libs/renderengine/gl/filters/GenericProgram.cpp b/libs/renderengine/gl/filters/GenericProgram.cpp
 new file mode 100644
-index 0000000..bb35889
+index 0000000000000000000000000000000000000000..bb35889665d7ac73c228d123b8d959b84a49c35c
 --- /dev/null
 +++ b/libs/renderengine/gl/filters/GenericProgram.cpp
 @@ -0,0 +1,122 @@
@@ -6345,7 +6354,7 @@ index 0000000..bb35889
 +} // namespace android
 diff --git a/libs/renderengine/gl/filters/GenericProgram.h b/libs/renderengine/gl/filters/GenericProgram.h
 new file mode 100644
-index 0000000..6da2a5a
+index 0000000000000000000000000000000000000000..6da2a5af5855282d5c0426759e4b26d67134eb9f
 --- /dev/null
 +++ b/libs/renderengine/gl/filters/GenericProgram.h
 @@ -0,0 +1,51 @@
@@ -6402,7 +6411,7 @@ index 0000000..6da2a5a
 +} // namespace android
 diff --git a/libs/renderengine/include/renderengine/Framebuffer.h b/libs/renderengine/include/renderengine/Framebuffer.h
 new file mode 100644
-index 0000000..6511127
+index 0000000000000000000000000000000000000000..65111278e0c719601942f9dd74f7fb3667ce5152
 --- /dev/null
 +++ b/libs/renderengine/include/renderengine/Framebuffer.h
 @@ -0,0 +1,35 @@
@@ -6443,7 +6452,7 @@ index 0000000..6511127
 +} // namespace android
 diff --git a/libs/renderengine/include/renderengine/Image.h b/libs/renderengine/include/renderengine/Image.h
 new file mode 100644
-index 0000000..3bb4731
+index 0000000000000000000000000000000000000000..3bb47318ef83589529b408c1cef82ff43afb7f5d
 --- /dev/null
 +++ b/libs/renderengine/include/renderengine/Image.h
 @@ -0,0 +1,31 @@
@@ -6480,7 +6489,7 @@ index 0000000..3bb4731
 +} // namespace android
 diff --git a/libs/renderengine/include/renderengine/Mesh.h b/libs/renderengine/include/renderengine/Mesh.h
 new file mode 100644
-index 0000000..167f13f
+index 0000000000000000000000000000000000000000..167f13f1bc71b2d3e70cdd332d9ea3570f25885b
 --- /dev/null
 +++ b/libs/renderengine/include/renderengine/Mesh.h
 @@ -0,0 +1,205 @@
@@ -6690,7 +6699,7 @@ index 0000000..167f13f
 +} // namespace android
 +#endif /* SF_RENDER_ENGINE_MESH_H */
 diff --git a/libs/renderengine/include/renderengine/RenderEngine.h b/libs/renderengine/include/renderengine/RenderEngine.h
-index eba8766..6616fb7 100644
+index 6f9ba50fc1591cf4ea12dd376fa52025da083f57..95bcc011b77aa714d76791fe0f45e15120205623 100644
 --- a/libs/renderengine/include/renderengine/RenderEngine.h
 +++ b/libs/renderengine/include/renderengine/RenderEngine.h
 @@ -23,6 +23,8 @@
@@ -6702,7 +6711,7 @@ index eba8766..6616fb7 100644
  #include <renderengine/LayerSettings.h>
  #include <stdint.h>
  #include <sys/types.h>
-@@ -264,6 +266,8 @@ public:
+@@ -271,6 +273,8 @@ public:
      // being drawn, then the implementation is free to silently ignore this call.
      virtual void cleanupPostRender() = 0;
  
@@ -6713,7 +6722,7 @@ index eba8766..6616fb7 100644
      // implementation limits on the number of contexts that can be created at a
 diff --git a/libs/renderengine/include/renderengine/Texture.h b/libs/renderengine/include/renderengine/Texture.h
 new file mode 100644
-index 0000000..c69ace0
+index 0000000000000000000000000000000000000000..c69ace06031df78e92b1c7e1a71103046e958464
 --- /dev/null
 +++ b/libs/renderengine/include/renderengine/Texture.h
 @@ -0,0 +1,60 @@
@@ -6779,7 +6788,7 @@ index 0000000..c69ace0
 +#endif /* SF_RENDER_ENGINE_TEXTURE_H */
 diff --git a/libs/renderengine/include/renderengine/mock/Framebuffer.h b/libs/renderengine/include/renderengine/mock/Framebuffer.h
 new file mode 100644
-index 0000000..dfb6a4e
+index 0000000000000000000000000000000000000000..dfb6a4e41e8957bbc980eb8eb5d9dd746ecb1ab6
 --- /dev/null
 +++ b/libs/renderengine/include/renderengine/mock/Framebuffer.h
 @@ -0,0 +1,36 @@
@@ -6821,7 +6830,7 @@ index 0000000..dfb6a4e
 +} // namespace android
 diff --git a/libs/renderengine/include/renderengine/mock/Image.h b/libs/renderengine/include/renderengine/mock/Image.h
 new file mode 100644
-index 0000000..2b0eed1
+index 0000000000000000000000000000000000000000..2b0eed11733ebe9fa969f52fdda887f1c5d31dcc
 --- /dev/null
 +++ b/libs/renderengine/include/renderengine/mock/Image.h
 @@ -0,0 +1,36 @@
@@ -6862,7 +6871,7 @@ index 0000000..2b0eed1
 +} // namespace renderengine
 +} // namespace android
 diff --git a/libs/renderengine/include/renderengine/mock/RenderEngine.h b/libs/renderengine/include/renderengine/mock/RenderEngine.h
-index a71b759..f6b5204 100644
+index a71b759a373c3a38f20d0eb3f5857e9faafdae1a..f6b5204009e9a9b7e6a7d241e2bfc811bc41b495 100644
 --- a/libs/renderengine/include/renderengine/mock/RenderEngine.h
 +++ b/libs/renderengine/include/renderengine/mock/RenderEngine.h
 @@ -19,7 +19,9 @@
@@ -6877,7 +6886,7 @@ index a71b759..f6b5204 100644
  #include <ui/Region.h>
 diff --git a/libs/renderengine/include/renderengine/private/Description.h b/libs/renderengine/include/renderengine/private/Description.h
 new file mode 100644
-index 0000000..2873ad7
+index 0000000000000000000000000000000000000000..2873ad7148bbd58467c89309110bed0242cc89d6
 --- /dev/null
 +++ b/libs/renderengine/include/renderengine/private/Description.h
 @@ -0,0 +1,92 @@
@@ -6975,7 +6984,7 @@ index 0000000..2873ad7
 +#endif /* SF_RENDER_ENGINE_DESCRIPTION_H_ */
 diff --git a/libs/renderengine/mock/Framebuffer.cpp b/libs/renderengine/mock/Framebuffer.cpp
 new file mode 100644
-index 0000000..fbdcaab
+index 0000000000000000000000000000000000000000..fbdcaab6977e4e62d25f1f0a9576bb588ff115f4
 --- /dev/null
 +++ b/libs/renderengine/mock/Framebuffer.cpp
 @@ -0,0 +1,30 @@
@@ -7011,7 +7020,7 @@ index 0000000..fbdcaab
 +} // namespace android
 diff --git a/libs/renderengine/mock/Image.cpp b/libs/renderengine/mock/Image.cpp
 new file mode 100644
-index 0000000..57f4346
+index 0000000000000000000000000000000000000000..57f4346f8fc49859b724ed453c1ebe75a9116e3a
 --- /dev/null
 +++ b/libs/renderengine/mock/Image.cpp
 @@ -0,0 +1,30 @@
@@ -7046,40 +7055,19 @@ index 0000000..57f4346
 +} // namespace renderengine
 +} // namespace android
 diff --git a/libs/renderengine/skia/SkiaGLRenderEngine.cpp b/libs/renderengine/skia/SkiaGLRenderEngine.cpp
-index 291177d..2d85295 100644
+index 49a64e95fd441aeebe1347946af3bb77bc500918..8ca7845b1ed3151210ec94481a7782328ad4da32 100644
 --- a/libs/renderengine/skia/SkiaGLRenderEngine.cpp
 +++ b/libs/renderengine/skia/SkiaGLRenderEngine.cpp
-@@ -36,26 +36,17 @@
- #include <memory>
+@@ -37,7 +37,7 @@
  #include <numeric>
  
+ #include <common/Panopticon.h>
 -#include "GLExtensions.h"
 +#include "../gl/GLExtensions.h"
  #include "compat/SkiaGpuContext.h"
  
-+bool checkGlError(const char* op, int lineNumber);
-+
  namespace android {
- namespace renderengine {
- namespace skia {
- 
- using base::StringAppendF;
- 
--static bool checkGlError(const char* op, int lineNumber) {
--    bool errorFound = false;
--    GLint error = glGetError();
--    while (error != GL_NO_ERROR) {
--        errorFound = true;
--        error = glGetError();
--        ALOGV("after %s() (line # %d) glError (0x%x)\n", op, lineNumber, error);
--    }
--    return errorFound;
--}
--
- static status_t selectConfigForAttribute(EGLDisplay dpy, EGLint const* attrs, EGLint attribute,
-                                          EGLint wanted, EGLConfig* outConfig) {
-     EGLint numConfigs = -1, n = 0;
-@@ -158,7 +149,7 @@ std::unique_ptr<SkiaGLRenderEngine> SkiaGLRenderEngine::create(
+@@ -159,7 +159,7 @@ std::unique_ptr<SkiaGLRenderEngine> SkiaGLRenderEngine::create(
          LOG_ALWAYS_FATAL("eglQueryString(EGL_EXTENSIONS) failed");
      }
  
@@ -7088,7 +7076,7 @@ index 291177d..2d85295 100644
      extensions.initWithEGLStrings(eglVersion, eglExtensions);
  
      // The code assumes that ES2 or later is available if this extension is
-@@ -326,7 +317,7 @@ bool SkiaGLRenderEngine::supportsFastRotatedClipRRectAA() const {
+@@ -327,7 +327,7 @@ bool SkiaGLRenderEngine::supportsFastRotatedClipRRectAA() const {
  bool SkiaGLRenderEngine::supportsForwardPixelKill() const {
      // ARM gpu support this since 2013
      constexpr std::string kArm = "ARM";
@@ -7097,7 +7085,7 @@ index 291177d..2d85295 100644
  }
  bool SkiaGLRenderEngine::supportsProtectedContentImpl() const {
      return mProtectedEGLContext != EGL_NO_CONTEXT;
-@@ -377,8 +368,8 @@ base::unique_fd SkiaGLRenderEngine::flushAndSubmit(SkiaGpuContext* context,
+@@ -380,8 +380,8 @@ base::unique_fd SkiaGLRenderEngine::flushAndSubmit(SkiaGpuContext* context,
  }
  
  bool SkiaGLRenderEngine::waitGpuFence(base::borrowed_fd fenceFd) {
@@ -7108,7 +7096,7 @@ index 291177d..2d85295 100644
          return false;
      }
  
-@@ -413,7 +404,7 @@ bool SkiaGLRenderEngine::waitGpuFence(base::borrowed_fd fenceFd) {
+@@ -416,7 +416,7 @@ bool SkiaGLRenderEngine::waitGpuFence(base::borrowed_fd fenceFd) {
  
  base::unique_fd SkiaGLRenderEngine::flushGL() {
      SFTRACE_CALL();
@@ -7117,7 +7105,7 @@ index 291177d..2d85295 100644
          return base::unique_fd();
      }
  
-@@ -504,13 +495,13 @@ EGLContext SkiaGLRenderEngine::createEglContext(EGLDisplay display, EGLConfig co
+@@ -507,13 +507,13 @@ EGLContext SkiaGLRenderEngine::createEglContext(EGLDisplay display, EGLConfig co
  
  std::optional<RenderEngine::ContextPriority> SkiaGLRenderEngine::createContextPriority(
          const RenderEngineCreationArgs& args) {
@@ -7133,7 +7121,7 @@ index 291177d..2d85295 100644
                  return RenderEngine::ContextPriority::Realtime;
              } else {
                  ALOGI("Realtime priority unsupported, degrading gracefully to high priority");
-@@ -554,8 +545,8 @@ int SkiaGLRenderEngine::getContextPriority() {
+@@ -557,8 +557,8 @@ int SkiaGLRenderEngine::getContextPriority() {
  }
  
  void SkiaGLRenderEngine::appendBackendSpecificInfoToDump(std::string& result) {
@@ -7145,10 +7133,10 @@ index 291177d..2d85295 100644
      StringAppendF(&result, "%s\n", extensions.getEGLExtensions());
      StringAppendF(&result, "GLES: %s, %s, %s\n", extensions.getVendor(), extensions.getRenderer(),
 diff --git a/libs/renderengine/skia/SkiaRenderEngine.h b/libs/renderengine/skia/SkiaRenderEngine.h
-index 8c88a3d..cdc7c59 100644
+index 25aee95d43f09b69d19648177415c95f8bd25b46..54144b699c0de00babd4a8adbd7a243721a021d0 100644
 --- a/libs/renderengine/skia/SkiaRenderEngine.h
 +++ b/libs/renderengine/skia/SkiaRenderEngine.h
-@@ -69,6 +69,7 @@ public:
+@@ -78,6 +78,7 @@ public:
  
      std::future<void> primeCache(PrimeCacheConfig config) override;
      void cleanupPostRender() override final;
@@ -7157,7 +7145,7 @@ index 8c88a3d..cdc7c59 100644
          return mBlurFilter != nullptr;
      }
 diff --git a/libs/renderengine/tests/RenderEngineThreadedTest.cpp b/libs/renderengine/tests/RenderEngineThreadedTest.cpp
-index 8b95e6e..231dccd 100644
+index 8b95e6e2c1a576245437a3601dd9993875adb0c9..231dccd726876aa461c3c6c24ee3a91c142f5bb2 100644
 --- a/libs/renderengine/tests/RenderEngineThreadedTest.cpp
 +++ b/libs/renderengine/tests/RenderEngineThreadedTest.cpp
 @@ -73,6 +73,18 @@ TEST_F(RenderEngineThreadedTest, primeCache) {
@@ -7180,19 +7168,10 @@ index 8b95e6e..231dccd 100644
      size_t size = 20;
      EXPECT_CALL(*mRenderEngine, getMaxTextureSize()).WillOnce(Return(size));
 diff --git a/libs/renderengine/threaded/RenderEngineThreaded.cpp b/libs/renderengine/threaded/RenderEngineThreaded.cpp
-index ff052ab..a04709a 100644
+index 7f40fcb3471d6c21b9d48a06230a24f9606d39f8..107a50dbcfa1898ecd0d8b69f05694259ab710d8 100644
 --- a/libs/renderengine/threaded/RenderEngineThreaded.cpp
 +++ b/libs/renderengine/threaded/RenderEngineThreaded.cpp
-@@ -14,7 +14,7 @@
-  * limitations under the License.
-  */
- 
--#define ATRACE_TAG ATRACE_TAG_GRAPHICS
-+#define SFTRACE_TAG SDTRACE_TAG_GRAPHICS
- 
- #include "RenderEngineThreaded.h"
- 
-@@ -30,6 +30,8 @@
+@@ -32,6 +32,8 @@
  #include <private/gui/SyncFeatures.h>
  #include <processgroup/processgroup.h>
  
@@ -7201,7 +7180,7 @@ index ff052ab..a04709a 100644
  using namespace std::chrono_literals;
  
  namespace android {
-@@ -188,15 +190,43 @@ void RenderEngineThreaded::dump(std::string& result) {
+@@ -190,15 +192,43 @@ void RenderEngineThreaded::dump(std::string& result) {
  }
  
  void RenderEngineThreaded::genTextures(size_t count, uint32_t* names) {
@@ -7249,16 +7228,7 @@ index ff052ab..a04709a 100644
  }
  
  void RenderEngineThreaded::mapExternalTextureBuffer(const sp<GraphicBuffer>& buffer,
-@@ -300,7 +330,7 @@ ftl::Future<FenceResult> RenderEngineThreaded::drawLayers(
-                     SFTRACE_NAME("REThreaded::drawLayers");
-                     instance.updateProtectedContext(layers, {buffer.get()});
-                     instance.drawLayersInternal(std::move(resultPromise), display, layers, buffer,
--                                                base::unique_fd(fd));
-+                                                useFramebufferCache, base::unique_fd(fd));
-                 });
-     }
-     mCondition.notify_one();
-@@ -331,6 +361,20 @@ ftl::Future<FenceResult> RenderEngineThreaded::tonemapAndDrawGainmap(
+@@ -335,6 +365,20 @@ ftl::Future<FenceResult> RenderEngineThreaded::tonemapAndDrawGainmap(
      return resultFuture;
  }
  
@@ -7280,7 +7250,7 @@ index ff052ab..a04709a 100644
      std::promise<int> resultPromise;
      std::future<int> resultFuture = resultPromise.get_future();
 diff --git a/libs/renderengine/threaded/RenderEngineThreaded.h b/libs/renderengine/threaded/RenderEngineThreaded.h
-index 0e3ebec..49f315a 100644
+index 0e3ebec139dade181930f34f584580625f1905bb..49f315aaa66668eca4d62937c8329e4f8f4a10cb 100644
 --- a/libs/renderengine/threaded/RenderEngineThreaded.h
 +++ b/libs/renderengine/threaded/RenderEngineThreaded.h
 @@ -63,6 +63,7 @@ public:
@@ -7292,7 +7262,7 @@ index 0e3ebec..49f315a 100644
      bool supportsBackgroundBlur() override;
      void onActiveDisplaySizeChanged(ui::Size size) override;
 diff --git a/services/surfaceflinger/Layer.cpp b/services/surfaceflinger/Layer.cpp
-index e94912d..318eb18 100644
+index 482d1c5f4f978ff3b2225f447298aebfae31d186..21c2b7e08f55f56f6eec6e9b48037eb4923c4b1b 100644
 --- a/services/surfaceflinger/Layer.cpp
 +++ b/services/surfaceflinger/Layer.cpp
 @@ -134,8 +134,8 @@ Layer::Layer(const surfaceflinger::LayerCreationArgs& args)
@@ -7306,7 +7276,7 @@ index e94912d..318eb18 100644
      ALOGV("Creating Layer %s", getDebugName());
  
      mDrawingState.crop = {0, 0, -1, -1};
-@@ -162,8 +162,6 @@ Layer::Layer(const surfaceflinger::LayerCreationArgs& args)
+@@ -160,8 +160,6 @@ Layer::Layer(const surfaceflinger::LayerCreationArgs& args)
      mPotentialCursor = args.flags & ISurfaceComposerClient::eCursorWindow;
      mLayerFEs.emplace_back(frontend::LayerHierarchy::TraversalPath{static_cast<uint32_t>(sequence)},
                             args.flinger->getFactory().createLayerFE(mName, this));
@@ -7315,7 +7285,7 @@ index e94912d..318eb18 100644
  }
  
  void Layer::onFirstRef() {
-@@ -179,13 +177,7 @@ Layer::~Layer() {
+@@ -177,13 +175,7 @@ Layer::~Layer() {
                                    mBufferInfo.mBuffer->getBuffer(), mBufferInfo.mFrameNumber,
                                    mBufferInfo.mFence);
      }
@@ -7331,7 +7301,7 @@ index e94912d..318eb18 100644
      mFlinger->mTimeStats->onDestroy(layerId);
      mFlinger->mFrameTracer->onDestroy(layerId);
 diff --git a/services/surfaceflinger/Layer.h b/services/surfaceflinger/Layer.h
-index 94d5b00..242a051 100644
+index 3940a4a199bdcc0cc3cc25ede8afe7d08bc764b0..ba758bfce8df5bdac1ac378267a8b8f59fcb7ca7 100644
 --- a/services/surfaceflinger/Layer.h
 +++ b/services/surfaceflinger/Layer.h
 @@ -25,6 +25,8 @@
@@ -7344,10 +7314,10 @@ index 94d5b00..242a051 100644
  #include <ui/BlurRegion.h>
  #include <ui/DisplayMap.h>
 diff --git a/services/surfaceflinger/SurfaceFlinger.cpp b/services/surfaceflinger/SurfaceFlinger.cpp
-index 17e8e1b..c8a3e00 100644
+index 57f847469632b802843545b06c4d5355d613192c..07bbea21a7b048961e155ec7cb125bb9e3fe90cd 100644
 --- a/services/surfaceflinger/SurfaceFlinger.cpp
 +++ b/services/surfaceflinger/SurfaceFlinger.cpp
-@@ -20,7 +20,8 @@
+@@ -21,7 +21,8 @@
  #pragma clang diagnostic ignored "-Wextra"
  
  // #define LOG_NDEBUG 0
@@ -7357,7 +7327,7 @@ index 17e8e1b..c8a3e00 100644
  
  #include "SurfaceFlinger.h"
  
-@@ -891,7 +892,7 @@ uint32_t SurfaceFlinger::getNewTexture() {
+@@ -900,7 +901,7 @@ uint32_t SurfaceFlinger::getNewTexture() {
          if (!mTexturePool.empty()) {
              uint32_t name = mTexturePool.back();
              mTexturePool.pop_back();
@@ -7366,7 +7336,7 @@ index 17e8e1b..c8a3e00 100644
              return name;
          }
  
-@@ -918,7 +919,7 @@ void SurfaceFlinger::deleteTextureAsync(uint32_t texture) {
+@@ -927,7 +928,7 @@ void SurfaceFlinger::deleteTextureAsync(uint32_t texture) {
      // We don't change the pool size, so the fix-up logic in postComposition will decide whether
      // to actually delete this or not based on mTexturePoolSize
      mTexturePool.push_back(texture);
@@ -7375,7 +7345,7 @@ index 17e8e1b..c8a3e00 100644
  }
  
  void chooseRenderEngineType(renderengine::RenderEngineCreationArgs::Builder& builder) {
-@@ -3874,13 +3875,13 @@ void SurfaceFlinger::onCompositionPresented(PhysicalDisplayId pacesetterId,
+@@ -4079,13 +4080,13 @@ void SurfaceFlinger::onCompositionPresented(PhysicalDisplayId pacesetterId,
              const size_t offset = mTexturePool.size();
              mTexturePool.resize(mTexturePoolSize);
              getRenderEngine().genTextures(refillCount, mTexturePool.data() + offset);
@@ -7391,17 +7361,17 @@ index 17e8e1b..c8a3e00 100644
          }
      }
  
-@@ -4547,6 +4548,8 @@ void SurfaceFlinger::processDisplayChanged(const wp<IBinder>& displayToken,
- 
+@@ -4769,6 +4770,8 @@ void SurfaceFlinger::processDisplayChanged(const wp<IBinder>& displayToken,
+     }();
      // Recreate the DisplayDevice if the surface or sequence ID changed.
-     if (currentBinder != drawingBinder || currentState.sequenceId != drawingState.sequenceId) {
+     if (didVirtualDisplaySurfaceChange || currentState.sequenceId != drawingState.sequenceId) {
 +        getRenderEngine().cleanFramebufferCache();
 +
          if (const auto display = getDisplayDeviceLocked(displayToken)) {
              display->disconnect();
              if (const auto virtualDisplayIdVariant = display->getVirtualDisplayIdVariant()) {
 diff --git a/services/surfaceflinger/tests/unittests/CompositionTest.cpp b/services/surfaceflinger/tests/unittests/CompositionTest.cpp
-index 4f553d9..bff9d23 100644
+index 4f553d970fd21b8827b5da1931d72701b54b4686..bff9d23de07383ffe2208deb4992669a3606bcb2 100644
 --- a/services/surfaceflinger/tests/unittests/CompositionTest.cpp
 +++ b/services/surfaceflinger/tests/unittests/CompositionTest.cpp
 @@ -32,6 +32,8 @@
@@ -7413,6 +7383,3 @@ index 4f553d9..bff9d23 100644
  #include <renderengine/mock/RenderEngine.h>
  #include <system/window.h>
  #include <utils/String8.h>
--- 
-2.53.0
-

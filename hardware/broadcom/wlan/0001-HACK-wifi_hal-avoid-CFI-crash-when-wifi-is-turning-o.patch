@@ -1,4 +1,4 @@
-From c15e22bdcc614547e54418dc7ffe12b0d3603599 Mon Sep 17 00:00:00 2001
+From d36acf1dc910d5e8b1efbac753b1ef07925b5541 Mon Sep 17 00:00:00 2001
 From: Yaroslav Zviezda <acroreiser@gmail.com>
 Date: Wed, 13 May 2026 17:50:04 -0400
 Subject: [PATCH] HACK: wifi_hal: avoid CFI crash when wifi is turning off
@@ -9,7 +9,7 @@ Change-Id: I41124a4d7f53b56731133203d6fe06805c9cbbe3
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/bcmdhd/wifi_hal/wifi_hal.cpp b/bcmdhd/wifi_hal/wifi_hal.cpp
-index 404a104..2bbc818 100644
+index 28b0a226d9590817030e3a597cb98f354f3bb128..1b0e577c6aeca98fca61fb0c026fa8c3842f4d08 100644
 --- a/bcmdhd/wifi_hal/wifi_hal.cpp
 +++ b/bcmdhd/wifi_hal/wifi_hal.cpp
 @@ -750,7 +750,7 @@ void wifi_cleanup(wifi_handle handle, wifi_cleaned_up_handler cleaned_up_handler
@@ -21,6 +21,3 @@ index 404a104..2bbc818 100644
          int num_cmd = info->num_cmd;
          cmd_info *cmdi = &(info->cmd[bad_commands]);
          WifiCommand *cmd = cmdi->cmd;
--- 
-2.53.0
-

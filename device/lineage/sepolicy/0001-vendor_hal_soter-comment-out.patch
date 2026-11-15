@@ -1,4 +1,4 @@
-From fb387e59932eb069a16567383cabd5abd5a5b526 Mon Sep 17 00:00:00 2001
+From c7c2678ef078546be6fa43efdf2382723714237d Mon Sep 17 00:00:00 2001
 From: Yaroslav Zviezda <acroreiser@gmail.com>
 Date: Mon, 18 May 2026 17:03:52 -0400
 Subject: [PATCH] vendor_hal_soter: comment out
@@ -8,17 +8,18 @@ but vendor_hal_soter actually unused at the moment.
 Would be good to get rid of this patch later.
 
 Change-Id: I2c78c576e595e771577d989c1c3b6520a593c90f
+
+Adapt both platform_app and platform_app_36 rules for Android 17.
 ---
- qcom/private/platform_app.te | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ qcom/private/platform_app.te | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/qcom/private/platform_app.te b/qcom/private/platform_app.te
-index 87bd5c6..bafea21 100644
+index 2c8e854239a66b527fb079358edb3663e7d138bd..22b0f9fabe52b63e605bedcb0aa693c6fa57b106 100644
 --- a/qcom/private/platform_app.te
 +++ b/qcom/private/platform_app.te
-@@ -1 +1 @@
+@@ -1,2 +1,2 @@
 -hal_client_domain(platform_app, vendor_hal_soter)
+-hal_client_domain(platform_app_36, vendor_hal_soter)
 +#hal_client_domain(platform_app, vendor_hal_soter)
--- 
-2.53.0
-
++#hal_client_domain(platform_app_36, vendor_hal_soter)

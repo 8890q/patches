@@ -1,7 +1,7 @@
-From dd67a1022d799a4b60571362d943730955e0ab40 Mon Sep 17 00:00:00 2001
+From fffb3f420f5615e59d93279b5a2d1ceb52324a89 Mon Sep 17 00:00:00 2001
 From: Yaroslav Zviezda <acroreiser@gmail.com>
 Date: Sun, 22 Mar 2026 14:53:12 -0400
-Subject: [PATCH 2/2] Revert "libprocessgroup: CgroupSetup should fail if a
+Subject: [PATCH] Revert "libprocessgroup: CgroupSetup should fail if a
  required controller fails to mount"
 
 This reverts commit 70daa2851508e56af3fcf685851b40f7c7f997d0.
@@ -10,10 +10,10 @@ This reverts commit 70daa2851508e56af3fcf685851b40f7c7f997d0.
  1 file changed, 3 insertions(+), 3 deletions(-)
 
 diff --git a/libprocessgroup/setup/cgroup_map_write.cpp b/libprocessgroup/setup/cgroup_map_write.cpp
-index 899b4e9..458e4cd 100644
+index 0b26e9568e9d2cb6d94ae2287592069cf79ef95d..f497a8ae2569cf3da38b81808631e2bc234bfdae 100644
 --- a/libprocessgroup/setup/cgroup_map_write.cpp
 +++ b/libprocessgroup/setup/cgroup_map_write.cpp
-@@ -174,7 +174,7 @@ static bool ActivateV2CgroupController(const CgroupDescriptor& descriptor) {
+@@ -173,7 +173,7 @@ static bool ActivateV2CgroupController(const CgroupDescriptor& descriptor) {
  
      if (!Mkdir(controller->path(), descriptor.mode(), descriptor.uid(), descriptor.gid())) {
          LOG(ERROR) << "Failed to create directory for " << controller->name() << " cgroup";
@@ -22,7 +22,7 @@ index 899b4e9..458e4cd 100644
      }
  
      return ::ActivateControllers(controller->path(), {{controller->name(), descriptor}});
-@@ -291,8 +291,8 @@ bool CgroupSetup() {
+@@ -290,8 +290,8 @@ bool CgroupSetup() {
          }
  
          if (!SetupCgroup(descriptor)) {
@@ -33,6 +33,3 @@ index 899b4e9..458e4cd 100644
          }
      }
  
--- 
-2.53.0
-

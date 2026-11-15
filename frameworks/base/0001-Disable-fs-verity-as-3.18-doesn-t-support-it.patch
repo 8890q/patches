@@ -1,7 +1,7 @@
-From b03842732b69f1591948c3360a627b95a7a652f7 Mon Sep 17 00:00:00 2001
+From d48a92ddcbd500317a3c222e21c3ad600f7ee82e Mon Sep 17 00:00:00 2001
 From: UDPSendToFailed <udpsendtofailed@gmail.com>
 Date: Sat, 24 Jan 2026 17:04:19 +0100
-Subject: [PATCH 1/8] Disable fs-verity as 3.18 doesn't support it
+Subject: [PATCH] Disable fs-verity as 3.18 doesn't support it
 
 01-24 15:28:46.713  1277  1306 E AccessPersistence: Failed to verity-protect runtime-permissions
 01-24 15:28:46.713  1277  1306 E AccessPersistence: java.io.IOException: Failed to enable fs-verity on FD(400): Inappropriate ioctl for device
@@ -25,7 +25,7 @@ Change-Id: Ib30d8a5a277588b4480155067953c8e6efd71b16
  1 file changed, 3 insertions(+), 11 deletions(-)
 
 diff --git a/core/java/com/android/internal/security/VerityUtils.java b/core/java/com/android/internal/security/VerityUtils.java
-index ac186d0a2..7a78cb612 100644
+index ac186d0a26b54d28a4600344fad1e191ec641dd8..7a78cb61276150ea874e6df03b3032fa2049ba0a 100644
 --- a/core/java/com/android/internal/security/VerityUtils.java
 +++ b/core/java/com/android/internal/security/VerityUtils.java
 @@ -56,25 +56,17 @@ public abstract class VerityUtils {
@@ -57,6 +57,3 @@ index ac186d0a2..7a78cb612 100644
      }
  
      /** Returns whether the file has fs-verity enabled. */
--- 
-2.53.0
-

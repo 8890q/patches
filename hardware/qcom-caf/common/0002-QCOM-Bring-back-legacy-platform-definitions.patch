@@ -1,7 +1,7 @@
-From 35193acc0c72ec10dd35d7c6d4adb2bf3356a307 Mon Sep 17 00:00:00 2001
+From d9a166a71dfd969f7a089a21c9a1cc0b29a085f9 Mon Sep 17 00:00:00 2001
 From: TARKZiM <tom8476oo@gmail.com>
 Date: Fri, 24 Oct 2025 00:07:47 +0300
-Subject: [PATCH 2/2] QCOM: Bring back legacy platform definitions
+Subject: [PATCH] QCOM: Bring back legacy platform definitions
 
 Change-Id: I5d8396f86fea34d14b83a0514f8e46efc6c260ff
 ---
@@ -10,7 +10,7 @@ Change-Id: I5d8396f86fea34d14b83a0514f8e46efc6c260ff
  2 files changed, 26 insertions(+)
 
 diff --git a/qcom_boards.mk b/qcom_boards.mk
-index 62ae73d..66881a8 100644
+index 942809678787d3a38f7deb653553229afb0d6fe0..03a28c748ce55e033040ac3e55fdfe7c9d705681 100644
 --- a/qcom_boards.mk
 +++ b/qcom_boards.mk
 @@ -1,6 +1,27 @@
@@ -42,7 +42,7 @@ index 62ae73d..66881a8 100644
  QCOM_BOARD_PLATFORMS += msm8937
  QCOM_BOARD_PLATFORMS += msm8953
 diff --git a/qcom_defs.mk b/qcom_defs.mk
-index 42d505d..0e568da 100644
+index 66d7dbd4798d594cc1621b59b9a0683be454eb4b..1dd144b5f23678268b7854ddeb73ca3b46ba10eb 100644
 --- a/qcom_defs.mk
 +++ b/qcom_defs.mk
 @@ -2,6 +2,11 @@
@@ -57,6 +57,3 @@ index 42d505d..0e568da 100644
  # UM families
  UM_3_18_FAMILY := msm8996 msm8937 msm8953
  UM_4_4_FAMILY := msm8998 sdm660
--- 
-2.53.0
-

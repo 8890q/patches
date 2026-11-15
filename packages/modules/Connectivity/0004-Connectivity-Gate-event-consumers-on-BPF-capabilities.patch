@@ -1,0 +1,116 @@
+From 88110bc860ca14bcf3a7cc31ca1b72853cb8f822 Mon Sep 17 00:00:00 2001
+From: ivanmeler <i_ivan@windowslive.com>
+Date: Sun, 15 Nov 2026 21:43:51 +0000
+Subject: [PATCH] Connectivity: Gate new event consumers on loaded BPF
+ capabilities
+
+The 5.4 program set has no local-network note-op or loopback event ring buffers. Avoid aborting system_server by opening missing buffers, and keep permission propagation and event-dependent features disabled when the required programs are absent. Existing UID-based local-network restrictions remain available. Modern program sets keep the upstream behavior.
+
+Change-Id: I7eee98e58862df41dce580434a6942ad932a185f
+---
+ .../libeventpolling/LoopbackEventHandler.cpp  |  2 ++
+ .../src/com/android/server/BpfNetMaps.java    | 20 +++++++++++++++----
+ .../android/server/ConnectivityService.java   |  3 ++-
+ .../connectivity/PermissionMonitor.java       |  3 ++-
+ 4 files changed, 22 insertions(+), 6 deletions(-)
+
+diff --git a/service/native/libs/libeventpolling/LoopbackEventHandler.cpp b/service/native/libs/libeventpolling/LoopbackEventHandler.cpp
+index 942bbf653b0feffe28bd9cad2d99315398cc05bb..da10a425cb8371b9e23ab9244096606e34a75bed 100644
+--- a/service/native/libs/libeventpolling/LoopbackEventHandler.cpp
++++ b/service/native/libs/libeventpolling/LoopbackEventHandler.cpp
+@@ -51,6 +51,8 @@ uint32_t convertLoopbackResult(uint32_t result) {
+ // static
+ bpf::RingbufEventPoller<LoopbackAccessEvent> *
+ LoopbackEventHandler::GetPoller() {
++    if (!bpf::isAtLeastKernelVersion(5, 10)) return nullptr;
++
+     static bpf::RingbufEventPoller<LoopbackAccessEvent> *const sPoller =
+         []() -> bpf::RingbufEventPoller<LoopbackAccessEvent> * {
+         auto rb = std::make_unique<BpfRingbuf<LoopbackAccessEvent>>(
+diff --git a/service/src/com/android/server/BpfNetMaps.java b/service/src/com/android/server/BpfNetMaps.java
+index c1a47997afe4100f8e75d0d49f49fdf0b7757411..0d1380baff04bde15e4d3d4d017bb6b153becfd7 100644
+--- a/service/src/com/android/server/BpfNetMaps.java
++++ b/service/src/com/android/server/BpfNetMaps.java
+@@ -170,6 +170,16 @@ public class BpfNetMaps {
+     }
+ 
+     private static final String TAG = "BpfNetMaps";
++
++    /** Whether the loaded BPF program set supports local-network access events. */
++    public static boolean isLocalNetEventSupported() {
++        return new File("/sys/fs/bpf/netd_shared/map_netd_local_net_note_op_ringbuf").exists();
++    }
++
++    private static boolean isLoopbackEventSupported() {
++        return new File("/sys/fs/bpf/netd_shared/map_netd_loopback_access_ringbuf").exists();
++    }
++
+     private final INetd mNetd;
+     private final Dependencies mDeps;
+     // Use legacy netd for releases before T.
+@@ -889,7 +899,7 @@ public class BpfNetMaps {
+          * @see com.android.tethering.flags.Flags#loopbackAccessMetrics()
+          */
+         public boolean isLoopbackAccessMetricsEnabled() {
+-            return SdkUtil.isAtLeast25Q4()
++            return SdkUtil.isAtLeast25Q4() && isLoopbackEventSupported()
+                     && com.android.tethering.flags.Flags.loopbackAccessMetrics();
+         }
+ 
+@@ -901,7 +911,7 @@ public class BpfNetMaps {
+          * @see android.permission.flags.Flags#useLoopbackInterfacePermissionEnabled()
+          */
+         public boolean isLoopbackChecksEnabled() {
+-            return SdkLevel.isAtLeastB()
++            return SdkLevel.isAtLeastB() && isLoopbackEventSupported()
+                     && android.permission.flags.Flags.useLoopbackInterfacePermissionEnabled();
+         }
+ 
+@@ -915,7 +925,8 @@ public class BpfNetMaps {
+         public boolean isAccessLocalNetworkPermissionEnabled() {
+             // Local network permission will be supported from Android C+, update this when
+             // isAtLeastC() is available.
+-            return SdkLevel.isAtLeastB() && accessLocalNetworkPermissionEnabled();
++            return SdkLevel.isAtLeastB() && isLocalNetEventSupported()
++                    && accessLocalNetworkPermissionEnabled();
+         }
+ 
+         /**
+@@ -926,7 +937,8 @@ public class BpfNetMaps {
+          * @see com.android.tethering.flags.Flags#collectBetaMetrics()
+          */
+         public boolean isBetaMetricsEnabled() {
+-            return SdkLevel.isAtLeastB() && com.android.tethering.flags.Flags.collectBetaMetrics();
++            return SdkLevel.isAtLeastB() && isLocalNetEventSupported()
++                    && com.android.tethering.flags.Flags.collectBetaMetrics();
+         }
+ 
+         public boolean isL4sProgramLoaded() {
+diff --git a/service/src/com/android/server/ConnectivityService.java b/service/src/com/android/server/ConnectivityService.java
+index 7682d5082635aeaa6f36c555c51f0ab2c17932c6..b85472a3a20c24be92690b1345902ec5ee70746c 100644
+--- a/service/src/com/android/server/ConnectivityService.java
++++ b/service/src/com/android/server/ConnectivityService.java
+@@ -2655,7 +2655,8 @@ public class ConnectivityService extends IConnectivityManager.Stub
+                 ? mDeps.makeMultiProxyTracker(mContext, mHandler)
+                 : mDeps.makeProxyTracker(mContext, mHandler);
+ 
+-        if (mDeps.isAtLeastB()) {
++        if (mDeps.isAtLeastB() && (mBpfNetMaps.isLocalNetMetricsEnabled()
++                || mBpfNetMaps.isAccessLocalNetworkPermissionEnabled())) {
+             mLocalNetEventListener = mDeps.getLocalNetEventListener(
+                     mContext,
+                     mHandler.getLooper(),
+diff --git a/service/src/com/android/server/connectivity/PermissionMonitor.java b/service/src/com/android/server/connectivity/PermissionMonitor.java
+index 0f88270c297c0a673f984a35cd6a100e0b9ec1fe..f703a1a85b050f2b665fccb44909626f3338f14d 100755
+--- a/service/src/com/android/server/connectivity/PermissionMonitor.java
++++ b/service/src/com/android/server/connectivity/PermissionMonitor.java
+@@ -415,7 +415,8 @@ public class PermissionMonitor {
+          * @see android.permission.flags.Flags#accessLocalNetworkPermissionEnabled()
+          */
+         public boolean isAccessLocalNetworkPermissionEnabled() {
+-            return accessLocalNetworkPermissionEnabled();
++            return com.android.server.BpfNetMaps.isLocalNetEventSupported()
++                    && accessLocalNetworkPermissionEnabled();
+         }
+     }
+ 

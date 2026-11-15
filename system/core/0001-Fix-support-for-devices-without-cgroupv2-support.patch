@@ -1,7 +1,7 @@
-From 794539d54064f5329d65b00ef2bb2ae33f39c95f Mon Sep 17 00:00:00 2001
+From 2328d4db60c166c8ab6224a5b930c5c78e100949 Mon Sep 17 00:00:00 2001
 From: Pierre-Hugues Husson <phh@phh.me>
 Date: Wed, 26 Oct 2022 17:59:11 -0400
-Subject: [PATCH 1/2] Fix support for devices without cgroupv2 support
+Subject: [PATCH] Fix support for devices without cgroupv2 support
 
 This is technically a revert of 1bd1746447.
 The warning inside the commit doesn't really apply to us, because the
@@ -12,10 +12,10 @@ devices without cgroupv2 simply won't freeze processes at all
  1 file changed, 3 insertions(+)
 
 diff --git a/init/service.cpp b/init/service.cpp
-index dbae8a7..2d2b12e 100644
+index e761285644ece20d726d83439a8492ea9a905612..f7053618a60f804ee980a499a8cc673c26398839 100644
 --- a/init/service.cpp
 +++ b/init/service.cpp
-@@ -739,12 +739,15 @@ Result<void> Service::Start() {
+@@ -758,12 +758,15 @@ Result<void> Service::Start() {
                           limit_percent_ != -1 || !limit_property_.empty();
          errno = -createProcessGroup(uid(), pid_, use_memcg);
          if (errno != 0) {
@@ -31,6 +31,3 @@ index dbae8a7..2d2b12e 100644
          }
  
          // When the blkio controller is mounted in the v1 hierarchy, NormalIoPriority is
--- 
-2.53.0
-

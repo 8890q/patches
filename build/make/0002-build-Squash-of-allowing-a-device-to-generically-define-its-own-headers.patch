@@ -1,4 +1,4 @@
-From c0aa838fe654dabc6e8e4990b67715b4b1f6ad8d Mon Sep 17 00:00:00 2001
+From 78c73e294bd2372ef98055a986e1001c163b5227 Mon Sep 17 00:00:00 2001
 From: Ricardo Cerqueira <cyanogenmod@cerqueira.org>
 Date: Tue, 12 Apr 2011 10:57:22 +0100
 Subject: [PATCH] build: Squash of allowing a device to generically define its
@@ -47,10 +47,10 @@ Signed-off-by: ivanmeler <i_ivan@windowslive.com>
  2 files changed, 6 insertions(+)
 
 diff --git a/core/binary.mk b/core/binary.mk
-index 825d58f55db347be08fb74e63cd03a420eb08a59..a6abdb8de6c3d136b07ff8447932fe344fa9d35d 100644
+index cb23c452205d6bd53c627f6bda6f77c3f1e36948..fd9c0f5a8e83e834a5c05b4351952967e4349966 100644
 --- a/core/binary.mk
 +++ b/core/binary.mk
-@@ -1401,6 +1401,11 @@ my_tracked_gen_files :=
+@@ -1428,6 +1428,11 @@ my_tracked_gen_files :=
  $(foreach f,$(my_tracked_src_files),$(eval my_src_file_obj_$(s):=))
  my_tracked_src_files :=
  
@@ -63,10 +63,10 @@ index 825d58f55db347be08fb74e63cd03a420eb08a59..a6abdb8de6c3d136b07ff8447932fe34
  
  my_c_includes := $(foreach inc,$(my_c_includes),$(call clean-path,$(inc)))
 diff --git a/core/soong_config.mk b/core/soong_config.mk
-index d5771f1552529227b14355c14e6277e64ecee65f..f65550fa540f9438ed52239e39b4b5b7b70d4ddf 100644
+index df578322c4a2d9d5cedb68c29110d5877f26f82f..c76528cba2db6d019bdd60a17df93d7e469e24ee 100644
 --- a/core/soong_config.mk
 +++ b/core/soong_config.mk
-@@ -148,6 +148,7 @@ $(call add_json_list, NativeCoverageExcludePaths,        $(NATIVE_COVERAGE_EXCLU
+@@ -157,6 +157,7 @@ $(call add_json_list, NativeCoverageExcludePaths,        $(NATIVE_COVERAGE_EXCLU
  $(call add_json_bool, ArtUseReadBarrier,                 $(call invert_bool,$(filter false,$(PRODUCT_ART_USE_READ_BARRIER))))
  $(call add_json_str,  BtConfigIncludeDir,                $(BOARD_BLUETOOTH_BDROID_BUILDCFG_INCLUDE_DIR))
  $(call add_json_list, DeviceKernelHeaders,               $(TARGET_DEVICE_KERNEL_HEADERS) $(TARGET_BOARD_KERNEL_HEADERS) $(TARGET_PRODUCT_KERNEL_HEADERS))
