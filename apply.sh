@@ -78,6 +78,5 @@ apply_patches_for system/memory/libmeminfo
 apply_patches_for system/sepolicy
 apply_patches_for system/tools/hidl
 apply_patches_for system/tools/mkbootimg
-apply_patches_for vendor/lineage
 
 echo "done"
