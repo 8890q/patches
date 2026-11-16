@@ -61,6 +61,7 @@ apply_patches_for build/make
 apply_patches_for build/release
 apply_patches_for build/soong
 apply_patches_for device/lineage/sepolicy
+apply_patches_for external/wpa_supplicant_8
 apply_patches_for frameworks/av
 apply_patches_for frameworks/base
 apply_patches_for frameworks/hardware/interfaces
@@ -75,6 +76,7 @@ apply_patches_for system/core
 apply_patches_for system/libhidl
 apply_patches_for system/libhwbinder
 apply_patches_for system/memory/libmeminfo
+apply_patches_for system/memory/lmkd
 apply_patches_for system/sepolicy
 apply_patches_for system/tools/hidl
 apply_patches_for system/tools/mkbootimg
