@@ -1,0 +1,24 @@
+From 9698e880f738fb1f3c11cf4508e313e039738148 Mon Sep 17 00:00:00 2001
+From: ivanmeler <i_ivan@windowslive.com>
+Date: Mon, 16 Nov 2026 11:52:09 +0000
+Subject: [PATCH] health: allow userspace power-supply event filtering
+
+HealthLoop already falls back to RecvUevents when its optional BPF socket filter cannot be attached. Do not mark that optimization critical: a legacy verifier rejecting the loop must not fail bpfloader and reboot Android before the health service can use its existing fallback. Keep the filter algorithm and all other BPF requirements unchanged.
+
+Change-Id: Ic79838f19d38a11807745325f33f4a85a855d337
+---
+ health/utils/libhealthloop/filterPowerSupplyEvents.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/health/utils/libhealthloop/filterPowerSupplyEvents.c b/health/utils/libhealthloop/filterPowerSupplyEvents.c
+index 6f295c7..53beacc 100644
+--- a/health/utils/libhealthloop/filterPowerSupplyEvents.c
++++ b/health/utils/libhealthloop/filterPowerSupplyEvents.c
+@@ -76,4 +76,6 @@ DEFINE_BPF_PROG("skfilter/power_supply", AID_ROOT, AID_SYSTEM, skfilter_power_su
+ }
+ 
+ LICENSE("Apache 2.0");
+-CRITICAL("healthd");
++// HealthLoop also filters power-supply uevents in userspace when this
++// optional socket filter is unavailable. Do not make its load failure
++// fatal to bpfloader on kernels without bounded-loop verification.

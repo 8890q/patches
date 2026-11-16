@@ -384,7 +384,7 @@
     {
       "project": "hardware/interfaces",
       "base": "a0221f11248a924532444fc7de85d41998b9fe1e",
-      "head": "0c0bd86095bd8fc378e1c4ec0fe74d4861b953c5",
+      "head": "9698e880f738fb1f3c11cf4508e313e039738148",
       "upstream_url": "https://github.com/LineageOS/android_hardware_interfaces",
       "upstream_branch": "lineage-24.0",
       "patches": [
@@ -401,11 +401,18 @@
           "subject": "radio: Fix linker errors for legacy /vendor/bin/hw/rild",
           "patch_id": "aac8c8a79de44af14ff43c32c1dcafe9d11a1978",
           "sha256": "f7449d1c7fc3f225e96eb5345eda6f5eed8e02500fc71a02790eabc3fc61db70"
+        },
+        {
+          "file": "hardware/interfaces/0003-health-allow-userspace-power-supply-event-filtering.patch",
+          "commit": "9698e880f738fb1f3c11cf4508e313e039738148",
+          "subject": "health: allow userspace power-supply event filtering",
+          "patch_id": "11b259d3ef6a4009afb2498621b8e3ea7895f169",
+          "sha256": "cbe88fa91e6fc3640d78a8411dd683d5a8bbba711e3a7cec928eee29a542b80b"
         }
       ],
       "base_tree": "aec4c2c8592d096ca8fc31d4853cd43794364afe",
-      "target_tree": "1176aae1f06424e914abdaec0f92d3465acafde2",
-      "validation": "PASS: exact tree replay"
+      "target_tree": "93e1b94043cebdd2390392b66da2ada9e9c23062",
+      "validation": "Source diff checked; compilation deferred to user."
     },
     {
       "project": "hardware/libhardware",
