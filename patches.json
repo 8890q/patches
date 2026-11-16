@@ -709,6 +709,25 @@
       "base_tree": "1cf51170300e76591f6d630bd2c6fc1debb80cbf",
       "target_tree": "eda4da0c3a29b8e31c6b982f76ddd7ce93d3b7c9",
       "validation": "Patch replay and whitespace checks pass; no build run. Runtime validation pending user build."
+    },
+    {
+      "project": "external/wpa_supplicant_8",
+      "base": "4d70ee052a9f65038a24ec7ea2f2bb3f92b17277",
+      "head": "dd3b47be62d159778382af2900bca2310a662eef",
+      "upstream_url": "https://github.com/LineageOS/android_external_wpa_supplicant_8",
+      "upstream_branch": "lineage-24.0",
+      "patches": [
+        {
+          "file": "external/wpa_supplicant_8/0001-Supplicant-AIDL-accept-successful-driver-command-replies.patch",
+          "commit": "dd3b47be62d159778382af2900bca2310a662eef",
+          "subject": "Supplicant AIDL: accept successful driver command replies",
+          "patch_id": "d18dbed016f44a27465ab6130a24fd1eb62059df",
+          "sha256": "2dd4eaf23765ece67d149cc98a3dea554c45c0cb3b708c0960fae94972c8b165"
+        }
+      ],
+      "base_tree": "9d58a96a986dd304d27575a493351049b06148e7",
+      "target_tree": "33af90b22b4cce86e259d3f304f693dce6137b30",
+      "validation": "Patch replay and whitespace checks pass; runtime test awaits user build of wpa_supplicant."
     }
   ]
 }

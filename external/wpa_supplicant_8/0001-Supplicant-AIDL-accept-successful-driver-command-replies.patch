@@ -1,0 +1,25 @@
+From dd3b47be62d159778382af2900bca2310a662eef Mon Sep 17 00:00:00 2001
+From: ivanmeler <i_ivan@windowslive.com>
+Date: Mon, 16 Nov 2026 15:24:50 +0000
+Subject: [PATCH] Supplicant AIDL: accept successful driver command replies
+
+The Broadcom driver command implementation returns the reply length on success, including 2 for OK. Treat only negative return values as failure so Bluetooth coexistence and other setter commands do not report FAILURE_UNKNOWN after the driver accepted them.
+
+Change-Id: Ibb60df1bd5eb1166caf14f044e8965258d967975
+---
+ wpa_supplicant/aidl/sta_iface.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/wpa_supplicant/aidl/sta_iface.cpp b/wpa_supplicant/aidl/sta_iface.cpp
+index 3627bbe1a9f2a68962b54f2a370e1baaa54300c9..561822596280e2757820b45b9a7718e0e924986c 100644
+--- a/wpa_supplicant/aidl/sta_iface.cpp
++++ b/wpa_supplicant/aidl/sta_iface.cpp
+@@ -131,7 +131,7 @@ ndk::ScopedAStatus doZeroArgDriverCommand(
+ 	char driver_cmd_reply_buf[4096] = {};
+ 	if (wpa_drv_driver_cmd(
+ 		wpa_s, cmd_vec.data(), driver_cmd_reply_buf,
+-		sizeof(driver_cmd_reply_buf))) {
++		sizeof(driver_cmd_reply_buf)) < 0) {
+ 		return createStatus(SupplicantStatusCode::FAILURE_UNKNOWN);
+ 	}
+ 	return ndk::ScopedAStatus::ok();
