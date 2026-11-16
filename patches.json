@@ -283,7 +283,7 @@
     {
       "project": "frameworks/native",
       "base": "a96adf2c6e62dbb22299cd83bbb9ea4bc569e985",
-      "head": "9642218d67420ebef4a05f2ab49997d3462e1d6b",
+      "head": "f28952474c8865ada7defdf3c469beb1d4511134",
       "upstream_url": "https://github.com/LineageOS/android_frameworks_native",
       "upstream_branch": "lineage-24.0",
       "patches": [
@@ -356,11 +356,18 @@
           "subject": "Revert \"Remove android.frameworks.schedulerservice\"",
           "patch_id": "d4fbfbe6aeb5917e22b50cb52df40a393e67a816",
           "sha256": "8b27593091a1b6f766d22b5040c4075f0cf1b6d910a5fd78a9424d18d6c2b86f"
+        },
+        {
+          "file": "frameworks/native/0011-sensorservice-allow-clients-without-Binder-freeze-notifications.patch",
+          "commit": "f28952474c8865ada7defdf3c469beb1d4511134",
+          "subject": "sensorservice: allow clients without Binder freeze notifications",
+          "patch_id": "bda626a3930148a5768718604fad855f53087a1e",
+          "sha256": "f1261fd33e8ef1b7ccfc6eb75099f3e3dc57be62445d85d3dbe75cd0aa9d6ce1"
         }
       ],
       "base_tree": "524b3c3c7e297a20474e8cece67c44b24c2d5678",
-      "target_tree": "9f366d8f546a323f9e7e1a83c9ab1c509e28f4cf",
-      "validation": "PASS: exact tree replay"
+      "target_tree": "0fc043420e35c623af4a60c0f1fb658038895ddb",
+      "validation": "Patch replay and whitespace checks pass; no build run. Runtime validation pending user build."
     },
     {
       "project": "hardware/broadcom/wlan",
@@ -683,6 +690,25 @@
       "base_tree": "c01f8463814d1c009edac911cafbe47c979423a9",
       "target_tree": "01f391cc8635e27b4de8d80e04e7e03dec35b426",
       "validation": "Compiler selection and kernel component checks passed; full ROM build left to user."
+    },
+    {
+      "project": "system/memory/lmkd",
+      "base": "c3601e823bd07c9c190f67e2f9bc7486e4978328",
+      "head": "c09f0956c55cf357fa42b87ef2e8f4cee190ce84",
+      "upstream_url": "https://android.googlesource.com/platform/system/memory/lmkd",
+      "upstream_branch": "lineage-24.0",
+      "patches": [
+        {
+          "file": "system/memory/lmkd/0001-lmkd-retain-the-in-kernel-interface-when-monitoring-starts.patch",
+          "commit": "c09f0956c55cf357fa42b87ef2e8f4cee190ce84",
+          "subject": "lmkd: retain the in-kernel interface when monitoring starts",
+          "patch_id": "ab4428f82b12c85a0209bb9fb021a68cad5e441f",
+          "sha256": "28dade6ed3ff02024411bfe657135fd2e1eecf2548e24ef2762ce46645713891"
+        }
+      ],
+      "base_tree": "1cf51170300e76591f6d630bd2c6fc1debb80cbf",
+      "target_tree": "eda4da0c3a29b8e31c6b982f76ddd7ce93d3b7c9",
+      "validation": "Patch replay and whitespace checks pass; no build run. Runtime validation pending user build."
     }
   ]
 }

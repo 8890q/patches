@@ -1,0 +1,28 @@
+From c09f0956c55cf357fa42b87ef2e8f4cee190ce84 Mon Sep 17 00:00:00 2001
+From: ivanmeler <i_ivan@windowslive.com>
+Date: Mon, 16 Nov 2026 15:19:07 +0000
+Subject: [PATCH] lmkd: retain the in-kernel interface when monitoring starts
+
+LMK_START_MONITORING unconditionally attempted to initialize PSI after boot, even when init selected the in-kernel lowmemorykiller. Kernels without PSI caused lmkd to exit and restart. Apply the same interface check used during init and property updates.
+
+Change-Id: Ie87591d0011fc329131e0e76b5ab9b05bd62c1f5
+---
+ lmkd.cpp | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+
+diff --git a/lmkd.cpp b/lmkd.cpp
+index 4bac215d9a177827752534e64cbee913aeba4b21..857efae2ba4b1649ef4875a5f7ea4d4811fcda1a 100644
+--- a/lmkd.cpp
++++ b/lmkd.cpp
+@@ -1624,8 +1624,9 @@ static void ctrl_command_handler(int dsock_idx) {
+     case LMK_START_MONITORING:
+         if (nargs != 0)
+             goto wronglen;
+-        // Registration is needed only if it was skipped earlier.
+-        if (monitors_initialized)
++        // The kernel LMK already monitors memory; it does not need PSI.
++        // Register userspace monitors only if they were skipped earlier.
++        if (use_inkernel_interface || monitors_initialized)
+             return;
+         if (!property_get_bool("sys.boot_completed", false)) {
+             ALOGE("LMK_START_MONITORING cannot be handled before boot completed");

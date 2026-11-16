@@ -1,0 +1,37 @@
+From f28952474c8865ada7defdf3c469beb1d4511134 Mon Sep 17 00:00:00 2001
+From: ivanmeler <i_ivan@windowslive.com>
+Date: Mon, 16 Nov 2026 15:19:07 +0000
+Subject: [PATCH] sensorservice: allow clients without Binder freeze
+ notifications
+
+Binder returns INVALID_OPERATION when its kernel driver lacks freeze notifications. Retain the linked death recipient and normal unfrozen delivery instead of aborting the sensor client registration. Continue propagating other registration errors.
+
+Change-Id: I7327c6de2c87939893a656a1c10163903d6915a3
+---
+ services/sensorservice/SensorService.cpp | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/services/sensorservice/SensorService.cpp b/services/sensorservice/SensorService.cpp
+index 912d5cb1dc0164faf9d7ff319a3a4be26af64828..0b505858b9563f86c5f85ef3cc3d41af3be405fe 100644
+--- a/services/sensorservice/SensorService.cpp
++++ b/services/sensorservice/SensorService.cpp
+@@ -2007,7 +2007,9 @@ status_t SensorService::registerClientListener(
+     }
+ 
+     status_t frozenErr = binder->addFrozenStateChangeCallback(recipient);
+-    if (frozenErr != OK) {
++    // Older Binder drivers cannot report frozen state. Keep death monitoring
++    // and normal sensor delivery when that optional notification is unsupported.
++    if (frozenErr != OK && frozenErr != INVALID_OPERATION) {
+         ALOGE("Failed to addFrozenStateChangeCallback (pid=%d, uid=%d), error=%d. "
+               "Cleaning up linkToDeath and aborting registration.",
+               pid, uid, frozenErr);
+@@ -2053,7 +2055,7 @@ status_t SensorService::unregisterClientListener(
+         // Detach from binder notifications. Do this without holding mStateLock to prevent ANR.
+         binder->unlinkToDeath(recipient);
+         status_t removeErr = binder->removeFrozenStateChangeCallback(recipient);
+-        if (removeErr != OK && removeErr != DEAD_OBJECT) {
++        if (removeErr != OK && removeErr != DEAD_OBJECT && removeErr != NAME_NOT_FOUND) {
+             // DEAD_OBJECT is expected if the client is already gone.
+             ALOGW("Failed to remove frozen state change callback, error=%d", removeErr);
+         }
