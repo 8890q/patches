@@ -1,0 +1,46 @@
+From 9bc2f957e48cb7ac26c9b048d7c34f9febd3f5b7 Mon Sep 17 00:00:00 2001
+From: ivanmeler <i_ivan@windowslive.com>
+Date: Mon, 16 Nov 2026 02:36:56 +0000
+Subject: [PATCH] SystemUI: Update IMS coroutine imports for Android 17
+
+Use the relocated conflatedCallbackFlow helper and import Flow for the
+IMS visibility fields in the Kairos adapter. The remaining trySend and
+awaitClose compiler errors are consequences of the unresolved helper.
+
+Change-Id: If2f08721c42fcbf3ca0743328e5988ad10aeb49a
+---
+ .../pipeline/ims/data/repository/CommonImsRepository.kt         | 2 +-
+ .../domain/interactor/MobileIconInteractorKairosAdapter.kt      | 1 +
+ 2 files changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/pipeline/ims/data/repository/CommonImsRepository.kt b/packages/SystemUI/src/com/android/systemui/statusbar/pipeline/ims/data/repository/CommonImsRepository.kt
+index 3c3e2a8b0570c24deba28fef4670a59522f6155c..a55d502f6b811a5e8c1713cb20b1ec1854b6cf83 100644
+--- a/packages/SystemUI/src/com/android/systemui/statusbar/pipeline/ims/data/repository/CommonImsRepository.kt
++++ b/packages/SystemUI/src/com/android/systemui/statusbar/pipeline/ims/data/repository/CommonImsRepository.kt
+@@ -18,13 +18,13 @@ package com.android.systemui.statusbar.pipeline.ims.data.repository
+ 
+ import android.telephony.SubscriptionInfo
+ import android.telephony.SubscriptionManager
+-import com.android.systemui.common.coroutine.ConflatedCallbackFlow.conflatedCallbackFlow
+ import com.android.systemui.dagger.SysUISingleton
+ import com.android.systemui.dagger.qualifiers.Application
+ import com.android.systemui.dagger.qualifiers.Background
+ import com.android.systemui.statusbar.pipeline.ims.data.model.ImsIconModel
+ import com.android.systemui.statusbar.pipeline.ims.data.model.ImsStateModel
+ import com.android.systemui.tuner.TunerService
++import com.android.systemui.utils.coroutines.flow.conflatedCallbackFlow
+ import kotlinx.coroutines.CoroutineDispatcher
+ import kotlinx.coroutines.CoroutineScope
+ import kotlinx.coroutines.ExperimentalCoroutinesApi
+diff --git a/packages/SystemUI/src/com/android/systemui/statusbar/pipeline/mobile/domain/interactor/MobileIconInteractorKairosAdapter.kt b/packages/SystemUI/src/com/android/systemui/statusbar/pipeline/mobile/domain/interactor/MobileIconInteractorKairosAdapter.kt
+index d1e6505fb04b9d77cfd120a1a80a1c3584b3e938..e5e21a685202698899738f9bea7b84dbda58cbdd 100644
+--- a/packages/SystemUI/src/com/android/systemui/statusbar/pipeline/mobile/domain/interactor/MobileIconInteractorKairosAdapter.kt
++++ b/packages/SystemUI/src/com/android/systemui/statusbar/pipeline/mobile/domain/interactor/MobileIconInteractorKairosAdapter.kt
+@@ -23,6 +23,7 @@ import com.android.systemui.statusbar.pipeline.mobile.data.model.NetworkNameMode
+ import com.android.systemui.statusbar.pipeline.mobile.domain.model.NetworkTypeIconModel
+ import com.android.systemui.statusbar.pipeline.mobile.domain.model.SignalIconModel
+ import com.android.systemui.statusbar.pipeline.shared.data.model.DataActivityModel
++import kotlinx.coroutines.flow.Flow
+ import kotlinx.coroutines.flow.StateFlow
+ 
+ fun BuildScope.MobileIconInteractorKairosAdapter(

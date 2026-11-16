@@ -140,7 +140,7 @@
     {
       "project": "frameworks/base",
       "base": "48b4df3c577586ef05a3cd7205fa1c0e71504cbd",
-      "head": "f0a6c0e5be843efe383b75f37de46e99b82a6129",
+      "head": "9bc2f957e48cb7ac26c9b048d7c34f9febd3f5b7",
       "upstream_url": "https://github.com/LineageOS/android_frameworks_base",
       "upstream_branch": "lineage-24.0",
       "patches": [
@@ -248,10 +248,17 @@
           "subject": "SystemUI: Use Android 17 Kairos state conversion for IMS visibility",
           "patch_id": "97d0a625de2ea1fea0f00450225eeb2473d16941",
           "sha256": "47a20cc1c1eea42c793142a029526bfcb13e3616a4caf0e9b00ffc71b558d808"
+        },
+        {
+          "file": "frameworks/base/0016-SystemUI-Update-IMS-coroutine-imports-for-Android-17.patch",
+          "commit": "9bc2f957e48cb7ac26c9b048d7c34f9febd3f5b7",
+          "subject": "SystemUI: Update IMS coroutine imports for Android 17",
+          "patch_id": "365c114b67a5d21512aa5137016684015ab626c5",
+          "sha256": "4a0b38a07fd34a6b57035c9531bf36899ab004cbb236d6469dfb0accb18738c1"
         }
       ],
       "base_tree": "07bd13aa364ff1eb8a68d4e5b262301ffbd64c78",
-      "target_tree": "a04403c8b47f1eb6ad4ae4297b4b3bf4123cb6aa",
+      "target_tree": "6b8e8ad62bcff0f4eff87c2008689587e12b59b9",
       "validation": "PASS: exact tree replay"
     },
     {
