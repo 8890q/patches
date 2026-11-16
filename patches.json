@@ -657,6 +657,25 @@
       "base_tree": "79c702136b6587fe4d2097a462c64db9fbd49204",
       "target_tree": "19a2b211dbcaf7bb9613461aa185a79c5dab3e75",
       "validation": "PASS: exact tree replay"
+    },
+    {
+      "project": "vendor/lineage",
+      "base": "5a1814d916321aecb72d60d13b5e52bc719251bd",
+      "head": "0a756ed621ec3c838b4332b29b9b66d0e6df5880",
+      "upstream_url": "https://github.com/LineageOS/android_vendor_lineage",
+      "upstream_branch": "lineage-24.0",
+      "patches": [
+        {
+          "file": "vendor/lineage/0001-Revert-kernel-Rip-out-GCC-support.patch",
+          "commit": "0a756ed621ec3c838b4332b29b9b66d0e6df5880",
+          "subject": "Revert \"kernel: Rip out GCC support\"",
+          "patch_id": "e46714e70874e15e87be1052d79a864989463553",
+          "sha256": "bc584826f40b3bbde027a6bec926ca258c44b5ee3fb1fd0d77de1d8c77f66794"
+        }
+      ],
+      "base_tree": "c01f8463814d1c009edac911cafbe47c979423a9",
+      "target_tree": "01f391cc8635e27b4de8d80e04e7e03dec35b426",
+      "validation": "Compiler selection and kernel component checks passed; full ROM build left to user."
     }
   ]
 }
