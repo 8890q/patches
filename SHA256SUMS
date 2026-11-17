@@ -34,6 +34,7 @@ d44f47b0fb0f81acc1845ef31cb1770ef3a935dd9d044bd9cd62e103c49038bd  frameworks/nat
 8b27593091a1b6f766d22b5040c4075f0cf1b6d910a5fd78a9424d18d6c2b86f  frameworks/native/0010-Revert-Remove-android.frameworks.schedulerservice.patch
 f1261fd33e8ef1b7ccfc6eb75099f3e3dc57be62445d85d3dbe75cd0aa9d6ce1  frameworks/native/0011-sensorservice-allow-clients-without-Binder-freeze-notifications.patch
 5823332a24490325b4df4c88298b3c8db4c1e4f662d32a24eb3ec5e4c2f26268  frameworks/native/0012-vulkan-use-Vulkan-1.0-for-basic-surface-format-queries.patch
+6cb9d7c8ebe2ffb7478dab94fa89058c833dc26ece088fc61efa4b8863114a95  frameworks/native/0013-vulkan-handle-missing-optional-driver-queries-and-memory-binding.patch
 7e6cef2a010ae208c3ec146899f2e28d62c40a22ee04261339070d63d529bff8  hardware/broadcom/wlan/0001-HACK-wifi_hal-avoid-CFI-crash-when-wifi-is-turning-o.patch
 72becc045abce547a33bb3b258b0c7dcede75df53f50bb7e6d8c7b9711448a0d  hardware/interfaces/0001-universal8890-common-Patch-wifi_hal.h-until-libwifi-hal-wrapper-works-properly.patch
 132ca377271421469ce0053152390ff5e7b93ed0859a766c806d2abcb47d5129  hardware/interfaces/0002-radio-Fix-linker-errors-for-legacy-vendor-bin-hw-rild.patch

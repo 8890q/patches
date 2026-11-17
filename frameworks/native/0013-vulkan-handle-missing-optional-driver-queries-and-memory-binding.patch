@@ -1,0 +1,452 @@
+From cb8961616b8d0ac7afea44627d93015ea0ebb4fb Mon Sep 17 00:00:00 2001
+From: ivanmeler <i_ivan@windowslive.com>
+Date: Tue, 17 Nov 2026 13:41:49 +0000
+Subject: [PATCH] vulkan: handle missing optional driver queries and memory
+ binding
+
+The loader exposes promoted instance queries even with older driver APIs.
+Several physical-device query wrappers check the core entry point but
+unconditionally call its KHR alias when the core pointer is absent. Both
+can be missing on Vulkan 1.0 drivers, causing the same null-call failure
+as the surface-format query.
+
+Share core/KHR dispatch and fall back to the corresponding required 1.0
+query for basic features, properties, formats, memory, queue families and
+sparse-image formats. Preserve output headers, extension chains and array
+capacity semantics. Reject image-format extension queries when neither
+newer entry point can implement them. Regenerate the required driver-table
+entries from the updated generator.
+
+Use either available spelling of BindImageMemory2 for swapchain memory
+binding. Allocate swapchain images eagerly if neither exists, and return
+FEATURE_NOT_PRESENT for an unsupported explicit bind instead of calling
+null. Preserve intercepted native-buffer binding data.
+
+Check surface-format extension enumeration errors before allocating or
+reading its output, and avoid a second enumeration with an empty vector.
+
+Validation: extracted host regressions reproduce the previous null call
+and allocation abort. The fixed code passes 208 dispatch/array/binding
+cases and 7 enumeration fault cases under ASan/UBSan. Android build and
+game runtime tests remain pending the user's build.
+
+Change-Id: I7cf4bfaa0083c0e8fc64ddcd1f4fa11eff3adc72
+---
+ vulkan/libvulkan/driver.cpp        | 142 ++++++++++++++++-------------
+ vulkan/libvulkan/driver_gen.cpp    |   5 +
+ vulkan/libvulkan/driver_gen.h      |   5 +
+ vulkan/libvulkan/swapchain.cpp     |  66 ++++++++++----
+ vulkan/scripts/driver_generator.py |   5 +
+ 5 files changed, 139 insertions(+), 84 deletions(-)
+
+diff --git a/vulkan/libvulkan/driver.cpp b/vulkan/libvulkan/driver.cpp
+index 4d3b92c..c86abbb 100644
+--- a/vulkan/libvulkan/driver.cpp
++++ b/vulkan/libvulkan/driver.cpp
+@@ -1832,8 +1832,10 @@ void GetPhysicalDeviceFeatures2(VkPhysicalDevice physicalDevice,
+ 
+     if (driver.GetPhysicalDeviceFeatures2) {
+         driver.GetPhysicalDeviceFeatures2(physicalDevice, pFeatures);
+-    } else {
++    } else if (driver.GetPhysicalDeviceFeatures2KHR) {
+         driver.GetPhysicalDeviceFeatures2KHR(physicalDevice, pFeatures);
++    } else {
++        driver.GetPhysicalDeviceFeatures(physicalDevice, &pFeatures->features);
+     }
+ 
+     PopulateLoaderImplementedFeatures(physicalDevice, pFeatures);
+@@ -1841,13 +1843,7 @@ void GetPhysicalDeviceFeatures2(VkPhysicalDevice physicalDevice,
+ 
+ void GetPhysicalDeviceFeatures2KHR(VkPhysicalDevice physicalDevice,
+                                    VkPhysicalDeviceFeatures2KHR* pFeatures) {
+-    ATRACE_CALL();
+-
+-    const auto& driver = GetData(physicalDevice).driver;
+-
+-    driver.GetPhysicalDeviceFeatures2KHR(physicalDevice, pFeatures);
+-
+-    PopulateLoaderImplementedFeatures(physicalDevice, pFeatures);
++    GetPhysicalDeviceFeatures2(physicalDevice, pFeatures);
+ }
+ 
+ void GetPhysicalDeviceProperties2(VkPhysicalDevice physicalDevice,
+@@ -1858,19 +1854,18 @@ void GetPhysicalDeviceProperties2(VkPhysicalDevice physicalDevice,
+ 
+     if (driver.GetPhysicalDeviceProperties2) {
+         driver.GetPhysicalDeviceProperties2(physicalDevice, pProperties);
+-        return;
++    } else if (driver.GetPhysicalDeviceProperties2KHR) {
++        driver.GetPhysicalDeviceProperties2KHR(physicalDevice, pProperties);
++    } else {
++        driver.GetPhysicalDeviceProperties(physicalDevice,
++                                           &pProperties->properties);
+     }
+-
+-    driver.GetPhysicalDeviceProperties2KHR(physicalDevice, pProperties);
+ }
+ 
+-void GetPhysicalDeviceProperties2KHR(VkPhysicalDevice physicalDevice,
+-                                     VkPhysicalDeviceProperties2KHR* pProperties) {
+-    ATRACE_CALL();
+-
+-    const auto& driver = GetData(physicalDevice).driver;
+-
+-    driver.GetPhysicalDeviceProperties2KHR(physicalDevice, pProperties);
++void GetPhysicalDeviceProperties2KHR(
++    VkPhysicalDevice physicalDevice,
++    VkPhysicalDeviceProperties2KHR* pProperties) {
++    GetPhysicalDeviceProperties2(physicalDevice, pProperties);
+ }
+ 
+ void GetPhysicalDeviceFormatProperties2(
+@@ -1884,23 +1879,21 @@ void GetPhysicalDeviceFormatProperties2(
+     if (driver.GetPhysicalDeviceFormatProperties2) {
+         driver.GetPhysicalDeviceFormatProperties2(physicalDevice, format,
+                                                   pFormatProperties);
+-        return;
++    } else if (driver.GetPhysicalDeviceFormatProperties2KHR) {
++        driver.GetPhysicalDeviceFormatProperties2KHR(physicalDevice, format,
++                                                     pFormatProperties);
++    } else {
++        driver.GetPhysicalDeviceFormatProperties(
++            physicalDevice, format, &pFormatProperties->formatProperties);
+     }
+-
+-    driver.GetPhysicalDeviceFormatProperties2KHR(physicalDevice, format,
+-                                                 pFormatProperties);
+ }
+ 
+ void GetPhysicalDeviceFormatProperties2KHR(
+     VkPhysicalDevice physicalDevice,
+     VkFormat format,
+     VkFormatProperties2KHR* pFormatProperties) {
+-    ATRACE_CALL();
+-
+-    const auto& driver = GetData(physicalDevice).driver;
+-
+-    driver.GetPhysicalDeviceFormatProperties2KHR(physicalDevice, format,
+-                                                 pFormatProperties);
++    GetPhysicalDeviceFormatProperties2(physicalDevice, format,
++                                       pFormatProperties);
+ }
+ 
+ VkResult GetPhysicalDeviceImageFormatProperties2(
+@@ -1915,20 +1908,29 @@ VkResult GetPhysicalDeviceImageFormatProperties2(
+         return driver.GetPhysicalDeviceImageFormatProperties2(
+             physicalDevice, pImageFormatInfo, pImageFormatProperties);
+     }
++    if (driver.GetPhysicalDeviceImageFormatProperties2KHR) {
++        return driver.GetPhysicalDeviceImageFormatProperties2KHR(
++            physicalDevice, pImageFormatInfo, pImageFormatProperties);
++    }
+ 
+-    return driver.GetPhysicalDeviceImageFormatProperties2KHR(
+-        physicalDevice, pImageFormatInfo, pImageFormatProperties);
++    // Vulkan 1.0 can answer the basic query, but cannot process extension
++    // chains such as external-memory or image-compression requirements.
++    pImageFormatProperties->imageFormatProperties = {};
++    if (pImageFormatInfo->pNext || pImageFormatProperties->pNext) {
++        return VK_ERROR_FORMAT_NOT_SUPPORTED;
++    }
++    return driver.GetPhysicalDeviceImageFormatProperties(
++        physicalDevice, pImageFormatInfo->format, pImageFormatInfo->type,
++        pImageFormatInfo->tiling, pImageFormatInfo->usage,
++        pImageFormatInfo->flags,
++        &pImageFormatProperties->imageFormatProperties);
+ }
+ 
+ VkResult GetPhysicalDeviceImageFormatProperties2KHR(
+     VkPhysicalDevice physicalDevice,
+     const VkPhysicalDeviceImageFormatInfo2KHR* pImageFormatInfo,
+     VkImageFormatProperties2KHR* pImageFormatProperties) {
+-    ATRACE_CALL();
+-
+-    const auto& driver = GetData(physicalDevice).driver;
+-
+-    return driver.GetPhysicalDeviceImageFormatProperties2KHR(
++    return GetPhysicalDeviceImageFormatProperties2(
+         physicalDevice, pImageFormatInfo, pImageFormatProperties);
+ }
+ 
+@@ -1943,22 +1945,28 @@ void GetPhysicalDeviceQueueFamilyProperties2(
+     if (driver.GetPhysicalDeviceQueueFamilyProperties2) {
+         driver.GetPhysicalDeviceQueueFamilyProperties2(
+             physicalDevice, pQueueFamilyPropertyCount, pQueueFamilyProperties);
+-        return;
++    } else if (driver.GetPhysicalDeviceQueueFamilyProperties2KHR) {
++        driver.GetPhysicalDeviceQueueFamilyProperties2KHR(
++            physicalDevice, pQueueFamilyPropertyCount, pQueueFamilyProperties);
++    } else if (!pQueueFamilyProperties) {
++        driver.GetPhysicalDeviceQueueFamilyProperties(
++            physicalDevice, pQueueFamilyPropertyCount, nullptr);
++    } else if (*pQueueFamilyPropertyCount) {
++        std::vector<VkQueueFamilyProperties> properties(
++            *pQueueFamilyPropertyCount);
++        driver.GetPhysicalDeviceQueueFamilyProperties(
++            physicalDevice, pQueueFamilyPropertyCount, properties.data());
++        for (uint32_t i = 0; i < *pQueueFamilyPropertyCount; i++) {
++            pQueueFamilyProperties[i].queueFamilyProperties = properties[i];
++        }
+     }
+-
+-    driver.GetPhysicalDeviceQueueFamilyProperties2KHR(
+-        physicalDevice, pQueueFamilyPropertyCount, pQueueFamilyProperties);
+ }
+ 
+ void GetPhysicalDeviceQueueFamilyProperties2KHR(
+     VkPhysicalDevice physicalDevice,
+     uint32_t* pQueueFamilyPropertyCount,
+     VkQueueFamilyProperties2KHR* pQueueFamilyProperties) {
+-    ATRACE_CALL();
+-
+-    const auto& driver = GetData(physicalDevice).driver;
+-
+-    driver.GetPhysicalDeviceQueueFamilyProperties2KHR(
++    GetPhysicalDeviceQueueFamilyProperties2(
+         physicalDevice, pQueueFamilyPropertyCount, pQueueFamilyProperties);
+ }
+ 
+@@ -1972,22 +1980,19 @@ void GetPhysicalDeviceMemoryProperties2(
+     if (driver.GetPhysicalDeviceMemoryProperties2) {
+         driver.GetPhysicalDeviceMemoryProperties2(physicalDevice,
+                                                   pMemoryProperties);
+-        return;
++    } else if (driver.GetPhysicalDeviceMemoryProperties2KHR) {
++        driver.GetPhysicalDeviceMemoryProperties2KHR(physicalDevice,
++                                                     pMemoryProperties);
++    } else {
++        driver.GetPhysicalDeviceMemoryProperties(
++            physicalDevice, &pMemoryProperties->memoryProperties);
+     }
+-
+-    driver.GetPhysicalDeviceMemoryProperties2KHR(physicalDevice,
+-                                                 pMemoryProperties);
+ }
+ 
+ void GetPhysicalDeviceMemoryProperties2KHR(
+     VkPhysicalDevice physicalDevice,
+     VkPhysicalDeviceMemoryProperties2KHR* pMemoryProperties) {
+-    ATRACE_CALL();
+-
+-    const auto& driver = GetData(physicalDevice).driver;
+-
+-    driver.GetPhysicalDeviceMemoryProperties2KHR(physicalDevice,
+-                                                 pMemoryProperties);
++    GetPhysicalDeviceMemoryProperties2(physicalDevice, pMemoryProperties);
+ }
+ 
+ void GetPhysicalDeviceSparseImageFormatProperties2(
+@@ -2002,11 +2007,24 @@ void GetPhysicalDeviceSparseImageFormatProperties2(
+     if (driver.GetPhysicalDeviceSparseImageFormatProperties2) {
+         driver.GetPhysicalDeviceSparseImageFormatProperties2(
+             physicalDevice, pFormatInfo, pPropertyCount, pProperties);
+-        return;
++    } else if (driver.GetPhysicalDeviceSparseImageFormatProperties2KHR) {
++        driver.GetPhysicalDeviceSparseImageFormatProperties2KHR(
++            physicalDevice, pFormatInfo, pPropertyCount, pProperties);
++    } else if (!pProperties) {
++        driver.GetPhysicalDeviceSparseImageFormatProperties(
++            physicalDevice, pFormatInfo->format, pFormatInfo->type,
++            pFormatInfo->samples, pFormatInfo->usage, pFormatInfo->tiling,
++            pPropertyCount, nullptr);
++    } else if (*pPropertyCount) {
++        std::vector<VkSparseImageFormatProperties> properties(*pPropertyCount);
++        driver.GetPhysicalDeviceSparseImageFormatProperties(
++            physicalDevice, pFormatInfo->format, pFormatInfo->type,
++            pFormatInfo->samples, pFormatInfo->usage, pFormatInfo->tiling,
++            pPropertyCount, properties.data());
++        for (uint32_t i = 0; i < *pPropertyCount; i++) {
++            pProperties[i].properties = properties[i];
++        }
+     }
+-
+-    driver.GetPhysicalDeviceSparseImageFormatProperties2KHR(
+-        physicalDevice, pFormatInfo, pPropertyCount, pProperties);
+ }
+ 
+ void GetPhysicalDeviceSparseImageFormatProperties2KHR(
+@@ -2014,12 +2032,8 @@ void GetPhysicalDeviceSparseImageFormatProperties2KHR(
+     const VkPhysicalDeviceSparseImageFormatInfo2KHR* pFormatInfo,
+     uint32_t* pPropertyCount,
+     VkSparseImageFormatProperties2KHR* pProperties) {
+-    ATRACE_CALL();
+-
+-    const auto& driver = GetData(physicalDevice).driver;
+-
+-    driver.GetPhysicalDeviceSparseImageFormatProperties2KHR(
+-        physicalDevice, pFormatInfo, pPropertyCount, pProperties);
++    GetPhysicalDeviceSparseImageFormatProperties2(physicalDevice, pFormatInfo,
++                                                  pPropertyCount, pProperties);
+ }
+ 
+ void GetPhysicalDeviceExternalBufferProperties(
+diff --git a/vulkan/libvulkan/driver_gen.cpp b/vulkan/libvulkan/driver_gen.cpp
+index db4ca9b..6935155 100644
+--- a/vulkan/libvulkan/driver_gen.cpp
++++ b/vulkan/libvulkan/driver_gen.cpp
+@@ -926,9 +926,14 @@ bool InitDriverTable(VkInstance instance,
+     INIT_PROC(true, instance, EnumeratePhysicalDevices);
+     INIT_PROC(true, instance, GetInstanceProcAddr);
+     INIT_PROC(true, instance, GetPhysicalDeviceProperties);
++    INIT_PROC(true, instance, GetPhysicalDeviceQueueFamilyProperties);
++    INIT_PROC(true, instance, GetPhysicalDeviceMemoryProperties);
++    INIT_PROC(true, instance, GetPhysicalDeviceFeatures);
++    INIT_PROC(true, instance, GetPhysicalDeviceFormatProperties);
+     INIT_PROC(true, instance, GetPhysicalDeviceImageFormatProperties);
+     INIT_PROC(true, instance, CreateDevice);
+     INIT_PROC(true, instance, EnumerateDeviceExtensionProperties);
++    INIT_PROC(true, instance, GetPhysicalDeviceSparseImageFormatProperties);
+     INIT_PROC_EXT(EXT_debug_report, true, instance, CreateDebugReportCallbackEXT);
+     INIT_PROC_EXT(EXT_debug_report, true, instance, DestroyDebugReportCallbackEXT);
+     INIT_PROC_EXT(EXT_debug_report, true, instance, DebugReportMessageEXT);
+diff --git a/vulkan/libvulkan/driver_gen.h b/vulkan/libvulkan/driver_gen.h
+index bd66244..176fb18 100644
+--- a/vulkan/libvulkan/driver_gen.h
++++ b/vulkan/libvulkan/driver_gen.h
+@@ -94,9 +94,14 @@ struct InstanceDriverTable {
+     PFN_vkEnumeratePhysicalDevices EnumeratePhysicalDevices;
+     PFN_vkGetInstanceProcAddr GetInstanceProcAddr;
+     PFN_vkGetPhysicalDeviceProperties GetPhysicalDeviceProperties;
++    PFN_vkGetPhysicalDeviceQueueFamilyProperties GetPhysicalDeviceQueueFamilyProperties;
++    PFN_vkGetPhysicalDeviceMemoryProperties GetPhysicalDeviceMemoryProperties;
++    PFN_vkGetPhysicalDeviceFeatures GetPhysicalDeviceFeatures;
++    PFN_vkGetPhysicalDeviceFormatProperties GetPhysicalDeviceFormatProperties;
+     PFN_vkGetPhysicalDeviceImageFormatProperties GetPhysicalDeviceImageFormatProperties;
+     PFN_vkCreateDevice CreateDevice;
+     PFN_vkEnumerateDeviceExtensionProperties EnumerateDeviceExtensionProperties;
++    PFN_vkGetPhysicalDeviceSparseImageFormatProperties GetPhysicalDeviceSparseImageFormatProperties;
+     PFN_vkCreateDebugReportCallbackEXT CreateDebugReportCallbackEXT;
+     PFN_vkDestroyDebugReportCallbackEXT DestroyDebugReportCallbackEXT;
+     PFN_vkDebugReportMessageEXT DebugReportMessageEXT;
+diff --git a/vulkan/libvulkan/swapchain.cpp b/vulkan/libvulkan/swapchain.cpp
+index ce6fee0..ae1d421 100644
+--- a/vulkan/libvulkan/swapchain.cpp
++++ b/vulkan/libvulkan/swapchain.cpp
+@@ -759,6 +759,19 @@ bool SupportsSurfaceFormat(const InstanceDriverTable& driver,
+     return result == VK_SUCCESS;
+ }
+ 
++VkResult BindImageMemory2WithFallback(const DeviceDriverTable& driver,
++                                      VkDevice device,
++                                      uint32_t bindInfoCount,
++                                      const VkBindImageMemoryInfo* pBindInfos) {
++    if (driver.BindImageMemory2) {
++        return driver.BindImageMemory2(device, bindInfoCount, pBindInfos);
++    }
++    if (driver.BindImageMemory2KHR) {
++        return driver.BindImageMemory2KHR(device, bindInfoCount, pBindInfos);
++    }
++    return VK_ERROR_FEATURE_NOT_PRESENT;
++}
++
+ }  // anonymous namespace
+ 
+ VKAPI_ATTR
+@@ -1003,18 +1016,26 @@ VkResult GetPhysicalDeviceSurfaceFormatsKHR(VkPhysicalDevice pdev,
+     }
+ 
+     bool rgba10x6_formats_ext = false;
+-    uint32_t exts_count;
++    uint32_t exts_count = 0;
+     const auto& driver = GetData(pdev).driver;
+-    driver.EnumerateDeviceExtensionProperties(pdev, nullptr, &exts_count,
+-                                              nullptr);
+-    std::vector<VkExtensionProperties> props(exts_count);
+-    driver.EnumerateDeviceExtensionProperties(pdev, nullptr, &exts_count,
+-                                              props.data());
+-    for (uint32_t i = 0; i < exts_count; i++) {
+-        VkExtensionProperties prop = props[i];
+-        if (strcmp(prop.extensionName,
+-                   VK_EXT_RGBA10X6_FORMATS_EXTENSION_NAME) == 0) {
+-            rgba10x6_formats_ext = true;
++    VkResult result = driver.EnumerateDeviceExtensionProperties(
++        pdev, nullptr, &exts_count, nullptr);
++    if (result != VK_SUCCESS) {
++        return result;
++    }
++    if (exts_count) {
++        std::vector<VkExtensionProperties> props(exts_count);
++        result = driver.EnumerateDeviceExtensionProperties(
++            pdev, nullptr, &exts_count, props.data());
++        if (result != VK_SUCCESS && result != VK_INCOMPLETE) {
++            return result;
++        }
++        for (uint32_t i = 0; i < exts_count; i++) {
++            const auto& prop = props[i];
++            if (strcmp(prop.extensionName,
++                       VK_EXT_RGBA10X6_FORMATS_EXTENSION_NAME) == 0) {
++                rgba10x6_formats_ext = true;
++            }
+         }
+     }
+     format = VK_FORMAT_R10X6G10X6B10X6A10X6_UNORM_4PACK16;
+@@ -2333,10 +2354,14 @@ VkResult CreateSwapchainKHR(VkDevice device,
+         image_create.flags |= VK_IMAGE_CREATE_EXTENDED_USAGE_BIT_KHR;
+     }
+ 
+-    // Note: don't do deferred allocation for shared present modes. There's only one buffer
+-    // involved so very little benefit.
+-    if ((create_info->flags & VK_SWAPCHAIN_CREATE_DEFERRED_MEMORY_ALLOCATION_BIT_EXT) &&
+-            !IsSharedPresentMode(create_info->presentMode)) {
++    // Note: don't do deferred allocation for shared present modes. There's only
++    // one buffer involved so very little benefit. Older drivers may support
++    // neither spelling of bind_memory2. In that case allocate eagerly, rather
++    // than attempting an unsupported late bind.
++    if ((create_info->flags &
++         VK_SWAPCHAIN_CREATE_DEFERRED_MEMORY_ALLOCATION_BIT_EXT) &&
++        !IsSharedPresentMode(create_info->presentMode) &&
++        (dispatch.BindImageMemory2 || dispatch.BindImageMemory2KHR)) {
+         // Don't want to touch the underlying gralloc buffers yet;
+         // instead just create unbound VkImages which will later be bound to memory inside
+         // AcquireNextImage.
+@@ -2586,7 +2611,8 @@ VkResult AcquireNextImageKHR(VkDevice device,
+                     .memory = VK_NULL_HANDLE,
+                     .memoryOffset = 0,
+                 };
+-                result = GetData(device).driver.BindImageMemory2(device, 1, &bimi);
++                result = BindImageMemory2WithFallback(GetData(device).driver,
++                                                      device, 1, &bimi);
+                 if (result != VK_SUCCESS) {
+                     // This shouldn't really happen. If it does, something is probably
+                     // unrecoverably wrong with the swapchain and its images. Cancel
+@@ -3451,8 +3477,8 @@ VkResult BindImageMemory2(VkDevice device,
+     std::vector<VkBindImageMemoryInfo> out_bind_infos;
+     InterceptBindImageMemory2(bindInfoCount, pBindInfos, &out_native_buffers,
+                               &out_bind_infos);
+-    return GetData(device).driver.BindImageMemory2(
+-        device, bindInfoCount,
++    return BindImageMemory2WithFallback(
++        GetData(device).driver, device, bindInfoCount,
+         out_bind_infos.empty() ? pBindInfos : out_bind_infos.data());
+ }
+ 
+@@ -3466,8 +3492,8 @@ VkResult BindImageMemory2KHR(VkDevice device,
+     std::vector<VkBindImageMemoryInfo> out_bind_infos;
+     InterceptBindImageMemory2(bindInfoCount, pBindInfos, &out_native_buffers,
+                               &out_bind_infos);
+-    return GetData(device).driver.BindImageMemory2KHR(
+-        device, bindInfoCount,
++    return BindImageMemory2WithFallback(
++        GetData(device).driver, device, bindInfoCount,
+         out_bind_infos.empty() ? pBindInfos : out_bind_infos.data());
+ }
+ 
+diff --git a/vulkan/scripts/driver_generator.py b/vulkan/scripts/driver_generator.py
+index 41ced54..ea8a21e 100644
+--- a/vulkan/scripts/driver_generator.py
++++ b/vulkan/scripts/driver_generator.py
+@@ -88,6 +88,11 @@ _NEEDED_COMMANDS = [
+     'vkDestroyImage',
+ 
+     'vkGetPhysicalDeviceProperties',
++    'vkGetPhysicalDeviceFeatures',
++    'vkGetPhysicalDeviceFormatProperties',
++    'vkGetPhysicalDeviceQueueFamilyProperties',
++    'vkGetPhysicalDeviceMemoryProperties',
++    'vkGetPhysicalDeviceSparseImageFormatProperties',
+     'vkGetPhysicalDeviceImageFormatProperties',
+ 
+     # VK_KHR_swapchain v69 requirement
+-- 
+2.34.1
+

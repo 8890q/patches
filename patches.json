@@ -283,7 +283,7 @@
     {
       "project": "frameworks/native",
       "base": "a96adf2c6e62dbb22299cd83bbb9ea4bc569e985",
-      "head": "a70ac692d9f09f9dfd61b0cf6bd0d63373cd9012",
+      "head": "cb8961616b8d0ac7afea44627d93015ea0ebb4fb",
       "upstream_url": "https://github.com/LineageOS/android_frameworks_native",
       "upstream_branch": "lineage-24.0",
       "patches": [
@@ -370,11 +370,18 @@
           "subject": "vulkan: use Vulkan 1.0 for basic surface format queries",
           "patch_id": "cd8e6438364ec7ce04ba6edc28d8437fb0ee33f4",
           "sha256": "5823332a24490325b4df4c88298b3c8db4c1e4f662d32a24eb3ec5e4c2f26268"
+        },
+        {
+          "file": "frameworks/native/0013-vulkan-handle-missing-optional-driver-queries-and-memory-binding.patch",
+          "commit": "cb8961616b8d0ac7afea44627d93015ea0ebb4fb",
+          "subject": "vulkan: handle missing optional driver queries and memory binding",
+          "patch_id": "dc86ce9a2077590ab00f5655ef385d362352ca84",
+          "sha256": "6cb9d7c8ebe2ffb7478dab94fa89058c833dc26ece088fc61efa4b8863114a95"
         }
       ],
       "base_tree": "524b3c3c7e297a20474e8cece67c44b24c2d5678",
-      "target_tree": "071c1add09f9c9fce636148e92f270b7d4b02ff7",
-      "validation": "PASS: exact tree replay of all 12 patches; new patch whitespace checks; host regression reproduces old SIGSEGV and passes 24 fixed query cases. Android build and game runtime validation pending user build."
+      "target_tree": "46b5987b15aa5b62373f32525cadfffa98f10dfd",
+      "validation": "PASS: exact tree replay of all 13 patches; new patch whitespace checks; original 24 surface-query cases and 208 optional-dispatch cases plus 7 enumeration fault cases pass (follow-up tests use ASan/UBSan). Android library build and runtime game retest pending user build."
     },
     {
       "project": "hardware/broadcom/wlan",
