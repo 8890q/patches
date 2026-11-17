@@ -283,7 +283,7 @@
     {
       "project": "frameworks/native",
       "base": "a96adf2c6e62dbb22299cd83bbb9ea4bc569e985",
-      "head": "f28952474c8865ada7defdf3c469beb1d4511134",
+      "head": "a70ac692d9f09f9dfd61b0cf6bd0d63373cd9012",
       "upstream_url": "https://github.com/LineageOS/android_frameworks_native",
       "upstream_branch": "lineage-24.0",
       "patches": [
@@ -363,11 +363,18 @@
           "subject": "sensorservice: allow clients without Binder freeze notifications",
           "patch_id": "bda626a3930148a5768718604fad855f53087a1e",
           "sha256": "f1261fd33e8ef1b7ccfc6eb75099f3e3dc57be62445d85d3dbe75cd0aa9d6ce1"
+        },
+        {
+          "file": "frameworks/native/0012-vulkan-use-Vulkan-1.0-for-basic-surface-format-queries.patch",
+          "commit": "a70ac692d9f09f9dfd61b0cf6bd0d63373cd9012",
+          "subject": "vulkan: use Vulkan 1.0 for basic surface format queries",
+          "patch_id": "cd8e6438364ec7ce04ba6edc28d8437fb0ee33f4",
+          "sha256": "5823332a24490325b4df4c88298b3c8db4c1e4f662d32a24eb3ec5e4c2f26268"
         }
       ],
       "base_tree": "524b3c3c7e297a20474e8cece67c44b24c2d5678",
-      "target_tree": "0fc043420e35c623af4a60c0f1fb658038895ddb",
-      "validation": "Patch replay and whitespace checks pass; no build run. Runtime validation pending user build."
+      "target_tree": "071c1add09f9c9fce636148e92f270b7d4b02ff7",
+      "validation": "PASS: exact tree replay of all 12 patches; new patch whitespace checks; host regression reproduces old SIGSEGV and passes 24 fixed query cases. Android build and game runtime validation pending user build."
     },
     {
       "project": "hardware/broadcom/wlan",

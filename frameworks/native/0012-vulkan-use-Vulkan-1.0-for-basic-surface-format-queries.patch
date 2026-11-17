@@ -1,0 +1,102 @@
+From a70ac692d9f09f9dfd61b0cf6bd0d63373cd9012 Mon Sep 17 00:00:00 2001
+From: ivanmeler <i_ivan@windowslive.com>
+Date: Tue, 17 Nov 2026 13:25:46 +0000
+Subject: [PATCH] vulkan: use Vulkan 1.0 for basic surface format queries
+
+SupportsSurfaceFormat calls the optional Vulkan 1.1 image-format query
+without checking whether the driver supplies it. Vulkan 1.0 drivers can
+therefore crash during vkGetPhysicalDeviceSurfaceFormatsKHR, as observed
+when Unity initializes Vulkan on Mali-T880.
+
+This query has no input or output extension chain. Use the required
+Vulkan 1.0 query with the same format, tiling, usage and flags. Register
+the entry point in the driver-table generator and regenerate its output.
+Supported formats still depend on the driver's result.
+
+Validation: an extracted-helper host regression reproduces SIGSEGV before
+the change and passes 24 query cases afterwards with optional core/KHR
+entry points absent or present. Android build and game retest pending.
+
+Change-Id: I2d814762fcc382771c5ef7adb46b6575643c5f94
+---
+ vulkan/libvulkan/driver_gen.cpp    |  1 +
+ vulkan/libvulkan/driver_gen.h      |  1 +
+ vulkan/libvulkan/swapchain.cpp     | 21 +++++++--------------
+ vulkan/scripts/driver_generator.py |  1 +
+ 4 files changed, 10 insertions(+), 14 deletions(-)
+
+diff --git a/vulkan/libvulkan/driver_gen.cpp b/vulkan/libvulkan/driver_gen.cpp
+index 0a55675..db4ca9b 100644
+--- a/vulkan/libvulkan/driver_gen.cpp
++++ b/vulkan/libvulkan/driver_gen.cpp
+@@ -926,6 +926,7 @@ bool InitDriverTable(VkInstance instance,
+     INIT_PROC(true, instance, EnumeratePhysicalDevices);
+     INIT_PROC(true, instance, GetInstanceProcAddr);
+     INIT_PROC(true, instance, GetPhysicalDeviceProperties);
++    INIT_PROC(true, instance, GetPhysicalDeviceImageFormatProperties);
+     INIT_PROC(true, instance, CreateDevice);
+     INIT_PROC(true, instance, EnumerateDeviceExtensionProperties);
+     INIT_PROC_EXT(EXT_debug_report, true, instance, CreateDebugReportCallbackEXT);
+diff --git a/vulkan/libvulkan/driver_gen.h b/vulkan/libvulkan/driver_gen.h
+index e00f546..bd66244 100644
+--- a/vulkan/libvulkan/driver_gen.h
++++ b/vulkan/libvulkan/driver_gen.h
+@@ -94,6 +94,7 @@ struct InstanceDriverTable {
+     PFN_vkEnumeratePhysicalDevices EnumeratePhysicalDevices;
+     PFN_vkGetInstanceProcAddr GetInstanceProcAddr;
+     PFN_vkGetPhysicalDeviceProperties GetPhysicalDeviceProperties;
++    PFN_vkGetPhysicalDeviceImageFormatProperties GetPhysicalDeviceImageFormatProperties;
+     PFN_vkCreateDevice CreateDevice;
+     PFN_vkEnumerateDeviceExtensionProperties EnumerateDeviceExtensionProperties;
+     PFN_vkCreateDebugReportCallbackEXT CreateDebugReportCallbackEXT;
+diff --git a/vulkan/libvulkan/swapchain.cpp b/vulkan/libvulkan/swapchain.cpp
+index 48e2586..ce6fee0 100644
+--- a/vulkan/libvulkan/swapchain.cpp
++++ b/vulkan/libvulkan/swapchain.cpp
+@@ -744,24 +744,17 @@ bool SupportsSurfaceFormat(const InstanceDriverTable& driver,
+                            VkFormat format) {
+     // These are all the flags that ANGLE would use for a framebuffer
+     // (see WindowSurfaceVk::createSwapChain)
+-    VkPhysicalDeviceImageFormatInfo2 formatInfo = {};
+-    formatInfo.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_FORMAT_INFO_2;
+-    formatInfo.pNext = nullptr;
+-    formatInfo.format = format;
+-    formatInfo.type = VK_IMAGE_TYPE_2D;
+-    formatInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+-    formatInfo.usage =
++    const VkImageUsageFlags usage =
+         VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT |
+         VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
+         VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT;
+-    formatInfo.flags = 0;
+ 
+-    VkImageFormatProperties2 properties = {};
+-    properties.sType = VK_STRUCTURE_TYPE_IMAGE_FORMAT_PROPERTIES_2;
+-    properties.pNext = nullptr;
+-
+-    VkResult result = driver.GetPhysicalDeviceImageFormatProperties2(
+-        pdev, &formatInfo, &properties);
++    // No extension data is needed, so use the query required by Vulkan 1.0.
++    // The Vulkan 1.1 entry point may be absent on older drivers.
++    VkImageFormatProperties properties = {};
++    VkResult result = driver.GetPhysicalDeviceImageFormatProperties(
++        pdev, format, VK_IMAGE_TYPE_2D, VK_IMAGE_TILING_OPTIMAL, usage, 0,
++        &properties);
+ 
+     return result == VK_SUCCESS;
+ }
+diff --git a/vulkan/scripts/driver_generator.py b/vulkan/scripts/driver_generator.py
+index 05e7375..41ced54 100644
+--- a/vulkan/scripts/driver_generator.py
++++ b/vulkan/scripts/driver_generator.py
+@@ -88,6 +88,7 @@ _NEEDED_COMMANDS = [
+     'vkDestroyImage',
+ 
+     'vkGetPhysicalDeviceProperties',
++    'vkGetPhysicalDeviceImageFormatProperties',
+ 
+     # VK_KHR_swapchain v69 requirement
+     'vkBindImageMemory2',
+-- 
+2.34.1
+
