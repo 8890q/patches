@@ -72,6 +72,7 @@ apply_patches_for hardware/libhardware
 apply_patches_for hardware/qcom-caf/common
 apply_patches_for hardware/ril
 apply_patches_for packages/modules/Connectivity
+apply_patches_for packages/modules/Nfc
 apply_patches_for system/core
 apply_patches_for system/libhidl
 apply_patches_for system/libhwbinder

@@ -1,0 +1,139 @@
+From 1ab38ce4c4860ad6ac0d5085b14f086690d3b3be Mon Sep 17 00:00:00 2001
+From: ivanmeler <i_ivan@windowslive.com>
+Date: Wed, 18 Nov 2026 07:12:13 +0000
+Subject: [PATCH] Nfc: restore screen-gated polling on NCI 1.x controllers
+
+The screen-off discovery configuration now enables polling and relies on
+NCI 2.0 screen-state commands to gate it. Legacy NCI controllers do not
+support those commands, leaving RF polling active while the phone sleeps.
+On herolte this coincides with repeated sec-nfc wakeups and long NFC
+wake-lock holds overnight.
+
+Require an unlocked, lit screen for ordinary NCI 1.x polling. Preserve
+explicit lockscreen polling, provisioning and host card-emulation routing,
+and retain controller-managed polling for NCI 2.x.
+
+Apply legacy discovery changes in the screen-state handler instead of a
+separate AsyncTask so routing and screen-state updates stay ordered.
+Add screen-state regression coverage for legacy and modern controllers.
+
+Validation: production discovery code passes 393 host assertions; the
+unmodified code reproduces the screen-off polling failure. Android unit
+tests and unplugged deep-sleep validation await the next ROM build.
+
+Change-Id: I608090fedd6d74de0355a4a3fd7a11e2bc8b7311
+---
+ NfcNci/src/com/android/nfc/NfcService.java    | 18 +++++---
+ .../src/com/android/nfc/NfcServiceTest.java   | 46 +++++++++++++++++++
+ 2 files changed, 57 insertions(+), 7 deletions(-)
+
+diff --git a/NfcNci/src/com/android/nfc/NfcService.java b/NfcNci/src/com/android/nfc/NfcService.java
+index ebf6724..96200c6 100644
+--- a/NfcNci/src/com/android/nfc/NfcService.java
++++ b/NfcNci/src/com/android/nfc/NfcService.java
+@@ -5097,8 +5097,12 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback
+     private NfcDiscoveryParameters computeDiscoveryParameters(int screenState) {
+         // Recompute discovery parameters based on screen state
+         NfcDiscoveryParameters.Builder paramsBuilder = NfcDiscoveryParameters.newBuilder();
+-        // Polling
+-        if (screenState >= NFC_POLLING_MODE && isReaderOptionEnabled()) {
++        // NCI 1.x controllers cannot gate polling with the NCI 2.0 screen-state
++        // commands. Reconfigure discovery to stop polling while the screen is off
++        // or locked, retaining the explicit lockscreen polling cases below.
++        int pollingMode = nci_version < NCI_VERSION_2_0
++                ? ScreenStateHelper.SCREEN_STATE_ON_UNLOCKED : NFC_POLLING_MODE;
++        if (screenState >= pollingMode && isReaderOptionEnabled()) {
+             // Check if reader-mode is enabled
+             if (mReaderModeParams != null) {
+                 int techMask = 0;
+@@ -5945,7 +5949,10 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback
+                                 screen_state_mask |= ScreenStateHelper.SCREEN_POLLING_TAG_MASK;
+                             }
+                         }
+-                        if (mNfcUnlockManager.isLockscreenPollingEnabled()
++                        // Keep legacy discovery changes on the same queue as the
++                        // screen-state update, including transitions to screen off.
++                        if (nci_version < NCI_VERSION_2_0
++                                || mNfcUnlockManager.isLockscreenPollingEnabled()
+                                 || mScreenState == ScreenStateHelper.SCREEN_STATE_ON_UNLOCKED) {
+                             applyRouting(false);
+                         }
+@@ -6591,7 +6598,7 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback
+     }
+ 
+     private void handleScreenStateChanged() {
+-        // Perform applyRouting() in AsyncTask to serialize blocking calls
++        // Queue screen-state changes on the service handler to keep routing ordered
+         if (mIsWlcCapable && mNfcCharging.NfcChargingOnGoing) {
+             Log.d(TAG,
+                     "handleScreenStateChanged: MSG_APPLY_SCREEN_STATE postponing due "
+@@ -6891,9 +6898,6 @@ public class NfcService implements DeviceHostListener, ForegroundUtils.Callback
+                     + ScreenStateHelper.screenStateToString(screenState));
+         }
+         if (mScreenState != screenState) {
+-            if (nci_version < NCI_VERSION_2_0) {
+-                new ApplyRoutingTask().execute(Integer.valueOf(screenState));
+-            }
+             if (DBG) Log.d(TAG, "applyScreenState: screenState != mScreenState=" + mScreenState);
+             sendMessage(MSG_APPLY_SCREEN_STATE, screenState);
+         }
+diff --git a/NfcNci/tests/unit/src/com/android/nfc/NfcServiceTest.java b/NfcNci/tests/unit/src/com/android/nfc/NfcServiceTest.java
+index 9fffa7c..e5deb59 100644
+--- a/NfcNci/tests/unit/src/com/android/nfc/NfcServiceTest.java
++++ b/NfcNci/tests/unit/src/com/android/nfc/NfcServiceTest.java
+@@ -2648,6 +2648,52 @@ public final class NfcServiceTest {
+         verify(mDeviceHost).doSetScreenState(anyInt(), anyBoolean());
+     }
+ 
++    @Test
++    public void testLegacyScreenStateStopsPollingAndPreservesHostRouting() throws Exception {
++        assertScreenStatePolling(NCI_VERSION_1_0, new int[] {0, 0, 0,
++                NfcDiscoveryParameters.NFC_POLL_DEFAULT});
++    }
++
++    @Test
++    public void testNci2ScreenStatePreservesControllerManagedPolling() throws Exception {
++        int pollMask = NfcDiscoveryParameters.NFC_POLL_DEFAULT;
++        assertScreenStatePolling(NfcService.NCI_VERSION_2_0,
++                new int[] {pollMask, pollMask, pollMask, pollMask});
++    }
++
++    private void assertScreenStatePolling(int nciVersion, int[] expectedMasks) throws Exception {
++        java.lang.reflect.Field version = NfcService.class.getDeclaredField("nci_version");
++        version.setAccessible(true);
++        int previousVersion = version.getInt(null);
++        try {
++            version.setInt(null, nciVersion);
++            mNfcService.mState.set(NfcAdapter.STATE_ON);
++            mNfcService.mIsReaderOptionEnabled = true;
++            mNfcService.mIsHceCapable = true;
++            mNfcService.mInProvisionMode = false;
++            mNfcService.mIsWatchType = false;
++            mNfcService.mScreenState = ScreenStateHelper.SCREEN_STATE_ON_UNLOCKED;
++            int[] screenStates = {ScreenStateHelper.SCREEN_STATE_OFF_LOCKED,
++                    ScreenStateHelper.SCREEN_STATE_OFF_UNLOCKED,
++                    ScreenStateHelper.SCREEN_STATE_ON_LOCKED,
++                    ScreenStateHelper.SCREEN_STATE_ON_UNLOCKED};
++            for (int i = 0; i < screenStates.length; i++) {
++                // Establish the current discovery state before each transition.
++                mNfcService.applyRouting(true);
++                when(mScreenStateHelper.checkScreenState(anyBoolean()))
++                        .thenReturn(screenStates[i]);
++                mNfcService.mNfcAdapter.setScreenState();
++                mLooper.dispatchAll();
++                assertEquals(expectedMasks[i],
++                        mNfcService.mCurrentDiscoveryParameters.getTechMask());
++                assertTrue(mNfcService.mCurrentDiscoveryParameters.shouldEnableHostRouting());
++                assertFalse(mNfcService.mCurrentDiscoveryParameters.shouldEnableReaderMode());
++            }
++        } finally {
++            version.setInt(null, previousVersion);
++        }
++    }
++
+     @Test
+     public void testSetWlcEnabled() {
+         NfcService.NfcAdapterService adapterService = mNfcService.new NfcAdapterService();
+-- 
+2.34.1
+

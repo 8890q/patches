@@ -742,6 +742,25 @@
       "base_tree": "9d58a96a986dd304d27575a493351049b06148e7",
       "target_tree": "33af90b22b4cce86e259d3f304f693dce6137b30",
       "validation": "Patch replay and whitespace checks pass; runtime test awaits user build of wpa_supplicant."
+    },
+    {
+      "project": "packages/modules/Nfc",
+      "base": "51754af96e392ad895e4a37762c1e55ba209787e",
+      "head": "1ab38ce4c4860ad6ac0d5085b14f086690d3b3be",
+      "upstream_url": "https://github.com/LineageOS/android_packages_modules_Nfc",
+      "upstream_branch": "lineage-24.0",
+      "patches": [
+        {
+          "file": "packages/modules/Nfc/0001-Nfc-restore-screen-gated-polling-on-NCI-1.x-controllers.patch",
+          "commit": "1ab38ce4c4860ad6ac0d5085b14f086690d3b3be",
+          "subject": "Nfc: restore screen-gated polling on NCI 1.x controllers",
+          "patch_id": "3c46b28f08f8cb62d04f5298828b1c9263b62c7d",
+          "sha256": "7ae15079cf0bc1bae56737e9f4f3b8689e8348cb8b5c3be022682a5bf23cf4e9"
+        }
+      ],
+      "base_tree": "7887fe5eb645b70c373a4aab3f81618e043ddfd5",
+      "target_tree": "8058cd8fe3303098bda44dbfd2cc4667a49d986d",
+      "validation": "PASS: exact tree replay and 393 host assertions on production discovery code; Android unit tests and unplugged deep-sleep validation await user build."
     }
   ]
 }
