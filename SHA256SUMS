@@ -51,6 +51,7 @@ c66b8168a9ec68d7ae566fc5782d5da8816d353c0df6da1643003b1b8627a493  hardware/qcom-
 8130f8be28caddaf36ebdac5b10c8ef8dd50853c2136b14849e097adbe2980cc  packages/modules/Connectivity/0003-bpf-Retain-5.4-programs-on-Android-17.patch
 f7dfb6752c1c04a2f15848ecdcf66e7046c3e3987a8f9c61ab5c26e13cfd3014  packages/modules/Connectivity/0004-Connectivity-Gate-event-consumers-on-BPF-capabilities.patch
 7ae15079cf0bc1bae56737e9f4f3b8689e8348cb8b5c3be022682a5bf23cf4e9  packages/modules/Nfc/0001-Nfc-restore-screen-gated-polling-on-NCI-1.x-controllers.patch
+e057d9f1cfb15b6de6fe66cd28aa16e60878590aa75a67eedee66725196bc092  packages/modules/Nfc/0002-Nfc-abort-polling-transactions-when-the-controller-stops-responding.patch
 3d92a63390a35dd5a8d6d20d59aa2eb5bf802a02a761e5710747d04fc0ea3b80  system/core/0001-Fix-support-for-devices-without-cgroupv2-support.patch
 76e6248692b7a1fa5f0c78684bcfa37a753b574ec5b969dd09e6602e945393a1  system/core/0002-Revert-libprocessgroup-CgroupSetup-should-fail-if-a-.patch
 e0fd312e64c00606ff9930a9538afc29a938a54a9218acc273cb30e8987f8e7f  system/core/0003-Camera-Add-feature-extensions.patch

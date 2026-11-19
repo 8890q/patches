@@ -746,7 +746,7 @@
     {
       "project": "packages/modules/Nfc",
       "base": "51754af96e392ad895e4a37762c1e55ba209787e",
-      "head": "1ab38ce4c4860ad6ac0d5085b14f086690d3b3be",
+      "head": "deb71fb00d5ff849139ab874de99c3d19d4de624",
       "upstream_url": "https://github.com/LineageOS/android_packages_modules_Nfc",
       "upstream_branch": "lineage-24.0",
       "patches": [
@@ -756,11 +756,18 @@
           "subject": "Nfc: restore screen-gated polling on NCI 1.x controllers",
           "patch_id": "3c46b28f08f8cb62d04f5298828b1c9263b62c7d",
           "sha256": "7ae15079cf0bc1bae56737e9f4f3b8689e8348cb8b5c3be022682a5bf23cf4e9"
+        },
+        {
+          "file": "packages/modules/Nfc/0002-Nfc-abort-polling-transactions-when-the-controller-stops-responding.patch",
+          "commit": "deb71fb00d5ff849139ab874de99c3d19d4de624",
+          "subject": "Nfc: abort polling transactions when the controller stops responding",
+          "patch_id": "8c75ec61a05fe1377be960be78eb3a53d04be867",
+          "sha256": "e057d9f1cfb15b6de6fe66cd28aa16e60878590aa75a67eedee66725196bc092"
         }
       ],
       "base_tree": "7887fe5eb645b70c373a4aab3f81618e043ddfd5",
-      "target_tree": "8058cd8fe3303098bda44dbfd2cc4667a49d986d",
-      "validation": "PASS: exact tree replay and 393 host assertions on production discovery code; Android unit tests and unplugged deep-sleep validation await user build."
+      "target_tree": "6185cac765cc9c269979ec749a46948305e63a98",
+      "validation": "PASS: exact tree replay; 393 screen-policy and 318 native recovery host assertions. Device NFC/card-reading and unplugged suspend verification remain pending."
     }
   ]
 }
